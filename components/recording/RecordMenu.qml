@@ -79,13 +79,21 @@ Pick {
                     }
                 }
 
-                highlight: Hi {
-                    pick: root
-                    row: Theme.recordRowH
-                    width: list.width
-                    mark: {
-                        const it = root.items[root.sel]
-                        return it && it.kind === "stop" ? Theme.red : Theme.accent
+                highlight: Rectangle {
+                    x: Theme.selInset
+                    y: root.sel * Theme.recordRowH + Theme.selGap / 2
+                    width: list.width - Theme.selInset * 2
+                    height: Theme.recordRowH - Theme.selGap
+                    radius: height / 2
+                    color: Theme.selFill
+                    antialiasing: true
+
+                    Behavior on y {
+                        enabled: !root.snap
+                        NumberAnimation {
+                            duration: root.dur
+                            easing.type: Theme.ease
+                        }
                     }
                 }
 
@@ -94,16 +102,13 @@ Pick {
                     required property var modelData
                     required property int index
                     readonly property bool isStop: !!modelData && modelData.kind === "stop"
+                    readonly property bool selected: root.sel === row.index
 
                     width: list.width
                     height: Theme.recordRowH
 
                     Txt {
                         anchors.left: parent.left
-                        transformOrigin: Item.Center
-                        scale: area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1
-
-                        Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
                         anchors.leftMargin: Theme.rowX
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.rowR
@@ -111,8 +116,15 @@ Pick {
                         text: row.modelData ? row.modelData.label : ""
                         elide: Text.ElideRight
                         font.pixelSize: Theme.fsL
-                        font.weight: Font.DemiBold
-                        color: row.isStop ? Theme.red : Theme.fg
+                        font.weight: Font.Normal
+                        color: row.isStop ? Theme.red : row.selected ? Theme.accent : Theme.fg
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.glide
+                                easing.type: Theme.ease
+                            }
+                        }
                     }
 
                     MouseArea {

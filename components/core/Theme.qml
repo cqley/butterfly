@@ -27,24 +27,22 @@ Singleton {
     readonly property int netToggleW: 36
     readonly property int netToggleH: 20
     readonly property int netKnob: 14
-    readonly property int netFocusInset: 4
-    readonly property int netFocusInsetY: 1
-    readonly property int netFocusMarkX: 7
-    readonly property int netFocusMarkW: 3
-    readonly property int netFocusMarkH: netRowH / 2 - 1
-    readonly property color netFocusFill: chip
+    readonly property int selInset: 4
+    readonly property int selGap: 2
+    readonly property color selFill: Qt.rgba(1, 1, 1, 0.06)
+    readonly property int selDuration: feedbackDuration
     readonly property color bg: "#000000"
     readonly property color fg: "#ffffff"
     readonly property color chip: "#1c1c1e"
     readonly property color tile: "#2c2c2e"
     readonly property color accent: "#f2b8e2"
     readonly property color red: "#e5534b"
+    readonly property color green: "#34c759"
+    readonly property string passChar: "∙"
 
     readonly property int listGap: 6
     readonly property int rowX: 18
     readonly property int rowR: 14
-    readonly property int markW: 3
-    readonly property int markX: 5
     readonly property int fsXS: 10
     readonly property int fsS: 11
     readonly property int fsM: 12
@@ -95,12 +93,6 @@ Singleton {
     readonly property int launchIconRadius: 7
     readonly property int launchIconBorderWidth: 1
     readonly property real launchIconSelectedScale: 1.02
-    readonly property int launchSelectionX: 4
-    readonly property int launchSelectionRight: 4
-    readonly property int launchSelectionH: rowH - 2
-    readonly property int launchSelectionRadius: launchSelectionH / 2
-    readonly property color launchSelectionFill: Qt.rgba(1, 1, 1, 0.06)
-    readonly property int launchSelectionDuration: feedbackDuration
     readonly property color launchIconFill: Qt.rgba(chip.r, chip.g, chip.b, 0.36)
     readonly property color launchIconSelectedFill: chip
     readonly property color launchIconBorder: Qt.rgba(1, 1, 1, 0.16)
@@ -191,12 +183,13 @@ Singleton {
     readonly property int noteBatGap: 1
     readonly property color noteBatNubColor: fg
     readonly property int noteBatBorder: 1
+    readonly property real noteSigScale: 0.8
     readonly property int noteBatRadius: 3
     readonly property int noteBatBoltW: 4
     readonly property int noteBatBoltH: 6
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"
-    readonly property color batGreen: "#34c759"
+    readonly property color batGreen: green
     readonly property int clockGap: 4
     readonly property int rowGap: 8
     readonly property int idlePopDuration: speed
@@ -253,8 +246,8 @@ Singleton {
     readonly property int authBtnGap: 8
     readonly property int authGlyph: 16
     readonly property int authIconR: authFieldR - 2
-    readonly property int authFieldIconX: 12
-    readonly property int authFieldTextX: 40
+    readonly property int authFieldIconX: 6
+    readonly property int authFieldTextX: 34
     readonly property int authFieldTextPad: 52
     readonly property int authBtnPadX: 28
     readonly property real authPressed: 0.82

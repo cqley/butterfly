@@ -246,16 +246,16 @@ Pick {
                     Rectangle {
                         anchors.left: parent.left
                         anchors.right: parent.right
-                        anchors.leftMargin: Theme.launchSelectionX
-                        anchors.rightMargin: Theme.launchSelectionRight
+                        anchors.leftMargin: Theme.selInset
+                        anchors.rightMargin: Theme.selInset
                         anchors.verticalCenter: parent.verticalCenter
-                        height: Theme.launchSelectionH
-                        radius: Theme.launchSelectionRadius
-                        color: Theme.launchSelectionFill
+                        height: Theme.rowH - Theme.selGap
+                        radius: height / 2
+                        color: Theme.selFill
                         opacity: row.selected ? 1 : 0
                         antialiasing: true
 
-                        Behavior on opacity { NumberAnimation { duration: Theme.launchSelectionDuration; easing.type: Theme.ease } }
+                        Behavior on opacity { NumberAnimation { duration: Theme.selDuration; easing.type: Theme.ease } }
                     }
 
                     LaunchIcon {
@@ -301,6 +301,7 @@ Pick {
                         id: area
                         anchors.fill: parent
                         hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
                         onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
                         onClicked: {
                             root.sel = row.index

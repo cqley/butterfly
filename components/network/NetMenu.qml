@@ -237,17 +237,23 @@ Pick {
                     }
                 }
 
-                highlight: Hi {
-                    pick: root
-                    row: Theme.netRowH
-                    insetX: Theme.netFocusInset
-                    insetY: Theme.netFocusInsetY
-                    markX: Theme.netFocusMarkX
-                    markW: Theme.netFocusMarkW
-                    markHeight: Theme.netFocusMarkH
-                    fill: Theme.netFocusFill
-                    width: list.width - Theme.netFocusInset * 2
+                highlight: Rectangle {
+                    x: Theme.selInset
+                    y: root.sel * Theme.netRowH + Theme.selGap / 2
+                    width: list.width - Theme.selInset * 2
+                    height: Theme.netRowH - Theme.selGap
+                    radius: height / 2
+                    color: Theme.selFill
+                    antialiasing: true
                     visible: !root.ask
+
+                    Behavior on y {
+                        enabled: !root.snap
+                        NumberAnimation {
+                            duration: root.dur
+                            easing.type: Theme.ease
+                        }
+                    }
                 }
 
                 delegate: Item {
@@ -282,7 +288,7 @@ Pick {
                         text: row.modelData ? row.modelData.ssid : ""
                         elide: Text.ElideRight
                         font.pixelSize: Theme.fsL
-                        font.weight: row.on || row.aimed || row.selected ? Font.DemiBold : Font.Normal
+                        font.weight: row.on || row.aimed ? Font.DemiBold : Font.Normal
                         color: row.on || row.aimed || row.selected ? Theme.accent : Theme.fg
 
                         Behavior on color {
@@ -374,14 +380,6 @@ Pick {
             spacing: Theme.listGap
             visible: root.ask
 
-            Rule {}
-
-            Txt {
-                text: "password for " + Net.asking
-                font.pixelSize: Theme.fsS
-                opacity: Theme.dimMuted
-            }
-
             Rectangle {
                 width: parent.width
                 height: Theme.netFieldH
@@ -403,7 +401,7 @@ Pick {
                     selectionColor: Theme.accent
                     selectedTextColor: Theme.bg
                     echoMode: TextInput.Password
-                    passwordCharacter: "•"
+                    passwordCharacter: Theme.passChar
                     selectByMouse: true
                     font.family: Theme.font
                     font.pixelSize: Theme.fsL

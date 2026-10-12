@@ -159,6 +159,7 @@ Fade {
                 selectionColor: Theme.accent
                 selectedTextColor: Theme.bg
                 echoMode: root.flow && root.flow.responseVisible ? TextInput.Normal : TextInput.Password
+                passwordCharacter: Theme.passChar
                 selectByMouse: true
                 clip: true
                 font.family: Theme.font
@@ -190,7 +191,7 @@ Fade {
                     width: Math.round(cancelTxt.width + Theme.authBtnPadX)
                     height: Theme.authBtnH
                     radius: Theme.authBtnH / 2
-                    color: mouse.pressed ? Theme.tile : mouse.containsMouse ? Theme.tile : Theme.chip
+                    color: mouse.containsMouse ? Theme.tile : Theme.chip
                     scale: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
                     antialiasing: true
                     transformOrigin: Item.Center

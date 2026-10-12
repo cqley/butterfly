@@ -105,8 +105,6 @@ Singleton {
         targetLabel = item.label
         startedAt = Date.now()
         elapsedSec = 0
-        Quickshell.execDetached(["mkdir", "-p", Theme.recordDir])
-
         if (backend === "gsr") {
             let src = Theme.screen
             if (item.kind === "monitor")

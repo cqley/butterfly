@@ -84,21 +84,20 @@ Singleton {
             pump()
     }
 
-    function pushSystem(summary, body, charging) {
-        const duplicate = (current && current.system && current.kind === "battery" && current.summary === summary) ||
-            queue.some(n => n && n.system && n.kind === "battery" && n.summary === summary)
-        if (duplicate)
+    function pushSystem(summary, body, charging, kind = "battery", failed = false) {
+        const same = n => n && n.system && n.kind === kind && n.summary === summary && (kind === "battery" || n.body === body)
+        if (same(current) || queue.some(same))
             return
 
         queue = trim([...queue, {
             system: true,
-            kind: "battery",
+            kind: kind,
             summary: summary,
             body: body,
-            appName: "fairy",
+            appName: "system",
             appIcon: "",
             image: "",
-            urgency: NotificationUrgency.Normal,
+            urgency: failed ? NotificationUrgency.Critical : NotificationUrgency.Normal,
             charging: charging
         }])
         if (current === null && !gap.running)

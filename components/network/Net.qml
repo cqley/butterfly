@@ -1,5 +1,6 @@
 pragma Singleton
 import "../core"
+import "../notifications"
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -21,6 +22,7 @@ Singleton {
     property bool canceling: false
     property bool sent: false
     property bool timedOut: false
+    property bool watch: false
 
     readonly property string title: {
         if (!enabled)
@@ -49,7 +51,8 @@ Singleton {
             rescan.running = true
         poll.restart()
     } else {
-        poll.stop()
+        if (!watch)
+            poll.stop()
         if (asking !== "")
             cancelAsk()
         error = ""
@@ -58,6 +61,17 @@ Singleton {
             phase = ""
         }
     }
+
+    onActiveChanged: if (watch && active !== "") {
+        watch = false
+        Notifs.pushSystem("connected", active, false, "net")
+    }
+
+    onWatchChanged: if (watch) {
+        watchEnd.restart()
+        poll.restart()
+    } else if (!open)
+        poll.stop()
 
     function refresh() {
         if (!toggling) {
@@ -74,6 +88,7 @@ Singleton {
         const next = enabled ? "off" : "on"
         toggling = true
         enabled = next === "on"
+        watch = enabled
         if (!enabled) {
             list = []
             active = ""
@@ -87,6 +102,7 @@ Singleton {
     function pick(item) {
         if (!item || busy || toggling || up.running)
             return
+        watch = false
         error = ""
         if (item.active) {
             busy = true
@@ -294,6 +310,7 @@ Singleton {
             const canceled = root.canceling
             const late = root.timedOut
             const wasSent = root.sent
+            const name = root.target
             root.canceling = false
             root.timedOut = false
             root.sent = false
@@ -307,13 +324,13 @@ Singleton {
                 root.phase = ""
                 root.refresh()
                 settle.restart()
+                Notifs.pushSystem("connected", name, false, "net")
+                root.open = false
                 return
             }
             const t = stderr.text.toLowerCase()
             const needsSecret = t.indexOf("password") >= 0 || t.indexOf("passphrase") >= 0 || t.indexOf("secret") >= 0
-            if (late)
-                root.error = "timed out"
-            else if (needsSecret) {
+            if (!late && needsSecret) {
                 root.asking = root.target
                 root.phase = ""
                 if (wasSent) {
@@ -321,12 +338,13 @@ Singleton {
                     forget.command = ["nmcli", "connection", "delete", "id", root.target]
                     forget.running = true
                 }
-            } else
-                root.error = "failed"
+            }
             if (root.asking === "") {
                 root.target = ""
                 root.phase = ""
                 root.pending = ""
+                Notifs.pushSystem("can't connect", late ? name + " · timed out" : name, false, "net", true)
+                root.open = false
             }
             root.refresh()
         }
@@ -366,6 +384,12 @@ Singleton {
                 root.clearPhase()
             root.refresh()
         }
+    }
+
+    Timer {
+        id: watchEnd
+        interval: Theme.netTimeout
+        onTriggered: root.watch = false
     }
 
     Timer {

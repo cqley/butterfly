@@ -1,4 +1,5 @@
 import "../core"
+import "../network"
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
@@ -19,6 +20,7 @@ Fade {
     property bool critical: false
     property bool battery: false
     property bool charging: false
+    property bool net: false
     readonly property real wanted: Math.max(Theme.noteH, more.y + more.height + Theme.noteTop)
 
     anchors.fill: parent
@@ -54,14 +56,16 @@ Fade {
         summary = plain(n.summary)
         body = plain(n.body)
         battery = !!n.system && n.kind === "battery"
+        net = !!n.system && n.kind === "net"
         charging = battery && !!n.charging
         critical = n.urgency === NotificationUrgency.Critical
 
         const name = String(n.appName || "").trim()
-        appLabel = battery ? "fairy" : name.toLowerCase()
+        const own = battery || net
+        appLabel = own ? "system" : name.toLowerCase()
         letter = ((name || "?")[0] || "?").toLowerCase()
-        picture = battery ? "" : fileUrl(n.image)
-        mark = battery ? "" : (fileUrl(n.appIcon) || fileUrl(n.desktopEntry))
+        picture = own ? "" : fileUrl(n.image)
+        mark = own ? "" : (fileUrl(n.appIcon) || fileUrl(n.desktopEntry))
         source = picture || mark
         if (img.failed)
             img.reload()
@@ -87,7 +91,7 @@ Fade {
         width: Theme.noteIcon
         height: Theme.noteIcon
         radius: Theme.noteIconR
-        color: root.critical ? Theme.red : Theme.chip
+        color: root.critical ? Theme.red : root.net ? Theme.green : Theme.chip
 
         StableImage {
             id: img
@@ -151,10 +155,17 @@ Fade {
             }
         }
 
+        Sig {
+            anchors.centerIn: parent
+            visible: root.net
+            level: Theme.sigBars
+            scale: Theme.noteSigScale
+        }
+
         Txt {
             anchors.centerIn: parent
             text: root.letter
-            visible: !root.battery && img.showPlaceholder
+            visible: !root.battery && !root.net && img.showPlaceholder
             font.pixelSize: Theme.fsM
             font.weight: Font.Bold
         }
