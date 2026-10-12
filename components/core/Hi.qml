@@ -5,11 +5,18 @@ Rectangle {
     required property var pick
     required property int row
     property color mark: Theme.accent
+    property color fill: Theme.chip
+    property int insetX: 0
+    property int insetY: 0
+    property int markX: Theme.markX
+    property int markW: Theme.markW
+    property real markHeight: root.height / 2 - 1
 
-    y: pick.sel * row
-    height: row
+    x: root.insetX
+    y: pick.sel * row + root.insetY
+    height: row - root.insetY * 2
     radius: height / 2
-    color: Theme.chip
+    color: root.fill
     antialiasing: true
 
     Behavior on y {
@@ -20,12 +27,20 @@ Rectangle {
         }
     }
 
+    Behavior on opacity {
+        NumberAnimation {
+            duration: Theme.feedbackDuration
+            easing.type: Theme.ease
+        }
+    }
+
     Rectangle {
-        x: Theme.markX
+        x: root.markX
         anchors.verticalCenter: parent.verticalCenter
-        width: Theme.markW
-        height: parent.height / 2 - 1
+        width: root.markW
+        height: root.markHeight
         radius: width / 2
         color: root.mark
+        antialiasing: true
     }
 }

@@ -2,26 +2,26 @@ import "../core"
 import QtQuick
 
 Item {
-    width: 14
-    height: 12
+    width: Theme.lockW
+    height: Theme.lockH
 
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
-        width: 8
-        height: 6
-        radius: 4
+        width: Theme.lockArcW
+        height: Theme.lockArcH
+        radius: Theme.lockArcR
         color: "transparent"
-        border.width: 1.4
+        border.width: Theme.lockBorder
         border.color: Theme.fg
         antialiasing: true
     }
 
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 4
-        width: 10
-        height: 8
-        radius: 2
+        y: Theme.lockBodyY
+        width: Theme.lockBodyW
+        height: Theme.lockBodyH
+        radius: Theme.lockBodyR
         color: Theme.fg
         antialiasing: true
     }

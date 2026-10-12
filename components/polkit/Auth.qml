@@ -64,26 +64,26 @@ Fade {
     Column {
         id: col
         width: parent.width
-        spacing: 12
+        spacing: Theme.authSpacing
 
         Row {
-            spacing: 10
+            spacing: Theme.authHeadGap
 
             Rectangle {
                 width: Theme.authIcon
                 height: Theme.authIcon
-                radius: Theme.authFieldR - 2
+                radius: Theme.authIconR
                 color: Theme.chip
 
                 Shape {
                     anchors.centerIn: parent
-                    width: 24
-                    height: 24
-                    scale: 16 / 24
+                    width: Theme.iconGrid
+                    height: Theme.iconGrid
+                    scale: Theme.authGlyph / Theme.iconGrid
                     preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
-                        strokeWidth: 1.8
+                        strokeWidth: Theme.iconStroke
                         strokeColor: Theme.fg
                         fillColor: "transparent"
                         capStyle: ShapePath.RoundCap
@@ -96,7 +96,7 @@ Fade {
             Txt {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "authentication required"
-                font.pixelSize: 15
+                font.pixelSize: Theme.fsXXL
                 font.weight: Font.DemiBold
             }
         }
@@ -105,7 +105,7 @@ Fade {
             width: parent.width
             text: root.flow ? (root.flow.message || "").toLowerCase() : ""
             wrapMode: Text.Wrap
-            font.pixelSize: 13
+            font.pixelSize: Theme.fsL
         }
 
         Txt {
@@ -113,8 +113,8 @@ Fade {
             visible: text !== ""
             text: root.flow ? (root.flow.actionId || "") : ""
             elide: Text.ElideMiddle
-            opacity: 0.4
-            font.pixelSize: 11
+            opacity: Theme.dimGhost
+            font.pixelSize: Theme.fsS
         }
 
         Txt {
@@ -123,7 +123,7 @@ Fade {
             text: root.flow && root.flow.supplementaryIsError && root.flow.supplementaryMessage !== "" ? root.flow.supplementaryMessage.toLowerCase() : "authentication failed, try again"
             color: Theme.red
             wrapMode: Text.Wrap
-            font.pixelSize: 12
+            font.pixelSize: Theme.fsM
         }
 
         Rectangle {
@@ -133,15 +133,15 @@ Fade {
             color: Theme.chip
 
             Shape {
-                x: 12
+                x: Theme.authFieldIconX
                 anchors.verticalCenter: parent.verticalCenter
-                width: 24
-                height: 24
-                scale: 16 / 24
+                width: Theme.iconGrid
+                height: Theme.iconGrid
+                scale: Theme.authGlyph / Theme.iconGrid
                 preferredRendererType: Shape.CurveRenderer
 
                 ShapePath {
-                    strokeWidth: 1.8
+                    strokeWidth: Theme.iconStroke
                     strokeColor: Theme.fg
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
@@ -152,8 +152,8 @@ Fade {
 
             TextInput {
                 id: input
-                x: 40
-                width: parent.width - 52
+                x: Theme.authFieldTextX
+                width: parent.width - Theme.authFieldTextPad
                 anchors.verticalCenter: parent.verticalCenter
                 color: Theme.fg
                 selectionColor: Theme.accent
@@ -162,7 +162,7 @@ Fade {
                 selectByMouse: true
                 clip: true
                 font.family: Theme.font
-                font.pixelSize: 13
+                font.pixelSize: Theme.fsL
                 font.weight: Font.Medium
                 enabled: !!root.flow && root.flow.isResponseRequired
                 onAccepted: root.submit()
@@ -173,8 +173,8 @@ Fade {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "password"
                 visible: input.text === ""
-                opacity: 0.35
-                font.pixelSize: 13
+                opacity: Theme.dimHint
+                font.pixelSize: Theme.fsL
             }
         }
 
@@ -184,47 +184,63 @@ Fade {
 
             Row {
                 anchors.right: parent.right
-                spacing: 8
+                spacing: Theme.authBtnGap
 
                 Rectangle {
-                    width: Math.round(cancelTxt.width + 28)
+                    width: Math.round(cancelTxt.width + Theme.authBtnPadX)
                     height: Theme.authBtnH
                     radius: Theme.authBtnH / 2
-                    color: Theme.chip
+                    color: mouse.pressed ? Theme.tile : mouse.containsMouse ? Theme.tile : Theme.chip
+                    scale: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
+                    antialiasing: true
+                    transformOrigin: Item.Center
+
+                    Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
+                    Behavior on color { ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
 
                     Txt {
                         id: cancelTxt
                         anchors.centerIn: parent
                         text: "cancel"
-                        font.pixelSize: 13
+                        font.pixelSize: Theme.fsL
                     }
 
                     MouseArea {
+                        id: mouse
                         anchors.fill: parent
+                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.cancel()
                     }
                 }
 
                 Rectangle {
-                    width: Math.round(okTxt.width + 28)
+                    width: Math.round(okTxt.width + Theme.authBtnPadX)
                     height: Theme.authBtnH
                     radius: Theme.authBtnH / 2
                     color: Theme.accent
-                    opacity: input.text.length > 0 ? 1 : 0.45
+                    opacity: input.text.length > 0 ? (mouse2.pressed ? Theme.authPressed : 1) : Theme.authDisabled
+                    scale: input.text.length > 0 ? (mouse2.pressed ? Theme.feedbackPressScale : mouse2.containsMouse ? Theme.feedbackHoverScale : 1) : 1
+                    antialiasing: true
+                    transformOrigin: Item.Center
+
+                    Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
+                    Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
 
                     Txt {
                         id: okTxt
                         anchors.centerIn: parent
                         text: "authenticate"
                         color: Theme.bg
-                        font.pixelSize: 13
+                        font.pixelSize: Theme.fsL
                         font.weight: Font.DemiBold
                     }
 
                     MouseArea {
+                        id: mouse2
                         anchors.fill: parent
                         enabled: input.text.length > 0
+                        hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.submit()
                     }

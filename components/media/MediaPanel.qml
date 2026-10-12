@@ -13,6 +13,16 @@ Fade {
     property bool scrubbing: false
     property real scrub: 0
 
+    onPChanged: {
+        scrubbing = false
+        scrub = 0
+    }
+
+    onVisibleChanged: if (!visible) {
+        scrubbing = false
+        scrub = 0
+    }
+
     width: Theme.mediaW
     height: col.height
 
@@ -24,13 +34,13 @@ Fade {
 
     FrameAnimation {
         running: root.visible && root.on && !root.scrubbing
-        onTriggered: root.p.positionChanged()
+        onTriggered: if (root.p && root.p.positionSupported) root.p.positionChanged()
     }
 
     Column {
         id: col
         width: parent.width
-        spacing: 6
+        spacing: Theme.mediaColGap
 
         Item {
             width: parent.width
@@ -40,30 +50,28 @@ Fade {
                 id: art
                 width: Theme.artS
                 height: Theme.artS
-                radius: 10
+                radius: Theme.artR
                 color: Theme.chip
 
-                Image {
+                StableImage {
                     id: img
                     anchors.fill: parent
                     source: root.p ? root.p.trackArtUrl : ""
-                    asynchronous: true
                     fillMode: Image.PreserveAspectCrop
                     sourceSize: Qt.size(Theme.artS * 2, Theme.artS * 2)
-                    visible: status === Image.Ready
                 }
 
                 Shape {
                     x: Math.round((art.width - width) / 2)
                     y: Math.round((art.height - height) / 2)
-                    width: 24
-                    height: 24
-                    opacity: 0.4
-                    visible: img.status !== Image.Ready
+                    width: Theme.iconGrid
+                    height: Theme.iconGrid
+                    opacity: Theme.dimGhost
+                    visible: img.showPlaceholder
                     preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
-                        strokeWidth: 1.8
+                        strokeWidth: Theme.iconStroke
                         strokeColor: Theme.fg
                         fillColor: "transparent"
                         capStyle: ShapePath.RoundCap
@@ -77,14 +85,14 @@ Fade {
                 x: art.width + Theme.mediaGap
                 width: parent.width - x - Theme.ctlS * 2 - Theme.playS - Theme.mediaGap * 2
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
+                spacing: Theme.mediaTextGap
 
                 Txt {
                     width: parent.width
                     text: Media.title
                     elide: Text.ElideRight
                     maximumLineCount: 1
-                    font.pixelSize: 13
+                    font.pixelSize: Theme.fsL
                     font.weight: Font.DemiBold
                 }
 
@@ -94,15 +102,15 @@ Fade {
                     visible: text !== ""
                     elide: Text.ElideRight
                     maximumLineCount: 1
-                    opacity: 0.55
-                    font.pixelSize: 11
+                    opacity: Theme.dimMuted
+                    font.pixelSize: Theme.fsS
                 }
             }
 
             Row {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 4
+                spacing: Theme.mediaCtlGap
 
                 Btn {
                     anchors.verticalCenter: parent.verticalCenter
@@ -114,7 +122,7 @@ Fade {
                 Btn {
                     anchors.verticalCenter: parent.verticalCenter
                     solid: true
-                    dx: root.on ? 0 : 1
+                    dx: root.on ? 0 : Theme.playNudge
                     path: root.on ? "M6 4H10V20H6ZM14 4H18V20H14Z" : "M5 3L19 12L5 21L5 3Z"
                     enabled: root.p !== null && root.p.canTogglePlaying
                     onClicked: root.p.togglePlaying()
@@ -131,11 +139,12 @@ Fade {
 
         Item {
             width: parent.width
-            height: Theme.barH + 4
+            height: Theme.barH + Theme.barPad
 
             Rectangle {
                 id: bar
-                y: 4
+                property bool hovered: seekArea.containsMouse
+                y: Theme.barPad
                 width: parent.width
                 height: Theme.barH
                 radius: height / 2
@@ -150,10 +159,27 @@ Fade {
                     antialiasing: true
                 }
 
+                Rectangle {
+                    x: Math.max(0, Math.min(parent.width - width, parent.width * root.frac - width / 2))
+                    y: Theme.knobY
+                    width: Theme.knobS
+                    height: Theme.knobS
+                    radius: width / 2
+                    color: Theme.accent
+                    transformOrigin: Item.Center
+                    scale: root.scrubbing ? Theme.knobScrub : bar.hovered ? 1 : 0
+                    opacity: root.scrubbing || bar.hovered ? 1 : 0
+                    antialiasing: true
+
+                    Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
+                    Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
+                }
+
                 MouseArea {
+                    id: seekArea
                     anchors.fill: parent
-                    anchors.topMargin: -6
-                    anchors.bottomMargin: -6
+                    anchors.topMargin: -Theme.barHit
+                    anchors.bottomMargin: -Theme.barHit
                     enabled: root.p !== null && root.p.canSeek && root.p.positionSupported && root.len > 0
                     cursorShape: Qt.PointingHandCursor
                     onPressed: m => {

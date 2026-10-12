@@ -14,60 +14,141 @@ Singleton {
         if (hovered)
             hold.stop()
         else
-            hold.restart()
+            armHold(current)
+    }
+
+    function dwellFor(n) {
+        if (!n || n.system)
+            return Theme.dwell
+        const t = Number(n.expireTimeout)
+        if (isFinite(t) && t === 0)
+            return Theme.dwellNever
+        if (isFinite(t) && t > 0)
+            return Math.max(Theme.dwellMin, Math.round(t * 1000))
+        if (n.urgency === NotificationUrgency.Critical)
+            return Theme.dwellCritical
+        return Theme.dwell
+    }
+
+    function armHold(n) {
+        const ms = dwellFor(n)
+        if (ms <= 0) {
+            hold.stop()
+            return
+        }
+        hold.interval = ms
+        hold.restart()
+    }
+
+    function trim(list) {
+        const cut = list.length - Theme.notificationQueueMax
+        if (cut <= 0)
+            return list
+        for (const n of list.slice(0, cut))
+            if (n && !n.system && n.tracked)
+                n.expire()
+        return list.slice(cut)
+    }
+
+    function touched() {
+        if (current && !hovered)
+            armHold(current)
+    }
+
+    function sameId(a, b) {
+        return a && b && !a.system && !b.system && a.id === b.id
     }
 
     function push(n) {
+        if (!n)
+            return
         n.tracked = true
-        queue = [...queue, n]
-        if (current === null && !gap.running) pump()
+
+        if (sameId(current, n)) {
+            current = n
+            if (!hovered)
+                armHold(n)
+            return
+        }
+
+        const qi = queue.findIndex(x => sameId(x, n))
+        if (qi >= 0) {
+            const next = queue.slice()
+            next[qi] = n
+            queue = next
+            return
+        }
+
+        queue = trim([...queue, n])
+        if (current === null && !gap.running)
+            pump()
+    }
+
+    function pushSystem(summary, body, charging) {
+        const duplicate = (current && current.system && current.kind === "battery" && current.summary === summary) ||
+            queue.some(n => n && n.system && n.kind === "battery" && n.summary === summary)
+        if (duplicate)
+            return
+
+        queue = trim([...queue, {
+            system: true,
+            kind: "battery",
+            summary: summary,
+            body: body,
+            appName: "fairy",
+            appIcon: "",
+            image: "",
+            urgency: NotificationUrgency.Normal,
+            charging: charging
+        }])
+        if (current === null && !gap.running)
+            pump()
+    }
+
+    function alive(n) {
+        if (!n)
+            return false
+        if (n.system)
+            return true
+        return n.tracked !== false
     }
 
     function pump() {
-        const q = queue.filter(n => n)
+        const q = queue.filter(alive)
         queue = q.slice(1)
-        if (q.length === 0) return
+        if (q.length === 0)
+            return
         current = q[0]
-        hold.interval = span(current)
-        hard.interval = Math.max(hold.interval * 2, Theme.dwellCritical)
-        hard.restart()
-        if (!hovered) hold.restart()
+        if (!hovered)
+            armHold(current)
     }
 
     function next() {
         hold.stop()
-        hard.stop()
         current = null
         gap.restart()
     }
 
     function dismiss() {
         const n = current
-        if (!n) return
+        if (!n)
+            return
         next()
-        n.dismiss()
+        if (!n.system)
+            n.dismiss()
     }
 
     function drop() {
         const n = current
-        if (!n) return
+        if (!n)
+            return
         next()
-        n.expire()
-    }
-
-    function span(n) {
-        const t = n.expireTimeout * 1000
-        if (t > 0) return Math.min(Math.max(t, 3000), 15000)
-        return n.urgency === NotificationUrgency.Critical ? Theme.dwellCritical : Theme.dwell
+        if (!n.system)
+            n.expire()
     }
 
     Timer {
         id: hold
-        onTriggered: root.drop()
-    }
-
-    Timer {
-        id: hard
         onTriggered: root.drop()
     }
 
@@ -78,9 +159,18 @@ Singleton {
     }
 
     Connections {
-        target: root.current
+        id: watched
+        property var item: root.current && !root.current.system ? root.current : null
+        target: item
         ignoreUnknownSignals: true
-        function onClosed() { root.next() }
+        function onClosed() {
+            if (root.current === item)
+                root.next()
+        }
+        function onSummaryChanged() { root.touched() }
+        function onBodyChanged() { root.touched() }
+        function onUrgencyChanged() { root.touched() }
+        function onExpireTimeoutChanged() { root.touched() }
     }
 
     NotificationServer {

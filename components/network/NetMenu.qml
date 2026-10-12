@@ -78,11 +78,11 @@ Pick {
     Keys.onPressed: e => {
         const k = e.key
         if (k === Qt.Key_Escape) {
-            if (ask)
+            if (ask || Net.busy)
                 Net.cancelAsk()
             else
                 Net.open = false
-        } else if (ask || Net.busy)
+        } else if (ask)
             return
         else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space)
             run()
@@ -102,12 +102,13 @@ Pick {
 
             Txt {
                 anchors.left: parent.left
-                anchors.leftMargin: 4
+                anchors.leftMargin: Theme.netTitleX
                 anchors.verticalCenter: parent.verticalCenter
                 text: Net.title
                 font.weight: Font.DemiBold
                 color: !Net.enabled ? Theme.red : Net.phase !== "" ? Theme.accent : Theme.fg
-                opacity: pulse.running ? 0.55 + 0.45 * pulse.val : 1
+                opacity: pulse.running ? Theme.dimMuted + (1 - Theme.dimMuted) * pulse.val : 1
+
 
                 Behavior on color {
                     ColorAnimation {
@@ -150,13 +151,15 @@ Pick {
                 id: toggle
                 readonly property real gap: (height - Theme.netKnob) / 2
                 anchors.right: parent.right
-                anchors.rightMargin: 2
+                anchors.rightMargin: Theme.netToggleInset
                 anchors.verticalCenter: parent.verticalCenter
                 width: Theme.netToggleW
                 height: Theme.netToggleH
                 radius: height / 2
                 color: Net.enabled ? Theme.accent : Theme.tile
-                opacity: Net.busy ? 0.5 : 1
+                opacity: Net.busy ? Theme.dimMid : 1
+                transformOrigin: Item.Center
+                scale: toggleArea.pressed ? Theme.feedbackPressScale : toggleArea.containsMouse ? Theme.feedbackHoverScale : 1
                 antialiasing: true
 
                 Behavior on color {
@@ -191,8 +194,10 @@ Pick {
                 }
 
                 MouseArea {
+                    id: toggleArea
                     anchors.fill: parent
                     enabled: !Net.busy
+                    hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Net.toggleWifi()
                 }
@@ -212,7 +217,13 @@ Pick {
                 height: Math.min(root.n, Theme.netRows) * Theme.netRowH
                 clip: true
                 interactive: false
-                model: root.items
+                ScriptModel {
+                    id: netModel
+                    values: root.items
+                    objectProp: "ssid"
+                }
+
+                model: netModel
                 cacheBuffer: Theme.netRowH * Theme.netRows * 2
                 reuseItems: true
                 contentY: root.start * Theme.netRowH
@@ -229,7 +240,13 @@ Pick {
                 highlight: Hi {
                     pick: root
                     row: Theme.netRowH
-                    width: list.width
+                    insetX: Theme.netFocusInset
+                    insetY: Theme.netFocusInsetY
+                    markX: Theme.netFocusMarkX
+                    markW: Theme.netFocusMarkW
+                    markHeight: Theme.netFocusMarkH
+                    fill: Theme.netFocusFill
+                    width: list.width - Theme.netFocusInset * 2
                     visible: !root.ask
                 }
 
@@ -243,10 +260,11 @@ Pick {
                     readonly property string status: root.statusOf(modelData)
                     readonly property real sig: modelData ? modelData.signal : 0
                     readonly property bool locked: !!modelData && !!modelData.locked
+                    readonly property bool selected: root.sel === row.index
 
                     width: list.width
                     height: Theme.netRowH
-                    opacity: root.ask && Net.asking !== (modelData ? modelData.ssid : "") ? 0.35 : 1
+                    opacity: root.ask && Net.asking !== (modelData ? modelData.ssid : "") ? Theme.dimHint : 1
 
                     Behavior on opacity {
                         NumberAnimation {
@@ -264,8 +282,8 @@ Pick {
                         text: row.modelData ? row.modelData.ssid : ""
                         elide: Text.ElideRight
                         font.pixelSize: Theme.fsL
-                        font.weight: row.on || row.aimed ? Font.DemiBold : Font.Normal
-                        color: row.on || row.aimed ? Theme.accent : Theme.fg
+                        font.weight: row.on || row.aimed || row.selected ? Font.DemiBold : Font.Normal
+                        color: row.on || row.aimed || row.selected ? Theme.accent : Theme.fg
 
                         Behavior on color {
                             ColorAnimation {
@@ -278,7 +296,7 @@ Pick {
                     Row {
                         id: meta
                         anchors.right: parent.right
-                        anchors.rightMargin: 12
+                        anchors.rightMargin: Theme.netMetaR
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.rowGap
 
@@ -287,7 +305,7 @@ Pick {
                             text: row.status
                             font.pixelSize: Theme.fsS
                             color: Theme.accent
-                            opacity: row.busy ? 0.5 + 0.5 * pulse.val : row.status === "" ? 0 : 0.55
+                            opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : row.status === "" ? 0 : Theme.dimMuted
                             visible: text !== ""
 
                             Behavior on opacity {
@@ -302,13 +320,13 @@ Pick {
                         Lock {
                             anchors.verticalCenter: parent.verticalCenter
                             visible: row.locked && row.status === ""
-                            opacity: 0.55
+                            opacity: Theme.dimMuted
                         }
 
                         Sig {
                             anchors.verticalCenter: parent.verticalCenter
-                            level: Math.round(row.sig * 4)
-                            opacity: row.busy ? 0.35 : 1
+                            level: Math.round(row.sig * Theme.sigBars)
+                            opacity: row.busy ? Theme.dimHint : 1
 
                             Behavior on opacity {
                                 NumberAnimation {
@@ -321,11 +339,15 @@ Pick {
 
                     MouseArea {
                         anchors.fill: parent
-                        enabled: !root.ask && !Net.busy
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
+                        onPositionChanged: m => {
+                            if (!root.ask)
+                                root.aim(mapToItem(null, m.x, m.y), row.index)
+                        }
                         onClicked: {
+                            if (root.ask)
+                                Net.cancelAsk()
                             root.sel = row.index
                             root.run()
                         }
@@ -336,14 +358,14 @@ Pick {
 
         Item {
             width: parent.width
-            height: empty.implicitHeight + 8
+            height: empty.implicitHeight + Theme.netEmptyPad
             visible: Net.enabled && root.n === 0
 
             Txt {
                 id: empty
                 anchors.centerIn: parent
                 text: "no networks"
-                opacity: 0.45
+                opacity: Theme.dimEmpty
             }
         }
 
@@ -357,7 +379,7 @@ Pick {
             Txt {
                 text: "password for " + Net.asking
                 font.pixelSize: Theme.fsS
-                opacity: 0.55
+                opacity: Theme.dimMuted
             }
 
             Rectangle {
@@ -365,7 +387,11 @@ Pick {
                 height: Theme.netFieldH
                 radius: height / 2
                 color: Theme.chip
+                border.color: Theme.accent
+                border.width: pass.activeFocus ? Theme.feedbackFocusBorder : 0
                 antialiasing: true
+
+                Behavior on border.width { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
 
                 TextInput {
                     id: pass
@@ -401,7 +427,7 @@ Pick {
                     anchors.leftMargin: Theme.rowR
                     anchors.verticalCenter: parent.verticalCenter
                     text: "password"
-                    opacity: 0.35
+                    opacity: Theme.dimHint
                     font.pixelSize: Theme.fsL
                     visible: pass.text === ""
                 }
@@ -425,7 +451,7 @@ Pick {
 
     Wheel {
         anchors.fill: parent
-        enabled: !root.ask && !Net.busy
+        enabled: !root.ask
         onStep: n => root.move(n, false)
     }
 }

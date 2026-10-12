@@ -21,6 +21,8 @@ Fade {
     height: Theme.pwH
 
     function run(i) {
+        if (i < 0 || i >= items.length)
+            return
         Quickshell.execDetached(items[i].cmd)
         Power.open = false
     }
@@ -28,6 +30,8 @@ Fade {
     function reset() {
         snap = true
         sel = 0
+        px = -1
+        py = -1
         snap = false
     }
 
@@ -74,6 +78,12 @@ Fade {
                 radius: Theme.radius - Theme.pwPad
                 antialiasing: true
                 color: on ? Theme.accent : Theme.chip
+                transformOrigin: Item.Center
+                scale: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
+
+                Behavior on scale {
+                    NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+                }
 
                 Behavior on color {
                     enabled: !root.snap
@@ -86,13 +96,13 @@ Fade {
 
                 Shape {
                     x: Math.round((tile.width - width) / 2) + tile.modelData.dx
-                    y: 11
-                    width: 24
-                    height: 24
+                    y: Theme.pwIconY
+                    width: Theme.iconGrid
+                    height: Theme.iconGrid
                     preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
-                        strokeWidth: 1.8
+                        strokeWidth: Theme.iconStroke
                         strokeColor: tile.ink
                         fillColor: "transparent"
                         capStyle: ShapePath.RoundCap
@@ -104,13 +114,14 @@ Fade {
 
                 Txt {
                     x: Math.round((tile.width - width) / 2)
-                    y: 42
+                    y: Theme.pwLabelY
                     text: tile.modelData.label
                     color: tile.ink
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fsS
                 }
 
                 MouseArea {
+                    id: mouse
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor

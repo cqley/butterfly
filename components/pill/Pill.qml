@@ -22,13 +22,14 @@ Item {
     readonly property bool alert: Notifs.current !== null && !modal
     readonly property bool calm: !alert && !modal
     readonly property bool resizing:
-        Math.abs(root.wAnim - root.targetW) > 0.5 ||
-        Math.abs(root.hAnim - root.targetH) > 0.5
+        Math.abs(root.wAnim - root.targetW) > Theme.settleEps ||
+        Math.abs(root.hAnim - root.targetH) > Theme.settleEps
     property bool media: false
     property real wAnim: Theme.w
     property real hAnim: Theme.h
 
     onModalChanged: full = false
+    onAlertChanged: if (!alert) full = false
     onHotChanged: sync()
     Component.onCompleted: {
         sync()
@@ -78,18 +79,22 @@ Item {
         precision: SystemClock.Minutes
     }
 
+    readonly property real idleTargetW: Math.max(
+        Theme.w,
+        clockText.implicitWidth + battery.targetWidth + mic.targetWidth + record.targetWidth + Theme.pad
+    )
     readonly property real targetW: Polkit.open ? Theme.authW
-        : root.alert ? Theme.noteW
+        : root.alert ? (root.hot ? Theme.noteOpenW : Theme.noteW)
         : Launcher.open ? Theme.launchW
         : Power.open ? Theme.powerW
         : Wallpaper.open ? Theme.wallW
         : Record.open ? Theme.recordW
         : Net.open ? Theme.netW
         : root.hot ? (root.media && !root.full ? Theme.mediaPillW : Theme.openW)
-        : Math.max(Theme.w, root.calm ? idle.width + Theme.pad : Theme.w)
+        : root.calm ? root.idleTargetW : Theme.w
 
     readonly property real targetH: Polkit.open ? auth.y + auth.height + Theme.authPad
-        : root.alert ? Theme.noteH
+        : root.alert ? (root.hot ? note.wanted : Theme.noteH)
         : Launcher.open ? launch.y + launch.height + Theme.lpad
         : Power.open ? power.y + power.height + Theme.pwPad
         : Wallpaper.open ? wall.y + wall.height + Theme.wallPad
@@ -98,7 +103,6 @@ Item {
         : root.full ? cal.y + cal.height + Theme.pad
         : root.hot ? (root.media ? tune.y + tune.height + Theme.pad : Theme.openH)
         : Theme.h
-
 
     Binding {
         target: root
@@ -176,8 +180,9 @@ Item {
         }
 
         Note {
-            anchors.horizontalCenter: parent.horizontalCenter
+            id: note
             n: Notifs.current
+            expanded: root.hot
             shown: root.alert
             ready: !root.resizing
         }
@@ -233,40 +238,86 @@ Item {
 
     Fade {
         id: idle
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: Theme.gap + Math.round((Theme.h - height) / 2)
+        anchors.horizontalCenter: body.horizontalCenter
+        anchors.top: body.top
+        anchors.topMargin: Theme.idleTopOffsetY
         width: row.width
-        height: row.height
+        height: Theme.h
         shown: root.calm
         z: 2
 
+        transform: Translate {
+            x: Theme.idleOffsetX
+            y: Theme.idleOffsetY
+        }
+
         Row {
             id: row
+            width: clockText.implicitWidth + battery.width + mic.width + record.width
+            height: parent.height
             spacing: 0
 
             Txt {
+                id: clockText
+                height: parent.height
                 anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: Theme.clockOffsetY
+                anchors.alignWhenCentered: Theme.idleAlignWhenCentered
+                verticalAlignment: Text.AlignVCenter
                 text: Qt.formatDateTime(clock.date, "HH:mm")
                 font.pixelSize: Theme.clockPx
+
+                transform: Translate {
+                    x: Theme.clockOffsetX
+                }
             }
 
-            Battery {
+            BatteryIcon {
+                id: battery
                 anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: Theme.moduleOffsetY + Theme.batteryOffsetY
+                anchors.alignWhenCentered: Theme.idleAlignWhenCentered
+                shown: Battery.shown
+                available: Battery.available
+                pct: Battery.pct
+                tone: Battery.tone
+                pluggedIn: Battery.pluggedIn
+                leadingGap: Theme.clockGap
+
+                transform: Translate {
+                    x: Theme.batteryOffsetX
+                }
             }
 
             Slot {
+                id: mic
                 anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: Theme.moduleOffsetY + Theme.micOffsetY
+                anchors.alignWhenCentered: Theme.idleAlignWhenCentered
                 shown: Mic.muted
+                leadingGap: battery.active ? Theme.rowGap : Theme.clockGap
                 onClicked: Mic.toggle()
+
+                transform: Translate {
+                    x: Theme.micOffsetX
+                }
 
                 MicOff {}
             }
 
             Slot {
+                id: record
                 anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: Theme.moduleOffsetY + Theme.recordOffsetY
+                anchors.alignWhenCentered: Theme.idleAlignWhenCentered
                 size: Theme.recordDot
                 shown: Record.active
+                leadingGap: (battery.active || mic.shown) ? Theme.rowGap : Theme.clockGap
                 onClicked: Record.stop()
+
+                transform: Translate {
+                    x: Theme.recordOffsetX
+                }
 
                 Rectangle {
                     property real pulse: 1
@@ -299,3 +350,4 @@ Item {
         }
     }
 }
+

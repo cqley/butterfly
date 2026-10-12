@@ -4,6 +4,16 @@ import Quickshell
 
 Pick {
     id: root
+    readonly property var apps: DesktopEntries.applications.values.filter(a => !a.noDisplay)
+    readonly property var catalog: apps.map(a => ({
+        id: String(a.id || a.name || ""),
+        app: a,
+        name: String(a.name || ""),
+        genericName: String(a.genericName || ""),
+        comment: String(a.comment || ""),
+        keywords: Array.isArray(a.keywords) ? a.keywords.map(String) : [],
+        iconName: String(a.icon || "")
+    }))
     readonly property var raw: find(input.text)
     property var results: raw
 
@@ -14,15 +24,16 @@ Pick {
 
     function fuzzy(n, s) {
         let j = 0
-        for (let i = 0; i < n.length && j < s.length; i++) if (n[i] === s[j]) j++
+        for (let i = 0; i < n.length && j < s.length; i++)
+            if (n[i] === s[j]) j++
         return j === s.length
     }
 
     function find(q) {
-        const s = q.trim().toLowerCase()
-        const c = a => Launcher.counts[a.id] || 0
+        const s = String(q || "").trim().toLowerCase()
+        const c = a => Number(Launcher.counts[a.id]) || 0
         const byName = (a, b) => a.name.localeCompare(b.name)
-        const apps = DesktopEntries.applications.values.filter(a => !a.noDisplay)
+        const apps = root.catalog
         if (!s) {
             const top = apps.filter(a => c(a) > 0).sort((a, b) => c(b) - c(a) || byName(a, b)).slice(0, Theme.rows)
             return top.concat(apps.filter(a => !top.includes(a)).sort(byName))
@@ -31,39 +42,60 @@ Pick {
         for (const a of apps) {
             const n = a.name.toLowerCase()
             const i = n.indexOf(s)
-            const k = i === 0 ? 0 : n.includes(" " + s) ? 1 : i > 0 ? 2 : (a.genericName + " " + a.keywords.join(" ")).toLowerCase().includes(s) ? 3 : fuzzy(n, s) ? 4 : -1
+            const generic = a.genericName.toLowerCase()
+            const keywords = a.keywords.join(" ").toLowerCase()
+            const haystack = generic + " " + keywords
+            const k = i === 0 ? 0 : n.includes(" " + s) ? 1 : i > 0 ? 2 : haystack.includes(s) ? 3 : fuzzy(n, s) ? 4 : -1
             if (k >= 0) hits.push({ a, k })
         }
         return hits.sort((x, y) => x.k - y.k || c(y.a) - c(x.a) || x.a.name.length - y.a.name.length || byName(x.a, y.a)).slice(0, Theme.rows).map(h => h.a)
     }
 
+    readonly property var icons: Object.create(null)
+
+    function iconFor(name) {
+        if (!(name in icons))
+            icons[name] = src(name)
+        return icons[name]
+    }
+
     function src(icon) {
-        return icon.startsWith("/") ? Theme.url(icon) : Quickshell.iconPath(icon, true)
+        const value = String(icon || "")
+        if (value === "")
+            return ""
+        return value.startsWith("/") || value.indexOf("://") >= 0 ? Theme.url(value) : Quickshell.iconPath(value, true)
     }
 
     function clear() {
-        hold()
+        reset()
         input.text = ""
     }
 
     function run() {
-        const a = results[sel]
+        const item = results[sel]
+        const a = item ? item.app : null
         if (!a) return
-        Launcher.bump(a.id)
-        if (a.runInTerminal && a.command) Quickshell.execDetached({ command: Theme.terminal.concat(Array.from(a.command)), workingDirectory: a.workingDirectory })
+        Launcher.bump(item.id)
+        if (a.runInTerminal && a.command && a.command.length) Quickshell.execDetached({ command: Theme.terminal.concat(Array.from(a.command)), workingDirectory: a.workingDirectory || "" })
         else a.execute()
         Launcher.open = false
     }
 
     onRawChanged: {
-        sel = 0
         const r = results || []
-        if (raw.length !== r.length || raw.some((a, i) => a !== r[i])) results = raw
+        const key = a => [a && a.id, a && a.name, a && a.comment, a && a.genericName, a && a.iconName].map(String).join("\u0000")
+        const changed = raw.length !== r.length || raw.some((a, i) => key(a) !== key(r[i]))
+        if (!changed) return
+        results = raw
+        sel = 0
     }
 
     onVisibleChanged: {
         if (visible) input.forceActiveFocus()
-        else clear()
+        else {
+            root.fast = false
+            clear()
+        }
     }
 
     Connections {
@@ -84,30 +116,42 @@ Pick {
             width: parent.width
             height: Theme.searchH
 
+            Rectangle {
+                anchors.fill: parent
+                radius: height / 2
+                color: Theme.chip
+                opacity: input.activeFocus ? Theme.launchSearchFocusOpacity : Theme.launchSearchOpacity
+                antialiasing: true
+
+                Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
+            }
+
             Item {
-                x: 17
-                width: 14
-                height: 14
+                x: Theme.launchSearchIconX
+                width: Theme.launchSearchIconBox
+                height: Theme.launchSearchIconBox
                 anchors.verticalCenter: parent.verticalCenter
-                opacity: 0.6
+                opacity: Theme.launchSearchIconOpacity
 
                 Rectangle {
-                    width: 11
-                    height: 11
-                    radius: 5.5
+                    x: Theme.launchSearchLensInset
+                    y: Theme.launchSearchLensInset
+                    width: Theme.launchSearchLensSize
+                    height: Theme.launchSearchLensSize
+                    radius: width / 2
                     color: "transparent"
-                    border.width: 1.5
+                    border.width: Theme.launchSearchIconBorder
                     border.color: Theme.fg
                     antialiasing: true
                 }
 
                 Rectangle {
-                    x: 9.4
-                    y: 8.65
-                    width: 5
-                    height: 1.5
-                    radius: 0.75
-                    rotation: 45
+                    x: Theme.launchSearchHandleX
+                    y: Theme.launchSearchHandleY
+                    width: Theme.launchSearchHandleW
+                    height: Theme.launchSearchHandleH
+                    radius: height / 2
+                    rotation: Theme.launchSearchHandleRot
                     transformOrigin: Item.Left
                     color: Theme.fg
                     antialiasing: true
@@ -116,8 +160,8 @@ Pick {
 
             TextInput {
                 id: input
-                x: 48
-                width: parent.width - 48 - 12
+                x: Theme.launchSearchTextX
+                width: parent.width - Theme.launchSearchTextX - Theme.launchSearchTextRight
                 anchors.verticalCenter: parent.verticalCenter
                 color: Theme.fg
                 selectionColor: Theme.accent
@@ -153,7 +197,7 @@ Pick {
                 anchors.verticalCenter: parent.verticalCenter
                 text: "search"
                 visible: input.text === ""
-                opacity: 0.4
+                opacity: Theme.dimGhost
                 font.pixelSize: Theme.fsL
             }
         }
@@ -172,7 +216,13 @@ Pick {
                 height: Math.min(root.n, Theme.rows) * Theme.rowH
                 clip: true
                 interactive: false
-                model: root.results
+                ScriptModel {
+                    id: appModel
+                    values: root.results
+                    objectProp: "id"
+                }
+
+                model: appModel
                 cacheBuffer: Theme.rowH * Theme.rows * 2
                 reuseItems: true
                 contentY: root.start * Theme.rowH
@@ -183,12 +233,6 @@ Pick {
                     NumberAnimation { duration: root.dur; easing.type: Theme.ease }
                 }
 
-                highlight: Hi {
-                    pick: root
-                    row: Theme.rowH
-                    width: list.width
-                }
-
                 delegate: Item {
                     id: row
                     required property var modelData
@@ -197,40 +241,42 @@ Pick {
                     width: list.width
                     height: Theme.rowH
 
+                    readonly property bool selected: root.sel === row.index
+
                     Rectangle {
-                        id: tile
-                        x: 10
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.leftMargin: Theme.launchSelectionX
+                        anchors.rightMargin: Theme.launchSelectionRight
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 28
-                        height: 28
-                        radius: 8
-                        color: img.status === Image.Error || img.status === Image.Null ? Theme.tile : "transparent"
+                        height: Theme.launchSelectionH
+                        radius: Theme.launchSelectionRadius
+                        color: Theme.launchSelectionFill
+                        opacity: row.selected ? 1 : 0
+                        antialiasing: true
 
-                        Image {
-                            id: img
-                            anchors.fill: parent
-                            source: root.src(row.modelData.icon)
-                            asynchronous: true
-                            fillMode: Image.PreserveAspectFit
-                            sourceSize: Qt.size(56, 56)
-                            visible: status === Image.Ready
-                        }
-
-                        Txt {
-                            anchors.centerIn: parent
-                            text: (row.modelData.name || "?")[0].toLowerCase()
-                            visible: img.status === Image.Error || img.status === Image.Null
-                            font.weight: Font.Bold
-                        }
+                        Behavior on opacity { NumberAnimation { duration: Theme.launchSelectionDuration; easing.type: Theme.ease } }
                     }
 
+                    LaunchIcon {
+                        id: icon
+                        x: Theme.launchIconX
+                        anchors.verticalCenter: parent.verticalCenter
+                        source: root.iconFor(row.modelData.iconName)
+                        fallbackText: row.modelData.name.charAt(0).toLowerCase() || "?"
+                        selected: row.selected
+                        hovered: area.containsMouse
+                        pressed: area.pressed
+                    }
+
+
                     Column {
-                        anchors.left: tile.right
-                        anchors.leftMargin: 10
+                        anchors.left: icon.right
+                        anchors.leftMargin: Theme.launchTextGap
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.rowR
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 1
+                        spacing: Theme.launchTextRowGap
 
                         Txt {
                             width: parent.width
@@ -246,12 +292,13 @@ Pick {
                             visible: text !== ""
                             elide: Text.ElideRight
                             maximumLineCount: 1
-                            opacity: 0.6
+                            opacity: Theme.dimSoft
                             font.pixelSize: Theme.fsXS
                         }
                     }
 
                     MouseArea {
+                        id: area
                         anchors.fill: parent
                         hoverEnabled: true
                         onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
@@ -260,6 +307,7 @@ Pick {
                             root.run()
                         }
                     }
+
                 }
             }
         }

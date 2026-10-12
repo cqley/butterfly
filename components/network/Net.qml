@@ -17,8 +17,10 @@ Singleton {
     property string pending: ""
     property string phase: ""
     property string target: ""
-    property string secret: ""
     property string activeConnection: ""
+    property bool canceling: false
+    property bool sent: false
+    property bool timedOut: false
 
     readonly property string title: {
         if (!enabled)
@@ -43,6 +45,8 @@ Singleton {
             phase = ""
         }
         refresh()
+        if (enabled)
+            rescan.running = true
         poll.restart()
     } else {
         poll.stop()
@@ -81,7 +85,7 @@ Singleton {
     }
 
     function pick(item) {
-        if (!item || busy || toggling)
+        if (!item || busy || toggling || up.running)
             return
         error = ""
         if (item.active) {
@@ -99,13 +103,13 @@ Singleton {
         phase = "connecting"
         asking = ""
         target = item.ssid
-        secret = ""
+        sent = false
         up.command = ["nmcli", "device", "wifi", "connect", item.ssid]
         up.running = true
     }
 
     function submitPsk(psk) {
-        if (asking === "" || psk === "" || busy)
+        if (asking === "" || psk === "" || busy || up.running)
             return
         error = ""
         busy = true
@@ -113,38 +117,22 @@ Singleton {
         phase = "connecting"
         target = asking
         asking = ""
-        secret = psk
-        if (up.running) {
-            up.write(secret + "\n")
-            secret = ""
-            return
-        }
-        up.command = ["nmcli", "--ask", "device", "wifi", "connect", target]
+        sent = true
+        up.command = ["nmcli", "device", "wifi", "connect", target, "password", psk]
         up.running = true
     }
 
     function cancelAsk() {
+        canceling = up.running
+        sent = false
         if (up.running)
             up.signal(15)
         asking = ""
         error = ""
         busy = false
-        secret = ""
         target = ""
         pending = ""
         phase = ""
-    }
-
-    function readPrompt(text) {
-        if (!up.running || root.asking !== "")
-            return
-        const t = text.toLowerCase()
-        if (t.indexOf("password") >= 0 || t.indexOf("passphrase") >= 0 || t.indexOf("secret") >= 0) {
-            root.asking = root.target
-            root.error = ""
-            root.busy = false
-            root.phase = ""
-        }
     }
 
     function clearPhase() {
@@ -206,7 +194,7 @@ Singleton {
                 return a.active ? -1 : 1
             return b.signal - a.signal
         })
-        const seen = {}
+        const seen = Object.create(null)
         const uniq = []
         for (let i = 0; i < rows.length; i++) {
             const r = rows[i]
@@ -225,8 +213,6 @@ Singleton {
             root.toggling = false
             radio.running = true
             activeCon.running = true
-            if (root.enabled && !activeCon.running)
-                scan.running = true
         }
     }
 
@@ -266,60 +252,88 @@ Singleton {
                     root.activeConnection = p[0]
                     break
                 }
-                scan.running = true
+                if (root.enabled)
+                    scan.running = true
             }
         }
     }
 
     Process {
         id: scan
-        command: ["nmcli", "-t", "-f", "ACTIVE,SIGNAL,SSID,SECURITY", "device", "wifi", "list"]
+        command: ["nmcli", "-t", "-f", "ACTIVE,SIGNAL,SSID,SECURITY", "device", "wifi", "list", "--rescan", "no"]
         stdout: StdioCollector {
-            onStreamFinished: root.parseWifi(text)
+            onStreamFinished: {
+                if (root.enabled)
+                    root.parseWifi(text)
+                else {
+                    root.list = []
+                    root.active = ""
+                }
+            }
         }
     }
 
     Process {
+        id: rescan
+        command: ["nmcli", "device", "wifi", "rescan"]
+        onExited: late.restart()
+    }
+
+    Timer {
+        id: late
+        interval: Theme.netRescanWait
+        onTriggered: if (root.open) root.refresh()
+    }
+
+    Process {
         id: up
-        stdinEnabled: true
-        onStarted: {
-            if (root.secret === "")
-                return
-            write(root.secret + "\n")
-            root.secret = ""
-        }
         stderr: StdioCollector {
             waitForEnd: false
-            onTextChanged: root.readPrompt(text)
         }
         onExited: code => {
+            const canceled = root.canceling
+            const late = root.timedOut
+            const wasSent = root.sent
+            root.canceling = false
+            root.timedOut = false
+            root.sent = false
             root.busy = false
+            if (canceled)
+                return
             if (code === 0) {
                 root.asking = ""
                 root.error = ""
                 root.target = ""
-                root.secret = ""
                 root.phase = ""
                 root.refresh()
                 settle.restart()
-            } else {
-                const t = stderr.text.toLowerCase()
-                const needsSecret = t.indexOf("password") >= 0 || t.indexOf("passphrase") >= 0 || t.indexOf("secret") >= 0
-                if (root.asking === "" && root.error === "") {
-                    if (needsSecret)
-                        root.asking = root.target
-                    else
-                        root.error = "failed"
-                }
-                if (root.asking === "") {
-                    root.target = ""
-                    root.secret = ""
-                    root.phase = ""
-                    root.pending = ""
-                }
-                root.refresh()
+                return
             }
+            const t = stderr.text.toLowerCase()
+            const needsSecret = t.indexOf("password") >= 0 || t.indexOf("passphrase") >= 0 || t.indexOf("secret") >= 0
+            if (late)
+                root.error = "timed out"
+            else if (needsSecret) {
+                root.asking = root.target
+                root.phase = ""
+                if (wasSent) {
+                    root.error = "wrong password"
+                    forget.command = ["nmcli", "connection", "delete", "id", root.target]
+                    forget.running = true
+                }
+            } else
+                root.error = "failed"
+            if (root.asking === "") {
+                root.target = ""
+                root.phase = ""
+                root.pending = ""
+            }
+            root.refresh()
         }
+    }
+
+    Process {
+        id: forget
     }
 
     Process {
@@ -334,17 +348,19 @@ Singleton {
 
     Timer {
         id: guard
-        interval: 30000
-        running: up.running && root.asking !== ""
+        interval: Theme.netTimeout
+        running: up.running
         onTriggered: {
-            if (up.running)
+            if (up.running) {
+                root.timedOut = true
                 up.signal(15)
+            }
         }
     }
 
     Timer {
         id: settle
-        interval: 600
+        interval: Theme.netSettle
         onTriggered: {
             if (!root.busy)
                 root.clearPhase()
@@ -354,7 +370,7 @@ Singleton {
 
     Timer {
         id: poll
-        interval: root.busy ? 1500 : 4000
+        interval: root.busy ? Theme.netPollBusy : Theme.netPoll
         repeat: true
         onTriggered: root.refresh()
     }

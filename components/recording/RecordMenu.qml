@@ -109,6 +109,10 @@ Pick {
 
                     Txt {
                         anchors.left: parent.left
+                        transformOrigin: Item.Center
+                        scale: area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1
+
+                        Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
                         anchors.leftMargin: Theme.rowX
                         anchors.right: parent.right
                         anchors.rightMargin: Theme.rowR
@@ -121,6 +125,7 @@ Pick {
                     }
 
                     MouseArea {
+                        id: area
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor

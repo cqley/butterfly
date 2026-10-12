@@ -18,45 +18,45 @@ Fade {
     Behavior on pos { NumberAnimation { duration: Theme.glide; easing.type: Theme.ease } }
 
     Repeater {
-        model: 9
+        model: Theme.weekCells
 
         Item {
             required property int index
-            readonly property int rel: root.base + index - 4
+            readonly property int rel: root.base + index - Theme.weekCenter
             readonly property date d: new Date(root.now.getFullYear(), root.now.getMonth(), root.now.getDate() + rel)
             readonly property bool today: rel === 0
             readonly property bool weekend: d.getDay() === 0 || d.getDay() === 6
             readonly property color tint: today ? Theme.accent : weekend ? Theme.red : Theme.fg
 
-            x: (index - 1 - root.frac) * Theme.cellW
+            x: (index - Theme.weekLead - root.frac) * Theme.cellW
             width: Theme.cellW
             height: Theme.stripH
-            opacity: Math.max(0.12, 1 - Math.abs(x + Theme.cellW / 2 - Theme.gridW / 2) / (Theme.cellW * 4.7))
+            opacity: Math.max(Theme.weekFadeMin, 1 - Math.abs(x + Theme.cellW / 2 - Theme.gridW / 2) / (Theme.cellW * Theme.weekFadeSpan))
 
             Rectangle {
                 anchors.fill: parent
-                radius: 11
+                radius: Theme.weekTodayR
                 visible: today
                 color: Theme.accent
-                opacity: 0.15
+                opacity: Theme.todayFill
             }
 
             Column {
                 anchors.centerIn: parent
-                spacing: 4
+                spacing: Theme.weekGap
 
                 Txt {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "smtwtfs"[d.getDay()]
                     color: tint
-                    font.pixelSize: 9
+                    font.pixelSize: Theme.fsXXS
                 }
 
                 Txt {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: d.getDate()
                     color: tint
-                    font.pixelSize: 14
+                    font.pixelSize: Theme.fsXL
                     font.weight: today ? Font.Bold : Font.Medium
                 }
             }

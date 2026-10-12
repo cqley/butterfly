@@ -17,7 +17,7 @@ Fade {
     readonly property int sel: n ? ((cursor % n) + n) % n : 0
     readonly property int step: Theme.thumbW + Theme.thumbGap
     readonly property real viewW: Theme.wallW - 2 * Theme.wallPad
-    readonly property int win: Theme.wallN + 4
+    readonly property int win: Theme.wallN + Theme.wallPreload * 2
     readonly property int winStart: {
         if (!n) return 0
         const mid = Math.floor(win / 2)
@@ -34,6 +34,7 @@ Fade {
         nameFilters: ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp", "*.gif"]
         showDirs: false
         showDotAndDotDot: false
+        caseSensitive: false
         sortField: FolderListModel.Name
         onCountChanged: root.rebuild()
     }
@@ -43,7 +44,6 @@ Fade {
         target: root
         property: "trackX"
         easing.type: Theme.ease
-        onFinished: root.settle()
     }
 
     function centerFor(i) {
@@ -77,21 +77,9 @@ Fade {
         slide.start()
     }
 
-    function settle() {
-        if (!n) return
-        const t = n + sel
-        if (cursor === t) return
-        go(t, true)
-    }
-
     function move(d) {
         if (!n) return
-        let t = cursor + d
-        if (t < 0 || t >= n * 3) {
-            go(n + sel, true)
-            t = cursor + d
-        }
-        go(t, false)
+        go(cursor + d, false)
     }
 
     function apply() {
@@ -101,18 +89,18 @@ Fade {
     }
 
     function reset() {
-        if (!n) {
-            cursor = 0
-            trackX = 0
-            return
-        }
-        go(n, true)
+        px = -1
+        py = -1
+        go(0, true)
     }
 
     onVisibleChanged: {
         if (visible) {
             rebuild()
             forceActiveFocus()
+            reset()
+        } else {
+            fast = false
             reset()
         }
     }
@@ -146,7 +134,7 @@ Fade {
     Column {
         id: col
         width: parent.width
-        spacing: 10
+        spacing: Theme.wallGap
 
         Txt {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -157,14 +145,14 @@ Fade {
 
         Item {
             width: parent.width
-            height: Theme.thumbH + 12
+            height: Theme.wallTrackH
             clip: true
 
             Item {
                 id: track
                 x: root.trackX
                 height: parent.height
-                width: Math.max(0, root.n * 3 * root.step)
+                width: parent.width
 
                 Repeater {
                     model: root.n > 0 ? root.win : 0
@@ -172,9 +160,9 @@ Fade {
                     Item {
                         id: cell
                         required property int index
-                        readonly property int abs: root.winStart + index
+                        readonly property int abs: root.winStart + (((index - root.winStart) % root.win) + root.win) % root.win
                         readonly property int realIdx: root.n ? ((abs % root.n) + root.n) % root.n : 0
-                        readonly property bool on: realIdx === root.sel && abs === root.cursor
+                        readonly property bool on: abs === root.cursor
                         readonly property var info: root.files[realIdx]
 
                         x: abs * root.step
@@ -185,9 +173,12 @@ Fade {
                             anchors.centerIn: parent
                             width: Theme.thumbW
                             height: Theme.thumbH
-                            scale: cell.on ? 1.08 : 1
-                            opacity: cell.on ? 1 : 0.7
+                            transformOrigin: Item.Center
+                            scale: cell.on ? Theme.wallFocusScale : area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1
+                            opacity: cell.on ? 1 : area.containsMouse ? Theme.wallHoverOpacity : Theme.wallIdleOpacity
                             z: cell.on ? 1 : 0
+
+                            Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
 
                             Behavior on scale {
                                 enabled: !root.snap
@@ -199,32 +190,31 @@ Fade {
 
                             ClippingRectangle {
                                 anchors.fill: parent
-                                radius: 8
-                                antialiasing: false
+                                radius: Theme.wallRadius
                                 color: Theme.chip
 
-                                Image {
+                                StableImage {
                                     anchors.fill: parent
                                     source: cell.info ? Theme.url(cell.info.path) : ""
-                                    asynchronous: true
-                                    cache: true
                                     fillMode: Image.PreserveAspectCrop
-                                    sourceSize: Qt.size(Theme.thumbW, Theme.thumbH)
+                                    retain: false
+                                    sourceSize: Qt.size(Theme.wallSourceW, Theme.wallSourceH)
                                 }
                             }
 
                             Rectangle {
                                 anchors.fill: parent
-                                anchors.margins: -2
-                                radius: 10
+                                anchors.margins: -Theme.wallRing
+                                radius: Theme.wallRadius + Theme.wallRing
                                 color: "transparent"
-                                border.width: cell.on ? 2 : 0
+                                border.width: cell.on ? Theme.wallRing : 0
                                 border.color: Theme.accent
-                                antialiasing: false
+                                antialiasing: true
                             }
                         }
 
                         MouseArea {
+                            id: area
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
@@ -251,7 +241,7 @@ Fade {
             horizontalAlignment: Text.AlignHCenter
             text: root.n > 0 ? root.files[root.sel].name : ""
             elide: Text.ElideMiddle
-            opacity: 0.55
+            opacity: Theme.dimMuted
             font.pixelSize: Theme.fsS
         }
     }

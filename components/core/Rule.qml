@@ -2,7 +2,7 @@ import QtQuick
 
 Rectangle {
     width: parent.width
-    height: 1
+    height: Theme.ruleH
     color: Theme.fg
-    opacity: 0.1
+    opacity: Theme.ruleOpacity
 }

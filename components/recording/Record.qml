@@ -30,6 +30,9 @@ Singleton {
             refresh()
     }
 
+    onActiveChanged: if (open)
+        refresh()
+
     function toggle() {
         open = !open
     }
@@ -160,7 +163,7 @@ Singleton {
 
     Timer {
         id: tick
-        interval: 1000
+        interval: Theme.recordTick
         repeat: true
         running: root.active
         onTriggered: root.elapsedSec = Math.floor((Date.now() - root.startedAt) / 1000)

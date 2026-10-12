@@ -8,14 +8,14 @@ Fade {
     property int last: 0
     readonly property date view: new Date(now.getFullYear(), now.getMonth() + months, 1)
     readonly property int first: view.getDay()
-    readonly property int rows: Math.ceil((first + new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate()) / 7)
+    readonly property int rows: Math.ceil((first + new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate()) / Theme.weekDays)
 
     width: col.width
     height: col.height
 
     onVisibleChanged: if (!visible) months = 0
     onMonthsChanged: {
-        grid.y = months > last ? 10 : -10
+        grid.y = months > last ? Theme.calSlide : -Theme.calSlide
         grid.opacity = 0
         last = months
         settle.restart()
@@ -29,12 +29,12 @@ Fade {
 
     Column {
         id: col
-        spacing: 6
+        spacing: Theme.calGap
 
         Txt {
-            x: 4
+            x: Theme.calTitleX
             text: Qt.formatDate(root.view, "MMMM yyyy").toLowerCase()
-            font.pixelSize: 13
+            font.pixelSize: Theme.fsL
             font.weight: Font.DemiBold
         }
 
@@ -44,36 +44,36 @@ Fade {
 
             Grid {
                 id: grid
-                columns: 7
+                columns: Theme.weekDays
 
                 Repeater {
-                    model: 7
+                    model: Theme.weekDays
 
                     Txt {
                         required property int index
                         width: Theme.cellW
-                        height: 16
+                        height: Theme.calHeadH
                         horizontalAlignment: Text.AlignHCenter
                         text: "smtwtfs"[index]
-                        color: index === 0 || index === 6 ? Theme.red : Theme.fg
-                        opacity: 0.5
-                        font.pixelSize: 10
+                        color: index === 0 || index === Theme.weekDays - 1 ? Theme.red : Theme.fg
+                        opacity: Theme.dimMid
+                        font.pixelSize: Theme.fsXS
                     }
                 }
 
                 Repeater {
-                    model: root.rows * 7
+                    model: root.rows * Theme.weekDays
 
                     Item {
                         required property int index
                         readonly property date d: new Date(root.view.getFullYear(), root.view.getMonth(), index - root.first + 1)
                         readonly property bool inMonth: d.getMonth() === root.view.getMonth()
                         readonly property bool today: d.getFullYear() === root.now.getFullYear() && d.getMonth() === root.now.getMonth() && d.getDate() === root.now.getDate()
-                        readonly property bool weekend: index % 7 === 0 || index % 7 === 6
+                        readonly property bool weekend: index % Theme.weekDays === 0 || index % Theme.weekDays === Theme.weekDays - 1
 
                         width: Theme.cellW
                         height: Theme.cellH
-                        opacity: inMonth ? 1 : 0.25
+                        opacity: inMonth ? 1 : Theme.outMonth
 
                         Rectangle {
                             anchors.centerIn: parent
@@ -82,7 +82,7 @@ Fade {
                             radius: Theme.cellH / 2
                             visible: today
                             color: Theme.accent
-                            opacity: 0.15
+                            opacity: Theme.todayFill
                         }
 
                         Txt {

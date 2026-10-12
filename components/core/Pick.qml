@@ -25,7 +25,7 @@ Fade {
     function move(d, wrap) {
         if (!n)
             return
-        const t = wrap ? (sel + d + n) % n : Math.max(0, Math.min(n - 1, sel + d))
+        const t = wrap ? ((sel + d) % n + n) % n : Math.max(0, Math.min(n - 1, sel + d))
         snap = Math.abs(t - sel) > rows
         sel = t
         if (snap)
@@ -33,9 +33,22 @@ Fade {
     }
 
     function reset() {
+        fast = false
         hold()
         sel = 0
         start = 0
+        px = -1
+        py = -1
+    }
+
+    onNChanged: {
+        if (n <= 0) {
+            sel = 0
+            start = 0
+        } else {
+            sel = Math.max(0, Math.min(n - 1, sel))
+            start = Math.max(0, Math.min(Math.max(0, n - rows), start))
+        }
     }
 
     function aim(p, i) {
@@ -43,7 +56,8 @@ Fade {
             return
         px = p.x
         py = p.y
-        sel = i
+        if (i >= 0 && i < n)
+            sel = i
     }
 
     function nav(e) {

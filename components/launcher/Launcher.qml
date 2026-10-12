@@ -7,21 +7,30 @@ import Quickshell.Io
 Singleton {
     id: root
     property bool open: false
-    property var counts: ({})
+    property var counts: Object.create(null)
 
     onOpenChanged: if (open)
         Modal.claim("launcher")
 
     function bump(id) {
-        const c = Object.assign({}, counts)
-        c[id] = (c[id] || 0) + 1
+        if (!id)
+            return
+        const c = Object.assign(Object.create(null), counts)
+        c[id] = (Number(c[id]) || 0) + 1
         counts = c
         store.setText(JSON.stringify(c))
     }
 
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", Quickshell.stateDir])
-        try { counts = JSON.parse(store.text()) } catch (e) {}
+        try {
+            const parsed = JSON.parse(store.text())
+            counts = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+                ? Object.assign(Object.create(null), parsed)
+                : Object.create(null)
+        } catch (e) {
+            counts = Object.create(null)
+        }
     }
 
     FileView {
