@@ -85,8 +85,7 @@ Item {
         Theme.w,
         clockText.implicitWidth + battery.targetWidth + mic.targetWidth + record.targetWidth + Theme.pad
     )
-    readonly property real targetW: Warm.on ? Theme.warmW
-        : Polkit.open ? Theme.authW
+    readonly property real targetW: Polkit.open ? Theme.authW
         : root.alert ? (root.hot ? Theme.noteOpenW : Theme.noteW)
         : Launcher.open ? Theme.launchW
         : Power.open ? Theme.powerW
@@ -97,8 +96,7 @@ Item {
         : root.hot ? (root.media && !root.full ? Theme.mediaPillW : Theme.openW)
         : root.calm ? root.idleTargetW : Theme.w
 
-    readonly property real targetH: Warm.on ? Theme.warmH
-        : Polkit.open ? auth.y + auth.height + Theme.authPad
+    readonly property real targetH: Polkit.open ? auth.y + auth.height + Theme.authPad
         : root.alert ? (root.hot ? note.wanted : Theme.noteH)
         : Launcher.open ? launch.y + launch.height + Theme.lpad
         : Power.open ? power.y + power.height + Theme.pwPad
@@ -123,7 +121,6 @@ Item {
     }
 
     Behavior on wAnim {
-        enabled: Warm.settled
         NumberAnimation {
             duration: Theme.speed
             easing.type: Theme.ease
@@ -131,7 +128,6 @@ Item {
     }
 
     Behavior on hAnim {
-        enabled: Warm.settled
         NumberAnimation {
             duration: Theme.speed
             easing.type: Theme.ease
@@ -146,8 +142,7 @@ Item {
         height: root.hAnim
         radius: Math.min(Math.min(width, height) / 2, Theme.radius)
         antialiasing: true
-        opacity: Warm.on ? Theme.warmPill : 1
-        color: Warm.settled ? Theme.bg : "transparent"
+        color: Theme.bg
 
         HoverHandler {
             id: hover
@@ -164,7 +159,6 @@ Item {
         }
 
         Week {
-            warm: true
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.body
             now: clock.date
@@ -181,7 +175,6 @@ Item {
         }
 
         Calendar {
-            warm: true
             id: cal
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.body
@@ -199,7 +192,6 @@ Item {
         }
 
         Launch {
-            warm: true
             id: launch
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.lpad
@@ -208,7 +200,6 @@ Item {
         }
 
         PowerMenu {
-            warm: true
             id: power
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.pwPad
@@ -217,7 +208,6 @@ Item {
         }
 
         Wall {
-            warm: true
             id: wall
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.wallPad
@@ -226,7 +216,6 @@ Item {
         }
 
         RecordMenu {
-            warm: true
             id: rec
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.recordPad
@@ -235,7 +224,6 @@ Item {
         }
 
         NetMenu {
-            warm: true
             id: net
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.netPad
@@ -244,7 +232,6 @@ Item {
         }
 
         BrightnessMenu {
-            warm: true
             id: bright
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.brightPad

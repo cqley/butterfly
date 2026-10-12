@@ -130,11 +130,6 @@ Singleton {
     readonly property int wallCatchup: 20
     readonly property int wallRepeat: 70
     readonly property int wallRetries: 2
-    readonly property int warmTime: 1800
-    readonly property real warmOpacity: 0.1
-    readonly property real warmPill: 0.02
-    readonly property int warmH: 480
-    readonly property int warmW: Math.max(launchW, wallW, netW, recordW, powerW, brightW, openW)
     readonly property int wallEasing: 400
     readonly property int wallSourceW: thumbW * 2
     readonly property int wallSourceH: thumbH * 2
