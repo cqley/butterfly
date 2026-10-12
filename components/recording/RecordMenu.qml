@@ -54,15 +54,6 @@ Pick {
         width: parent.width
         spacing: Theme.listGap
 
-        Txt {
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: Record.active ? "recording " + Record.clock : "record"
-            font.weight: Font.DemiBold
-            color: Record.active ? Theme.red : Theme.fg
-        }
-
-        Rule { visible: root.n > 0 }
-
         Item {
             width: parent.width
             height: list.height

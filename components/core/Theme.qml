@@ -115,19 +115,31 @@ Singleton {
     readonly property int pwN: 5
     readonly property int powerW: pwW * pwN + pwGap * (pwN - 1) + pwPad * 2
 
-    readonly property int wallPad: 14
-    readonly property int thumbW: 120
-    readonly property int thumbH: 68
-    readonly property int thumbGap: 16
+    readonly property int wallPad: 16
+    readonly property int thumbW: 132
+    readonly property int thumbH: 75
+    readonly property int thumbGap: 12
+    readonly property int wallFocusGap: 7
     readonly property int wallN: 5
-    readonly property int wallPreload: 3
-    readonly property int wallTrackH: thumbH + 20
-    readonly property int wallRadius: 8
-    readonly property int wallRing: 2
+    readonly property int wallPreload: 5
+    readonly property int wallTrackH: thumbH + 22
+    readonly property int wallRadius: 9
+    readonly property int wallRing: 1
+    readonly property int wallBleed: 1
+    readonly property int wallVelocity: 600
+    readonly property int wallCatchup: 20
+    readonly property int wallRepeat: 70
+    readonly property int wallRetries: 2
+    readonly property int warmTime: 1800
+    readonly property real warmOpacity: 0.1
+    readonly property real warmPill: 0.02
+    readonly property int warmH: 480
+    readonly property int warmW: Math.max(launchW, wallW, netW, recordW, powerW, brightW, openW)
+    readonly property int wallEasing: 400
     readonly property int wallSourceW: thumbW * 2
     readonly property int wallSourceH: thumbH * 2
     readonly property real wallFocusScale: 1.15
-    readonly property int wallW: thumbW * wallN + thumbGap * (wallN - 1) + wallPad * 2
+    readonly property int wallW: thumbW * wallN + thumbGap * (wallN - 1) + wallFocusGap * 2 + wallPad * 2
 
     readonly property int authW: 380
     readonly property int authPad: 16
@@ -312,7 +324,19 @@ Singleton {
     readonly property int netPoll: 4000
     readonly property int netRescanWait: 2500
 
-    readonly property int wallGap: 10
+    readonly property int brightW: 208
+    readonly property int brightPad: 14
+    readonly property int brightTrackH: 24
+    readonly property int brightStep: 5
+    readonly property int brightFineStep: 1
+    readonly property int brightBigStep: 10
+    readonly property int brightMin: 1
+    readonly property int brightGap: 8
+    readonly property int brightIcon: 14
+    readonly property int brightSlop: 4
+    readonly property int brightGlide: 550
+    readonly property int brightEasing: 275
+
     readonly property real wallHoverOpacity: 0.82
     readonly property real wallIdleOpacity: 0.7
     readonly property int launchSearchHandleRot: 45

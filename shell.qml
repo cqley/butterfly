@@ -32,6 +32,7 @@ Variants {
             readonly property bool modal: Modal.any
             property var pillMask: Region { item: pill.hitTarget }
             property var openMask: Region { width: win.width; height: win.height }
+            property var noMask: Region {}
 
             screen: modelData
             anchors {
@@ -42,7 +43,7 @@ Variants {
             }
             exclusionMode: ExclusionMode.Ignore
             color: "transparent"
-            mask: modal ? openMask : pillMask
+            mask: Warm.on ? noMask : modal ? openMask : pillMask
             WlrLayershell.keyboardFocus: modal ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
             Pill { id: pill }

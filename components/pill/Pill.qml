@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Widgets
 import "../audio"
+import "../brightness"
 import "../calendar"
 import "../core"
 import "../launcher"
@@ -39,6 +40,7 @@ Item {
         Modal.register("polkit", Polkit)
         Modal.register("record", Record)
         Modal.register("net", Net)
+        Modal.register("brightness", Brightness)
     }
 
     function sync() {
@@ -83,23 +85,27 @@ Item {
         Theme.w,
         clockText.implicitWidth + battery.targetWidth + mic.targetWidth + record.targetWidth + Theme.pad
     )
-    readonly property real targetW: Polkit.open ? Theme.authW
+    readonly property real targetW: Warm.on ? Theme.warmW
+        : Polkit.open ? Theme.authW
         : root.alert ? (root.hot ? Theme.noteOpenW : Theme.noteW)
         : Launcher.open ? Theme.launchW
         : Power.open ? Theme.powerW
         : Wallpaper.open ? Theme.wallW
         : Record.open ? Theme.recordW
         : Net.open ? Theme.netW
+        : Brightness.open ? Theme.brightW
         : root.hot ? (root.media && !root.full ? Theme.mediaPillW : Theme.openW)
         : root.calm ? root.idleTargetW : Theme.w
 
-    readonly property real targetH: Polkit.open ? auth.y + auth.height + Theme.authPad
+    readonly property real targetH: Warm.on ? Theme.warmH
+        : Polkit.open ? auth.y + auth.height + Theme.authPad
         : root.alert ? (root.hot ? note.wanted : Theme.noteH)
         : Launcher.open ? launch.y + launch.height + Theme.lpad
         : Power.open ? power.y + power.height + Theme.pwPad
         : Wallpaper.open ? wall.y + wall.height + Theme.wallPad
         : Record.open ? rec.y + rec.height + Theme.recordPad
         : Net.open ? net.y + net.height + Theme.netPad
+        : Brightness.open ? bright.y + bright.height + Theme.brightPad
         : root.full ? cal.y + cal.height + Theme.pad
         : root.hot ? (root.media ? tune.y + tune.height + Theme.pad : Theme.openH)
         : Theme.h
@@ -117,6 +123,7 @@ Item {
     }
 
     Behavior on wAnim {
+        enabled: Warm.settled
         NumberAnimation {
             duration: Theme.speed
             easing.type: Theme.ease
@@ -124,6 +131,7 @@ Item {
     }
 
     Behavior on hAnim {
+        enabled: Warm.settled
         NumberAnimation {
             duration: Theme.speed
             easing.type: Theme.ease
@@ -138,7 +146,8 @@ Item {
         height: root.hAnim
         radius: Math.min(Math.min(width, height) / 2, Theme.radius)
         antialiasing: true
-        color: Theme.bg
+        opacity: Warm.on ? Theme.warmPill : 1
+        color: Warm.settled ? Theme.bg : "transparent"
 
         HoverHandler {
             id: hover
@@ -155,6 +164,7 @@ Item {
         }
 
         Week {
+            warm: true
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.body
             now: clock.date
@@ -171,6 +181,7 @@ Item {
         }
 
         Calendar {
+            warm: true
             id: cal
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.body
@@ -188,6 +199,7 @@ Item {
         }
 
         Launch {
+            warm: true
             id: launch
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.lpad
@@ -196,6 +208,7 @@ Item {
         }
 
         PowerMenu {
+            warm: true
             id: power
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.pwPad
@@ -204,6 +217,7 @@ Item {
         }
 
         Wall {
+            warm: true
             id: wall
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.wallPad
@@ -212,6 +226,7 @@ Item {
         }
 
         RecordMenu {
+            warm: true
             id: rec
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.recordPad
@@ -220,10 +235,20 @@ Item {
         }
 
         NetMenu {
+            warm: true
             id: net
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.netPad
             shown: Net.open
+            ready: !root.resizing
+        }
+
+        BrightnessMenu {
+            warm: true
+            id: bright
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Theme.brightPad
+            shown: Brightness.open
             ready: !root.resizing
         }
 
