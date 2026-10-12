@@ -31,6 +31,13 @@ Singleton {
     readonly property int selGap: 2
     readonly property color selFill: Qt.rgba(1, 1, 1, 0.06)
     readonly property int selDuration: feedbackDuration
+    readonly property int markX: 7
+    readonly property int markW: 3
+    readonly property int markH: 11
+    readonly property real markY: 0.5
+    readonly property int markCapH: 12
+    readonly property int markCapY: -1
+    readonly property int rowTextY: 0
     readonly property color bg: "#000000"
     readonly property color fg: "#ffffff"
     readonly property color chip: "#1c1c1e"

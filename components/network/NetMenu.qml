@@ -247,6 +247,18 @@ Pick {
                     antialiasing: true
                     visible: !root.ask
 
+                    Rectangle {
+                        readonly property var it: root.items ? root.items[root.sel] : null
+                        readonly property bool cap: !!it && /[A-Z0-9]/.test(it.ssid)
+                        x: Theme.markX
+                        y: Math.round(parent.height / 2 + (cap ? Theme.markCapY - Theme.markCapH / 2 : Theme.markY - Theme.markH / 2))
+                        width: Theme.markW
+                        height: cap ? Theme.markCapH : Theme.markH
+                        radius: width / 2
+                        color: Theme.accent
+                        antialiasing: true
+                    }
+
                     Behavior on y {
                         enabled: !root.snap
                         NumberAnimation {
@@ -285,6 +297,7 @@ Pick {
                         anchors.right: meta.left
                         anchors.rightMargin: Theme.rowGap
                         anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: Theme.rowTextY
                         text: row.modelData ? row.modelData.ssid : ""
                         elide: Text.ElideRight
                         font.pixelSize: Theme.fsL
