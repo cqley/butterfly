@@ -378,7 +378,8 @@ Item {
                 anchors.verticalCenterOffset: Theme.moduleOffsetY + Theme.micOffsetY
                 anchors.alignWhenCentered: Theme.idleAlignWhenCentered
                 shown: Mic.muted && !root.hideIdleIcons
-                leadingGap: battery.active ? Theme.rowGap : Theme.clockGap
+                leadingGap: Theme.clockGap + (Theme.rowGap - Theme.clockGap) * battery.enter
+                settledGap: battery.active ? Theme.rowGap : Theme.clockGap
                 onClicked: Mic.toggle()
 
                 transform: Translate {
@@ -395,7 +396,8 @@ Item {
                 anchors.alignWhenCentered: Theme.idleAlignWhenCentered
                 size: Theme.recordDot
                 shown: Record.active && !root.hideIdleIcons
-                leadingGap: (battery.active || mic.shown) ? Theme.rowGap : Theme.clockGap
+                leadingGap: Theme.clockGap + (Theme.rowGap - Theme.clockGap) * Math.max(battery.enter, mic.enter)
+                settledGap: (battery.active || mic.shown) ? Theme.rowGap : Theme.clockGap
                 onClicked: Record.stop()
 
                 transform: Translate {
