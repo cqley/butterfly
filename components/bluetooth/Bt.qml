@@ -104,11 +104,16 @@ Singleton {
             required property var modelData
             target: modelData
             function onConnectedChanged() {
-                if (!modelData.connected || root.open)
+                if (root.open)
                     return
                 const name = root.displayName(modelData)
-                const body = modelData.batteryAvailable ? `${name} · ${Math.round(modelData.battery * 100)}%` : name
-                Notifs.pushSystem("connected", body, false, "bluetooth")
+                if (modelData.connected) {
+                    const level = modelData.batteryAvailable ? modelData.battery : -1
+                    const body = level >= 0 ? `${name} · ${Math.round(level * 100)}%` : name
+                    Notifs.pushSystem("connected", body, true, "bluetooth", false, level)
+                } else {
+                    Notifs.pushSystem("disconnected", name, false, "bluetooth")
+                }
             }
         }
     }

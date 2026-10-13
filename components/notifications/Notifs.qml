@@ -18,8 +18,10 @@ Singleton {
     }
 
     function dwellFor(n) {
-        if (!n || n.system)
+        if (!n)
             return Theme.dwell
+        if (n.system)
+            return n.kind === "battery" ? Theme.dwellCritical : Theme.dwell
         const t = Number(n.expireTimeout)
         if (isFinite(t) && t === 0)
             return Theme.dwellNever
@@ -84,7 +86,7 @@ Singleton {
             pump()
     }
 
-    function pushSystem(summary, body, charging, kind = "battery", failed = false) {
+    function pushSystem(summary, body, charging, kind = "battery", failed = false, level = -1) {
         const same = n => n && n.system && n.kind === kind && n.summary === summary && (kind === "battery" || n.body === body)
         if (same(current) || queue.some(same))
             return
@@ -98,7 +100,8 @@ Singleton {
             appIcon: "",
             image: "",
             urgency: failed ? NotificationUrgency.Critical : NotificationUrgency.Normal,
-            charging: charging
+            charging: charging,
+            level: level
         }])
         if (current === null && !gap.running)
             pump()
