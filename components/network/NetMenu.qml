@@ -204,8 +204,6 @@ Pick {
             }
         }
 
-        Rule { visible: Net.enabled }
-
         Item {
             width: parent.width
             height: list.height
@@ -247,16 +245,8 @@ Pick {
                     antialiasing: true
                     visible: !root.ask
 
-                    Rectangle {
-                        readonly property var it: root.items ? root.items[root.sel] : null
-                        readonly property bool cap: !!it && /[A-Z0-9]/.test(it.ssid)
-                        x: Theme.markX
-                        y: Math.round(parent.height / 2 + (cap ? Theme.markCapY - Theme.markCapH / 2 : Theme.markY - Theme.markH / 2))
-                        width: Theme.markW
-                        height: cap ? Theme.markCapH : Theme.markH
-                        radius: width / 2
-                        color: Theme.accent
-                        antialiasing: true
+                    Mark {
+                        label: root.items && root.items[root.sel] ? root.items[root.sel].ssid : ""
                     }
 
                     Behavior on y {

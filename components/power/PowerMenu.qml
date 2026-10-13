@@ -78,6 +78,8 @@ Fade {
                 radius: Theme.radius - Theme.pwPad
                 antialiasing: true
                 color: on ? Theme.accent : Theme.chip
+                border.width: Theme.launchIconBorderWidth
+                border.color: on ? Theme.accent : Theme.launchIconBorder
                 transformOrigin: Item.Center
                 scale: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
 
@@ -86,6 +88,10 @@ Fade {
                 }
 
                 Behavior on color {
+                    enabled: !root.snap
+                    ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                }
+                Behavior on border.color {
                     enabled: !root.snap
                     ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
                 }

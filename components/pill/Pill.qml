@@ -24,6 +24,7 @@ Item {
     readonly property bool calm: !alert && !modal
     readonly property bool mediaHover: root.hot && !root.full && root.calm && root.media
     readonly property bool showVisualizer: Visualizer.on || root.mediaHover
+    readonly property bool hideIdleIcons: root.mediaHover || root.full
     readonly property bool resizing:
         Math.abs(root.wAnim - root.targetW) > Theme.settleEps ||
         Math.abs(root.hAnim - root.targetH) > Theme.settleEps
@@ -83,12 +84,10 @@ Item {
         precision: SystemClock.Minutes
     }
 
-    readonly property real idleTargetW: Visualizer.on
-        ? Math.max(Theme.w, Theme.visW + Theme.pad)
-        : Math.max(
-            Theme.w,
-            clockText.implicitWidth + battery.targetWidth + mic.targetWidth + record.targetWidth + Theme.pad
-        )
+    readonly property real idleTargetW: Math.max(
+        Theme.w,
+        clockSlot.width + battery.targetWidth + mic.targetWidth + record.targetWidth + Theme.pad
+    )
     readonly property real targetW: Polkit.open ? Theme.authW
         : root.alert ? (root.hot ? Theme.noteOpenW : Theme.noteW)
         : Launcher.open ? Theme.launchW
@@ -181,7 +180,7 @@ Item {
         Calendar {
             id: cal
             anchors.horizontalCenter: parent.horizontalCenter
-            y: Theme.body
+            y: Theme.pad
             now: clock.date
             shown: root.hot && root.full && root.calm
             ready: !root.resizing
@@ -253,45 +252,13 @@ Item {
     }
 
     Fade {
-        id: visual
-        anchors.horizontalCenter: body.horizontalCenter
-        anchors.top: body.top
-        anchors.topMargin: Theme.idleTopOffsetY
-        width: vbars.width
-        height: Theme.h
-        shown: root.calm && root.showVisualizer
-        ready: !root.resizing
-        scale: active ? 1 : Theme.slotScale
-        z: 2
-
-        transform: Translate {
-            x: Theme.idleOffsetX
-            y: Theme.idleOffsetY
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: Theme.idlePopDuration
-                easing.type: Theme.ease
-            }
-        }
-
-        VisualizerBars {
-            id: vbars
-            anchors.verticalCenter: parent.verticalCenter
-            playing: Media.playing
-            artUrl: Media.player ? Media.player.trackArtUrl : ""
-        }
-    }
-
-    Fade {
         id: idle
         anchors.horizontalCenter: body.horizontalCenter
         anchors.top: body.top
         anchors.topMargin: Theme.idleTopOffsetY
         width: row.width
         height: Theme.h
-        shown: root.calm && !root.showVisualizer
+        shown: root.calm
         scale: active ? 1 : Theme.slotScale
         z: 2
 
@@ -309,22 +276,70 @@ Item {
 
         Row {
             id: row
-            width: clockText.implicitWidth + battery.width + mic.width + record.width
+            width: clockSlot.width + battery.width + mic.width + record.width
             height: parent.height
             spacing: 0
 
-            Txt {
-                id: clockText
+            Item {
+                id: clockSlot
+                width: Math.max(clockText.implicitWidth, vbars.width)
                 height: parent.height
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: Theme.clockOffsetY
-                anchors.alignWhenCentered: Theme.idleAlignWhenCentered
-                verticalAlignment: Text.AlignVCenter
-                text: Qt.formatDateTime(clock.date, "HH:mm")
-                font.pixelSize: Theme.clockPx
 
-                transform: Translate {
-                    x: Theme.clockOffsetX
+                Fade {
+                    id: clockFade
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: Theme.clockOffsetY
+                    anchors.alignWhenCentered: Theme.idleAlignWhenCentered
+                    width: clockText.implicitWidth
+                    height: parent.height
+                    shown: !root.showVisualizer && !root.full
+                    scale: active ? 1 : Theme.slotScale
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: Theme.idlePopDuration
+                            easing.type: Theme.ease
+                        }
+                    }
+
+                    Txt {
+                        id: clockText
+                        anchors.fill: parent
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        text: Qt.formatDateTime(clock.date, "HH:mm")
+                        font.pixelSize: Theme.clockPx
+
+                        transform: Translate {
+                            x: Theme.clockOffsetX
+                        }
+                    }
+                }
+
+                Fade {
+                    id: visFade
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: vbars.width
+                    height: parent.height
+                    shown: root.showVisualizer
+                    ready: !root.resizing
+                    scale: active ? 1 : Theme.slotScale
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: Theme.idlePopDuration
+                            easing.type: Theme.ease
+                        }
+                    }
+
+                    VisualizerBars {
+                        id: vbars
+                        anchors.centerIn: parent
+                        playing: Media.playing
+                        artUrl: Media.player ? Media.player.trackArtUrl : ""
+                    }
                 }
             }
 
@@ -333,7 +348,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: Theme.moduleOffsetY + Theme.batteryOffsetY
                 anchors.alignWhenCentered: Theme.idleAlignWhenCentered
-                shown: Battery.shown
+                shown: Battery.shown && !root.hideIdleIcons
                 available: Battery.available
                 pct: Battery.pct
                 tone: Battery.tone
@@ -350,7 +365,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: Theme.moduleOffsetY + Theme.micOffsetY
                 anchors.alignWhenCentered: Theme.idleAlignWhenCentered
-                shown: Mic.muted
+                shown: Mic.muted && !root.hideIdleIcons
                 leadingGap: battery.active ? Theme.rowGap : Theme.clockGap
                 onClicked: Mic.toggle()
 
@@ -367,7 +382,7 @@ Item {
                 anchors.verticalCenterOffset: Theme.moduleOffsetY + Theme.recordOffsetY
                 anchors.alignWhenCentered: Theme.idleAlignWhenCentered
                 size: Theme.recordDot
-                shown: Record.active
+                shown: Record.active && !root.hideIdleIcons
                 leadingGap: (battery.active || mic.shown) ? Theme.rowGap : Theme.clockGap
                 onClicked: Record.stop()
 
@@ -404,6 +419,27 @@ Item {
                 }
             }
         }
+    }
+
+    Rectangle {
+        anchors.fill: body
+        anchors.margins: -Theme.pillHaloSpread
+        radius: body.radius + Theme.pillHaloSpread
+        color: "transparent"
+        border.width: Theme.pillHaloWidth
+        border.color: Qt.rgba(0, 0, 0, Theme.pillHaloOpacity)
+        antialiasing: true
+        z: 3
+    }
+
+    Rectangle {
+        anchors.fill: body
+        radius: body.radius
+        color: "transparent"
+        border.width: Theme.pillBorderWidth
+        border.color: Qt.rgba(1, 1, 1, Theme.pillBorderOpacity)
+        antialiasing: true
+        z: 3
     }
 }
 
