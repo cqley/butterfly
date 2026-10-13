@@ -11,8 +11,9 @@ Item {
     property color tone: Theme.batGreen
     property bool pluggedIn: false
     property int leadingGap: Theme.batGap
+    property int settledGap: leadingGap
     readonly property bool active: root.shown && root.available
-    readonly property real targetWidth: root.active ? root.leadingGap + Theme.batW + Theme.batNubGap + Theme.batNubW : 0
+    readonly property real targetWidth: root.active ? root.settledGap + Theme.batW + Theme.batNubGap + Theme.batNubW : 0
     property real enter: root.active ? 1 : 0
     property real boltEnter: root.pluggedIn ? 1 : 0
 

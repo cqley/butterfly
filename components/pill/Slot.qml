@@ -6,7 +6,8 @@ Item {
     property bool shown: false
     property int size: Theme.micS
     property int leadingGap: Theme.rowGap
-    readonly property int targetWidth: shown ? leadingGap + size : 0
+    property int settledGap: leadingGap
+    readonly property int targetWidth: shown ? settledGap + size : 0
     property real enter: shown ? 1 : 0
     default property alias content: holder.data
     signal clicked
