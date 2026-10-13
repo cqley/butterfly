@@ -198,7 +198,8 @@ Singleton {
     readonly property int noteBatBoltW: 4
     readonly property int noteBatBoltH: 6
     readonly property int noteBtGlyph: 16
-    readonly property int noteBtBadge: 14
+    readonly property int noteBtBadge: 18
+    readonly property real noteBtRingWidth: 2.5
     readonly property color greenDim: Qt.darker(green, 1.8)
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"
