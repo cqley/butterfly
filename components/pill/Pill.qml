@@ -22,6 +22,8 @@ Item {
     readonly property bool modal: Modal.any
     readonly property bool alert: Notifs.current !== null && !modal
     readonly property bool calm: !alert && !modal
+    readonly property bool mediaHover: root.hot && !root.full && root.calm && root.media
+    readonly property bool showVisualizer: Visualizer.on || root.mediaHover
     readonly property bool resizing:
         Math.abs(root.wAnim - root.targetW) > Theme.settleEps ||
         Math.abs(root.hAnim - root.targetH) > Theme.settleEps
@@ -81,10 +83,12 @@ Item {
         precision: SystemClock.Minutes
     }
 
-    readonly property real idleTargetW: Math.max(
-        Theme.w,
-        clockText.implicitWidth + battery.targetWidth + mic.targetWidth + record.targetWidth + Theme.pad
-    )
+    readonly property real idleTargetW: Visualizer.on
+        ? Math.max(Theme.w, Theme.visW + Theme.pad)
+        : Math.max(
+            Theme.w,
+            clockText.implicitWidth + battery.targetWidth + mic.targetWidth + record.targetWidth + Theme.pad
+        )
     readonly property real targetW: Polkit.open ? Theme.authW
         : root.alert ? (root.hot ? Theme.noteOpenW : Theme.noteW)
         : Launcher.open ? Theme.launchW
@@ -249,18 +253,58 @@ Item {
     }
 
     Fade {
+        id: visual
+        anchors.horizontalCenter: body.horizontalCenter
+        anchors.top: body.top
+        anchors.topMargin: Theme.idleTopOffsetY
+        width: vbars.width
+        height: Theme.h
+        shown: root.calm && root.showVisualizer
+        ready: !root.resizing
+        scale: active ? 1 : Theme.slotScale
+        z: 2
+
+        transform: Translate {
+            x: Theme.idleOffsetX
+            y: Theme.idleOffsetY
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Theme.idlePopDuration
+                easing.type: Theme.ease
+            }
+        }
+
+        VisualizerBars {
+            id: vbars
+            anchors.verticalCenter: parent.verticalCenter
+            playing: Media.playing
+            artUrl: Media.player ? Media.player.trackArtUrl : ""
+        }
+    }
+
+    Fade {
         id: idle
         anchors.horizontalCenter: body.horizontalCenter
         anchors.top: body.top
         anchors.topMargin: Theme.idleTopOffsetY
         width: row.width
         height: Theme.h
-        shown: root.calm
+        shown: root.calm && !root.showVisualizer
+        scale: active ? 1 : Theme.slotScale
         z: 2
 
         transform: Translate {
             x: Theme.idleOffsetX
             y: Theme.idleOffsetY
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: Theme.idlePopDuration
+                easing.type: Theme.ease
+            }
         }
 
         Row {
