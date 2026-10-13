@@ -61,13 +61,43 @@ Pick {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Bt.title
                 font.weight: Font.DemiBold
-                color: !Bt.enabled ? Theme.red : Theme.fg
+                color: !Bt.enabled ? Theme.red : Bt.busy ? Theme.accent : Theme.fg
+                opacity: pulse.running ? Theme.dimMuted + (1 - Theme.dimMuted) * pulse.val : 1
 
                 Behavior on color {
                     ColorAnimation {
                         duration: Theme.glide
                         easing.type: Theme.ease
                     }
+                }
+            }
+
+            QtObject {
+                id: pulse
+                property real val: 1
+                property bool running: Bt.busy
+            }
+
+            SequentialAnimation {
+                running: pulse.running
+                loops: Animation.Infinite
+
+                NumberAnimation {
+                    target: pulse
+                    property: "val"
+                    from: 1
+                    to: 0
+                    duration: Theme.blink
+                    easing.type: Easing.InOutSine
+                }
+
+                NumberAnimation {
+                    target: pulse
+                    property: "val"
+                    from: 0
+                    to: 1
+                    duration: Theme.blink
+                    easing.type: Easing.InOutSine
                 }
             }
 
@@ -81,13 +111,20 @@ Pick {
                 height: Theme.netToggleH
                 radius: height / 2
                 color: Bt.enabled ? Theme.accent : Theme.tile
-                opacity: Bt.available ? 1 : Theme.dimMid
+                opacity: !Bt.available || Bt.busy ? Theme.dimMid : 1
                 transformOrigin: Item.Center
                 scale: toggleArea.pressed ? Theme.feedbackPressScale : toggleArea.containsMouse ? Theme.feedbackHoverScale : 1
                 antialiasing: true
 
                 Behavior on color {
                     ColorAnimation {
+                        duration: Theme.glide
+                        easing.type: Theme.ease
+                    }
+                }
+
+                Behavior on opacity {
+                    NumberAnimation {
                         duration: Theme.glide
                         easing.type: Theme.ease
                     }
@@ -113,15 +150,13 @@ Pick {
                 MouseArea {
                     id: toggleArea
                     anchors.fill: parent
-                    enabled: Bt.available
+                    enabled: Bt.available && !Bt.busy
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Bt.toggleAdapter()
                 }
             }
         }
-
-        Rule { visible: Bt.enabled }
 
         Item {
             width: parent.width
@@ -164,10 +199,7 @@ Pick {
                     antialiasing: true
 
                     Mark {
-                        label: {
-                            const it = root.items[root.sel]
-                            return it ? (it.name || it.deviceName || "") : ""
-                        }
+                        label: Bt.displayName(root.items[root.sel])
                     }
 
                     Behavior on y {
@@ -185,6 +217,7 @@ Pick {
                     required property int index
                     readonly property bool on: !!modelData && !!modelData.connected
                     readonly property string status: Bt.statusOf(modelData)
+                    readonly property bool busy: status !== "" && status !== "connected"
                     readonly property bool selected: root.sel === row.index
 
                     width: list.width
@@ -197,7 +230,7 @@ Pick {
                         anchors.rightMargin: Theme.rowGap
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.verticalCenterOffset: Theme.rowTextY
-                        text: row.modelData ? (row.modelData.name || row.modelData.deviceName || "unknown") : ""
+                        text: Bt.displayName(row.modelData)
                         elide: Text.ElideRight
                         font.pixelSize: Theme.fsL
                         font.weight: row.on ? Font.DemiBold : Font.Normal
@@ -222,8 +255,15 @@ Pick {
                             anchors.verticalCenter: parent.verticalCenter
                             text: row.modelData && row.modelData.batteryAvailable ? Math.round(row.modelData.battery * 100) + "%" : ""
                             font.pixelSize: Theme.fsS
-                            opacity: Theme.dimMuted
+                            opacity: row.busy ? Theme.dimHint : Theme.dimMuted
                             visible: text !== ""
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: Theme.glide
+                                    easing.type: Theme.ease
+                                }
+                            }
                         }
 
                         Txt {
@@ -231,8 +271,16 @@ Pick {
                             text: row.status
                             font.pixelSize: Theme.fsS
                             color: Theme.accent
-                            opacity: row.status === "" ? 0 : Theme.dimMuted
+                            opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : row.status === "" ? 0 : Theme.dimMuted
                             visible: text !== ""
+
+                            Behavior on opacity {
+                                enabled: row.status === "connected"
+                                NumberAnimation {
+                                    duration: Theme.glide
+                                    easing.type: Theme.ease
+                                }
+                            }
                         }
                     }
 
