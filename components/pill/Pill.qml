@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Widgets
 import "../audio"
+import "../bluetooth"
 import "../brightness"
 import "../calendar"
 import "../core"
@@ -44,6 +45,7 @@ Item {
         Modal.register("record", Record)
         Modal.register("net", Net)
         Modal.register("brightness", Brightness)
+        Modal.register("bluetooth", Bt)
     }
 
     function sync() {
@@ -96,6 +98,7 @@ Item {
         : Record.open ? Theme.recordW
         : Net.open ? Theme.netW
         : Brightness.open ? Theme.brightW
+        : Bt.open ? Theme.btW
         : root.hot ? (root.media && !root.full ? Theme.mediaPillW : Theme.openW)
         : root.calm ? root.idleTargetW : Theme.w
 
@@ -107,6 +110,7 @@ Item {
         : Record.open ? rec.y + rec.height + Theme.recordPad
         : Net.open ? net.y + net.height + Theme.netPad
         : Brightness.open ? bright.y + bright.height + Theme.brightPad
+        : Bt.open ? bt.y + bt.height + Theme.netPad
         : root.full ? cal.y + cal.height + Theme.pad
         : root.hot ? (root.media ? tune.y + tune.height + Theme.pad : Theme.openH)
         : Theme.h
@@ -239,6 +243,14 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.brightPad
             shown: Brightness.open
+            ready: !root.resizing
+        }
+
+        BtMenu {
+            id: bt
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Theme.netPad
+            shown: Bt.open
             ready: !root.resizing
         }
 

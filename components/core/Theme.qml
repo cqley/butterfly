@@ -27,6 +27,7 @@ Singleton {
     readonly property int netToggleW: 36
     readonly property int netToggleH: 20
     readonly property int netKnob: 14
+    readonly property int btW: 320
     readonly property int selInset: 4
     readonly property int selGap: 2
     readonly property color selFill: Qt.rgba(1, 1, 1, 0.06)
