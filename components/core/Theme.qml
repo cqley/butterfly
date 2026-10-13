@@ -197,6 +197,9 @@ Singleton {
     readonly property int noteBatRadius: 3
     readonly property int noteBatBoltW: 4
     readonly property int noteBatBoltH: 6
+    readonly property int noteBtGlyph: 16
+    readonly property int noteBtBadge: 14
+    readonly property color greenDim: Qt.darker(green, 1.8)
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"
     readonly property color batGreen: green
@@ -226,8 +229,8 @@ Singleton {
     readonly property real feedbackHoverFill: 0.06
     readonly property real feedbackPressFill: 0.1
     readonly property real feedbackFocusBorder: 1
-    readonly property int dwell: 3000
-    readonly property int dwellCritical: 5000
+    readonly property int dwell: 5000
+    readonly property int dwellCritical: 10000
     readonly property int dwellMax: 15000
     readonly property int notificationQueueMax: 32
     readonly property real batRedAt: 0.15

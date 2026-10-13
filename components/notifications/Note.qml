@@ -21,7 +21,12 @@ Fade {
     property bool battery: false
     property bool charging: false
     property bool net: false
+    property bool bluetooth: false
+    property bool btConnected: false
+    property real btLevel: -1
+    readonly property bool hasLevel: bluetooth && btLevel >= 0
     readonly property real wanted: Math.max(Theme.noteH, more.y + more.height + Theme.noteTop)
+    readonly property int sideReserve: hasLevel ? Theme.noteBtBadge + Theme.noteTextGap : 0
 
     anchors.fill: parent
 
@@ -57,11 +62,14 @@ Fade {
         body = plain(n.body)
         battery = !!n.system && n.kind === "battery"
         net = !!n.system && n.kind === "net"
+        bluetooth = !!n.system && n.kind === "bluetooth"
         charging = battery && !!n.charging
+        btConnected = bluetooth && !!n.charging
+        btLevel = bluetooth ? Number(n.level) : -1
         critical = n.urgency === NotificationUrgency.Critical
 
         const name = String(n.appName || "").trim()
-        const own = battery || net
+        const own = battery || net || bluetooth
         appLabel = own ? "system" : name.toLowerCase()
         letter = ((name || "?")[0] || "?").toLowerCase()
         picture = own ? "" : fileUrl(n.image)
@@ -91,7 +99,7 @@ Fade {
         width: Theme.noteIcon
         height: Theme.noteIcon
         radius: Theme.noteIconR
-        color: root.critical ? Theme.red : root.net ? Theme.green : Theme.chip
+        color: root.critical ? Theme.red : root.net ? Theme.green : root.bluetooth && root.btConnected ? Theme.green : Theme.chip
 
         StableImage {
             id: img
@@ -162,12 +170,60 @@ Fade {
             scale: Theme.noteSigScale
         }
 
+        Shape {
+            anchors.centerIn: parent
+            width: Theme.iconGrid
+            height: Theme.iconGrid
+            scale: Theme.noteBtGlyph / Theme.iconGrid
+            visible: root.bluetooth
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                strokeWidth: Theme.iconStroke
+                strokeColor: Theme.fg
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathSvg { path: "M7 7L17 17L12 22L12 2L17 7L7 17" }
+            }
+        }
+
         Txt {
             anchors.centerIn: parent
             text: root.letter
-            visible: !root.battery && !root.net && img.showPlaceholder
+            visible: !root.battery && !root.net && !root.bluetooth && img.showPlaceholder
             font.pixelSize: Theme.fsM
             font.weight: Font.Bold
+        }
+    }
+
+    Item {
+        id: btBadge
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.noteTextRight
+        anchors.verticalCenter: parent.verticalCenter
+        width: Theme.noteBtBadge
+        height: Theme.noteBtBadge
+        visible: root.hasLevel
+
+        Rectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: Theme.greenDim
+            antialiasing: true
+        }
+
+        ClippingRectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: "transparent"
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: parent.height * Math.max(0, Math.min(1, root.btLevel))
+                color: Theme.green
+            }
         }
     }
 
@@ -177,7 +233,7 @@ Fade {
 
         Column {
             x: chip.x + chip.width + Theme.noteTextGap
-            width: parent.width - x - Theme.noteTextRight
+            width: parent.width - x - Theme.noteTextRight - root.sideReserve
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.noteLineGap
 
@@ -210,7 +266,7 @@ Fade {
             id: more
             x: chip.x + chip.width + Theme.noteTextGap
             y: Theme.noteTop
-            width: Theme.noteOpenW - x - Theme.noteTextRight
+            width: Theme.noteOpenW - x - Theme.noteTextRight - root.sideReserve
             spacing: Theme.noteLineGap
 
             Txt {
