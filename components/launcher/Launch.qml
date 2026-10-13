@@ -179,10 +179,8 @@ Pick {
                     root.fast = e.isAutoRepeat
                     if (k === Qt.Key_Escape) Launcher.open = false
                     else if (k === Qt.Key_Return || k === Qt.Key_Enter) root.run()
-                    else if (k === Qt.Key_Down || k === Qt.Key_Tab || c && (k === Qt.Key_J || k === Qt.Key_N)) root.move(1, w)
-                    else if (k === Qt.Key_Up || k === Qt.Key_Backtab || c && (k === Qt.Key_K || k === Qt.Key_P)) root.move(-1, w)
-                    else if (k === Qt.Key_PageDown) root.move(Theme.rows, false)
-                    else if (k === Qt.Key_PageUp) root.move(-Theme.rows, false)
+                    else if (k === Qt.Key_Down || k === Qt.Key_Tab || k === Qt.Key_PageDown || c && (k === Qt.Key_J || k === Qt.Key_N)) root.move(1, w)
+                    else if (k === Qt.Key_Up || k === Qt.Key_Backtab || k === Qt.Key_PageUp || c && (k === Qt.Key_K || k === Qt.Key_P)) root.move(-1, w)
                     else return
                     e.accepted = true
                 }
@@ -201,8 +199,6 @@ Pick {
                 font.pixelSize: Theme.fsL
             }
         }
-
-        Rule { visible: root.n > 0 }
 
         Item {
             id: pane

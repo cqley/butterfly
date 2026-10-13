@@ -21,7 +21,9 @@ Singleton {
         if (!n)
             return Theme.dwell
         if (n.system)
-            return n.kind === "battery" ? Theme.dwellCritical : Theme.dwell
+            return n.kind === "battery" || n.urgency === NotificationUrgency.Critical
+                ? Theme.dwellCritical
+                : Theme.dwell
         const t = Number(n.expireTimeout)
         if (isFinite(t) && t === 0)
             return Theme.dwellNever
