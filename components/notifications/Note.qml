@@ -227,7 +227,7 @@ Fade {
             strokeWidth: Theme.noteBtRingWidth
             strokeColor: Theme.green
             fillColor: "transparent"
-            capStyle: ShapePath.RoundCap
+            capStyle: ShapePath.FlatCap
 
             PathAngleArc {
                 centerX: btBadge.width / 2
