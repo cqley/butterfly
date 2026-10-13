@@ -201,7 +201,7 @@ Fade {
         id: btBadge
         anchors.right: parent.right
         anchors.rightMargin: Theme.noteTextRight
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: chip.verticalCenter
         width: Theme.noteBtBadge
         height: Theme.noteBtBadge
         visible: root.hasLevel

@@ -31,7 +31,11 @@ Singleton {
     }
 
     function named(d) {
-        return !!d && !!d.name && d.name !== "" && d.name !== d.address
+        if (!d)
+            return false
+        if (d.name && d.name !== "" && d.name !== d.address)
+            return true
+        return !!d.deviceName && d.deviceName !== "" && d.deviceName !== d.address
     }
 
     function displayName(d) {
@@ -44,17 +48,51 @@ Singleton {
         return "unknown device"
     }
 
+    property int devicesVersion: 0
+
     readonly property var items: {
+        devicesVersion
         if (!available)
             return []
         const list = [...adapter.devices.values].filter(d => d.paired || d.connected || named(d))
         return list.sort(cmp)
     }
 
+    Connections {
+        target: root.available ? root.adapter.devices : null
+        function onValuesChanged() { root.devicesVersion++ }
+    }
+
     readonly property bool busy: items.some(d =>
         d.state === BluetoothDeviceState.Connecting ||
         d.state === BluetoothDeviceState.Disconnecting ||
         d.pairing)
+
+    onBusyChanged: {
+        if (!busy) {
+            connectTimeout.stop()
+            connecting = null
+            if (open && available)
+                adapter.discovering = true
+        }
+    }
+
+    property var connecting: null
+
+    Timer {
+        id: connectTimeout
+        interval: Theme.btTimeout
+        onTriggered: {
+            const d = root.connecting
+            root.connecting = null
+            if (!d)
+                return
+            if (d.pairing)
+                d.cancelPair()
+            else if (d.state === BluetoothDeviceState.Connecting)
+                d.disconnect()
+        }
+    }
 
     onOpenChanged: {
         if (open)
@@ -91,26 +129,31 @@ Singleton {
         }
         if (available)
             adapter.discovering = false
+        connecting = d
+        connectTimeout.restart()
         if (d.paired)
             d.connect()
         else
             d.pair()
     }
 
-    property var pendingConnect: null
+    property var pendingConnects: []
 
     Timer {
         id: connectNotifyDelay
         interval: 1200
         onTriggered: {
-            const d = root.pendingConnect
-            root.pendingConnect = null
-            if (!d || !d.connected)
+            if (root.pendingConnects.length === 0)
                 return
-            const name = root.displayName(d)
-            const level = d.batteryAvailable ? d.battery : -1
-            const body = level >= 0 ? `${name} · ${Math.round(level * 100)}%` : name
-            Notifs.pushSystem("connected", body, true, "bluetooth", false, level)
+            const d = root.pendingConnects.shift()
+            if (d && d.connected && !root.open) {
+                const name = root.displayName(d)
+                const level = d.batteryAvailable ? d.battery : -1
+                const body = level >= 0 ? `${name} · ${Math.round(level * 100)}%` : name
+                Notifs.pushSystem("connected", body, true, "bluetooth", false, level)
+            }
+            if (root.pendingConnects.length > 0)
+                connectNotifyDelay.restart()
         }
     }
 
@@ -124,8 +167,9 @@ Singleton {
                 if (root.open)
                     return
                 if (modelData.connected) {
-                    root.pendingConnect = modelData
-                    connectNotifyDelay.restart()
+                    root.pendingConnects.push(modelData)
+                    if (!connectNotifyDelay.running)
+                        connectNotifyDelay.restart()
                 } else {
                     Notifs.pushSystem("disconnected", root.displayName(modelData), false, "bluetooth")
                 }
