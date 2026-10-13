@@ -197,7 +197,7 @@ Fade {
         }
     }
 
-    Item {
+    Shape {
         id: btBadge
         anchors.right: parent.right
         anchors.rightMargin: Theme.noteTextRight
@@ -205,24 +205,37 @@ Fade {
         width: Theme.noteBtBadge
         height: Theme.noteBtBadge
         visible: root.hasLevel
+        preferredRendererType: Shape.CurveRenderer
 
-        Rectangle {
-            anchors.fill: parent
-            radius: width / 2
-            color: Theme.greenDim
-            antialiasing: true
+        ShapePath {
+            strokeWidth: Theme.noteBtRingWidth
+            strokeColor: Theme.greenDim
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+
+            PathAngleArc {
+                centerX: btBadge.width / 2
+                centerY: btBadge.height / 2
+                radiusX: (btBadge.width - Theme.noteBtRingWidth) / 2
+                radiusY: (btBadge.height - Theme.noteBtRingWidth) / 2
+                startAngle: 0
+                sweepAngle: 360
+            }
         }
 
-        ClippingRectangle {
-            anchors.fill: parent
-            radius: width / 2
-            color: "transparent"
+        ShapePath {
+            strokeWidth: Theme.noteBtRingWidth
+            strokeColor: Theme.green
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
 
-            Rectangle {
-                anchors.bottom: parent.bottom
-                width: parent.width
-                height: parent.height * Math.max(0, Math.min(1, root.btLevel))
-                color: Theme.green
+            PathAngleArc {
+                centerX: btBadge.width / 2
+                centerY: btBadge.height / 2
+                radiusX: (btBadge.width - Theme.noteBtRingWidth) / 2
+                radiusY: (btBadge.height - Theme.noteBtRingWidth) / 2
+                startAngle: -90
+                sweepAngle: 360 * Math.max(0, Math.min(1, root.btLevel))
             }
         }
     }

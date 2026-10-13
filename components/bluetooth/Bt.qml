@@ -97,6 +97,23 @@ Singleton {
             d.pair()
     }
 
+    property var pendingConnect: null
+
+    Timer {
+        id: connectNotifyDelay
+        interval: 1200
+        onTriggered: {
+            const d = root.pendingConnect
+            root.pendingConnect = null
+            if (!d || !d.connected)
+                return
+            const name = root.displayName(d)
+            const level = d.batteryAvailable ? d.battery : -1
+            const body = level >= 0 ? `${name} · ${Math.round(level * 100)}%` : name
+            Notifs.pushSystem("connected", body, true, "bluetooth", false, level)
+        }
+    }
+
     Instantiator {
         model: root.available ? root.adapter.devices : null
 
@@ -106,13 +123,11 @@ Singleton {
             function onConnectedChanged() {
                 if (root.open)
                     return
-                const name = root.displayName(modelData)
                 if (modelData.connected) {
-                    const level = modelData.batteryAvailable ? modelData.battery : -1
-                    const body = level >= 0 ? `${name} · ${Math.round(level * 100)}%` : name
-                    Notifs.pushSystem("connected", body, true, "bluetooth", false, level)
+                    root.pendingConnect = modelData
+                    connectNotifyDelay.restart()
                 } else {
-                    Notifs.pushSystem("disconnected", name, false, "bluetooth")
+                    Notifs.pushSystem("disconnected", root.displayName(modelData), false, "bluetooth")
                 }
             }
         }
