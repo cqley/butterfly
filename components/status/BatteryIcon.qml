@@ -10,8 +10,8 @@ Item {
     property real pct: 0
     property color tone: Theme.batGreen
     property bool pluggedIn: false
-    property int leadingGap: Theme.batGap
-    property int settledGap: leadingGap
+    property real leadingGap: Theme.batGap
+    property int settledGap: Math.round(leadingGap)
     readonly property bool active: root.shown && root.available
     readonly property real targetWidth: root.active ? root.settledGap + Theme.batW + Theme.batNubGap + Theme.batNubW : 0
     property real enter: root.active ? 1 : 0
@@ -46,7 +46,7 @@ Item {
 
         Rectangle {
             id: body
-            x: root.leadingGap
+            x: Math.round(root.leadingGap)
             width: Theme.batW
             height: Theme.batH
             anchors.verticalCenter: parent.verticalCenter

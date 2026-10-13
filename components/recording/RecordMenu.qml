@@ -147,6 +147,19 @@ Pick {
                 }
             }
         }
+
+        Item {
+            width: parent.width
+            height: empty.implicitHeight + Theme.netEmptyPad
+            visible: root.n === 0
+
+            Txt {
+                id: empty
+                anchors.centerIn: parent
+                text: "no sources"
+                opacity: Theme.dimEmpty
+            }
+        }
     }
 
     Wheel {

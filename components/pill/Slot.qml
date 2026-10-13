@@ -5,8 +5,8 @@ Item {
     id: root
     property bool shown: false
     property int size: Theme.micS
-    property int leadingGap: Theme.rowGap
-    property int settledGap: leadingGap
+    property real leadingGap: Theme.rowGap
+    property int settledGap: Math.round(leadingGap)
     readonly property int targetWidth: shown ? settledGap + size : 0
     property real enter: shown ? 1 : 0
     default property alias content: holder.data
@@ -26,7 +26,7 @@ Item {
 
     Item {
         id: holder
-        x: root.leadingGap
+        x: Math.round(root.leadingGap)
         width: root.size
         height: root.size
         anchors.verticalCenter: parent.verticalCenter
@@ -37,7 +37,7 @@ Item {
 
     MouseArea {
         id: area
-        x: root.leadingGap - Theme.slotHit
+        x: Math.round(root.leadingGap) - Theme.slotHit
         y: Math.round((root.height - root.size) / 2) - Theme.slotHit
         width: root.size + Theme.slotHit * 2
         height: root.size + Theme.slotHit * 2

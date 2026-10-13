@@ -144,6 +144,7 @@ Item {
     ClippingRectangle {
         id: body
         anchors.horizontalCenter: parent.horizontalCenter
+        anchors.alignWhenCentered: false
         y: Theme.gap
         width: root.wAnim
         height: root.hAnim
@@ -266,6 +267,7 @@ Item {
     Fade {
         id: idle
         anchors.horizontalCenter: body.horizontalCenter
+        anchors.alignWhenCentered: false
         anchors.top: body.top
         anchors.topMargin: Theme.idleTopOffsetY
         width: row.width
