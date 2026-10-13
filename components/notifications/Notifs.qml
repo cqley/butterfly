@@ -24,7 +24,7 @@ Singleton {
         if (isFinite(t) && t === 0)
             return Theme.dwellNever
         if (isFinite(t) && t > 0)
-            return Math.max(Theme.dwellMin, Math.round(t * 1000))
+            return Math.min(Theme.dwellMax, Math.max(Theme.dwellMin, Math.round(t)))
         if (n.urgency === NotificationUrgency.Critical)
             return Theme.dwellCritical
         return Theme.dwell

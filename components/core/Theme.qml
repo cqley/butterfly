@@ -342,6 +342,20 @@ Singleton {
     readonly property int dwellMin: 500
     readonly property int dwellNever: 5000
 
+    readonly property int visBars: 4
+    readonly property int visBarW: 3
+    readonly property int visGap: 3
+    readonly property int visMinH: 4
+    readonly property int visMaxH: 14
+    readonly property int visIdleH: 4
+    readonly property int visCycle: 900
+    readonly property real visFreqStep: 0.35
+    readonly property real visOffset: 1.1
+    readonly property int visSettle: speed
+    readonly property int visW: visBarW * visBars + visGap * (visBars - 1)
+    readonly property color visFallback: accent
+    readonly property int visSampleSize: 8
+
     function url(path) {
         const value = String(path || "")
         if (value === "" || /^[a-z][a-z0-9+.-]*:/i.test(value))
