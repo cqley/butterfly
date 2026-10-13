@@ -7,26 +7,33 @@ import Quickshell.Widgets
 Fade {
     id: root
     property int cursor: 0
-    property bool fast: false
     property bool snap: false
-    property double last: 0
     property real trackX: 0
+    property real focusPos: cursor
     property real vel: Theme.wallVelocity
-    property real px: -1
-    property real py: -1
+    property int trackDur: Theme.glide
     property var files: []
     readonly property int n: files.length
     readonly property int sel: n ? ((cursor % n) + n) % n : 0
     readonly property int step: Theme.thumbW + Theme.thumbGap
     readonly property real viewW: Theme.wallW - 2 * Theme.wallPad
     readonly property int win: Theme.wallN + Theme.wallPreload * 2
-    readonly property int winStart: n ? Math.round(((viewW - Theme.thumbW) / 2 - trackX) / step) - Math.floor(win / 2) : 0
+    readonly property real centerIndex: n ? ((viewW - Theme.thumbW) / 2 - trackX) / step : 0
+    readonly property int winStart: n ? Math.round(centerIndex) - Math.floor(win / 2) : 0
 
     Behavior on trackX {
         enabled: !root.snap
-        SmoothedAnimation {
-            velocity: root.vel
-            maximumEasingTime: Theme.wallEasing
+        NumberAnimation {
+            duration: root.trackDur
+            easing.type: Theme.ease
+        }
+    }
+
+    Behavior on focusPos {
+        enabled: !root.snap
+        NumberAnimation {
+            duration: Theme.feedbackDuration
+            easing.type: Theme.ease
         }
     }
 
@@ -65,7 +72,9 @@ Fade {
         snap = instant
         cursor = i
         const x = centerFor(i)
-        vel = Math.max(Theme.wallVelocity, (Math.abs(x - trackX) - 3 * step) * Theme.wallCatchup)
+        const dist = Math.abs(x - trackX)
+        vel = Math.max(Theme.wallVelocity, (dist - 3 * step) * Theme.wallCatchup)
+        trackDur = dist > 0 ? Math.round(dist / vel * 1000) : Theme.fast
         trackX = x
         snap = false
     }
@@ -82,8 +91,6 @@ Fade {
     }
 
     function reset() {
-        px = -1
-        py = -1
         go(0, true)
     }
 
@@ -93,7 +100,6 @@ Fade {
             forceActiveFocus()
             reset()
         } else {
-            fast = false
             reset()
         }
     }
@@ -108,28 +114,17 @@ Fade {
     }
 
     Keys.onPressed: e => {
-        const k = e.key
         if (e.isAutoRepeat) {
-            const now = Date.now()
-            if (now - last < Theme.wallRepeat) {
-                e.accepted = true
-                return
-            }
-            last = now
+            e.accepted = true
+            return
         }
-        root.fast = e.isAutoRepeat
+        const k = e.key
         if (k === Qt.Key_Escape) Wallpaper.open = false
         else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) root.apply()
-        else if (k === Qt.Key_Right || k === Qt.Key_L || k === Qt.Key_Tab) root.move(1)
-        else if (k === Qt.Key_Left || k === Qt.Key_H || k === Qt.Key_Backtab) root.move(-1)
-        else if (k === Qt.Key_PageDown) root.move(Theme.wallN)
-        else if (k === Qt.Key_PageUp) root.move(-Theme.wallN)
+        else if (k === Qt.Key_Right || k === Qt.Key_Down || k === Qt.Key_L || k === Qt.Key_Tab || k === Qt.Key_PageDown) root.move(1)
+        else if (k === Qt.Key_Left || k === Qt.Key_Up || k === Qt.Key_H || k === Qt.Key_Backtab || k === Qt.Key_PageUp) root.move(-1)
         else return
         e.accepted = true
-    }
-
-    Keys.onReleased: e => {
-        if (!e.isAutoRepeat) root.fast = false
     }
 
     Item {
@@ -151,7 +146,9 @@ Fade {
                     required property int index
                     readonly property int abs: root.winStart + (((index - root.winStart) % root.win) + root.win) % root.win
                     readonly property int realIdx: root.n ? ((abs % root.n) + root.n) % root.n : 0
-                    readonly property bool on: abs === root.cursor
+                    readonly property real dist: Math.abs(abs - root.centerIndex)
+                    readonly property real glow: Math.max(0, 1 - dist)
+                    readonly property real glowFast: Math.max(0, 1 - Math.abs(abs - root.focusPos))
                     readonly property var info: root.files[realIdx]
 
                     x: abs * root.step
@@ -160,32 +157,16 @@ Fade {
 
                     Item {
                         id: thumb
-                        x: cell.abs === root.cursor ? 0 : cell.abs > root.cursor ? Theme.wallFocusGap : -Theme.wallFocusGap
+                        readonly property int dir: cell.abs > root.centerIndex ? 1 : cell.abs < root.centerIndex ? -1 : 0
+                        x: dir * Theme.wallFocusGap * Math.min(1, cell.dist)
                         anchors.verticalCenter: parent.verticalCenter
                         width: Theme.thumbW
                         height: Theme.thumbH
                         transformOrigin: Item.Center
-                        scale: cell.on ? Theme.wallFocusScale : area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1
-                        opacity: cell.on ? 1 : area.containsMouse ? Theme.wallHoverOpacity : Theme.wallIdleOpacity
-                        z: cell.on ? 1 : 0
-
-                        Behavior on x {
-                            enabled: !root.snap && !root.fast
-                            NumberAnimation {
-                                duration: root.fast ? Theme.fast : Theme.glide
-                                easing.type: Theme.ease
-                            }
-                        }
-
-                        Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
-
-                        Behavior on scale {
-                            enabled: !root.snap && !root.fast
-                            NumberAnimation {
-                                duration: Theme.glide
-                                easing.type: Theme.ease
-                            }
-                        }
+                        scale: cell.glowFast > 0
+                            ? 1 + (Theme.wallFocusScale - 1) * cell.glowFast
+                            : (area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1)
+                        z: cell.glowFast
 
                         Rectangle {
                             anchors.fill: parent
@@ -215,8 +196,9 @@ Fade {
                             anchors.margins: -Theme.wallRing
                             radius: Theme.wallRadius + Theme.wallRing
                             color: "transparent"
-                            border.width: cell.on ? Theme.wallRing + Theme.wallBleed : 0
+                            border.width: Theme.wallRing + Theme.wallBleed
                             border.color: Theme.accent
+                            opacity: cell.glowFast
                             antialiasing: true
                         }
                     }
@@ -228,13 +210,6 @@ Fade {
                         height: parent.height
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onPositionChanged: m => {
-                            const p = mapToItem(null, m.x, m.y)
-                            if (p.x === root.px && p.y === root.py) return
-                            root.px = p.x
-                            root.py = p.y
-                            if (cell.abs !== root.cursor) root.go(cell.abs, false)
-                        }
                         onClicked: {
                             root.go(cell.abs, false)
                             root.apply()
@@ -243,10 +218,5 @@ Fade {
                 }
             }
         }
-    }
-
-    Wheel {
-        anchors.fill: parent
-        onStep: n => root.move(n)
     }
 }

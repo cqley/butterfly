@@ -88,16 +88,9 @@ Pick {
                     color: Theme.selFill
                     antialiasing: true
 
-                    Rectangle {
-                        readonly property var it: root.items[root.sel]
-                        readonly property bool cap: !!it && /[A-Z0-9]/.test(it.label)
-                        x: Theme.markX
-                        y: Math.round(parent.height / 2 + (cap ? Theme.markCapY - Theme.markCapH / 2 : Theme.markY - Theme.markH / 2))
-                        width: Theme.markW
-                        height: cap ? Theme.markCapH : Theme.markH
-                        radius: width / 2
-                        color: it && it.kind === "stop" ? Theme.red : Theme.accent
-                        antialiasing: true
+                    Mark {
+                        label: root.items[root.sel] ? root.items[root.sel].label : ""
+                        tint: root.items[root.sel] && root.items[root.sel].kind === "stop" ? Theme.red : Theme.accent
                     }
 
                     Behavior on y {

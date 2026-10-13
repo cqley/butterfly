@@ -6,9 +6,9 @@ Singleton {
     readonly property string screen: "HDMI-A-1"
     readonly property string font: "sans-serif"
     readonly property var terminal: ["sh", "-c", 'for t in "$TERMINAL" alacritty kitty foot ghostty wezterm xterm; do command -v "$t" >/dev/null 2>&1 || continue; case $t in kitty) exec kitty "$@";; wezterm) exec wezterm start -- "$@";; *) exec "$t" -e "$@";; esac; done', "sh"]
-    readonly property string wallDir: "file:///home/cat/pictures/wallpapers"
+    readonly property string wallDir: url(Quickshell.env("HOME") + "/pictures/wallpapers")
     readonly property var wallCmd: ["colors"]
-    readonly property string recordDir: "/home/cat/videos/records"
+    readonly property string recordDir: Quickshell.env("HOME") + "/videos/records"
     readonly property string recordBin: ""
     readonly property string recordBackend: ""
     readonly property int recordFps: 60
@@ -73,6 +73,11 @@ Singleton {
     readonly property int noteBodyLines: 1
     readonly property int noteOpenBodyLines: 3
     readonly property int radius: 28
+    readonly property int pillBorderWidth: 1
+    readonly property real pillBorderOpacity: 0.08
+    readonly property int pillHaloWidth: 1
+    readonly property real pillHaloOpacity: 0.18
+    readonly property int pillHaloSpread: 1
 
     readonly property int launchW: 340
     readonly property int lpad: 8
@@ -127,9 +132,7 @@ Singleton {
     readonly property int wallBleed: 1
     readonly property int wallVelocity: 600
     readonly property int wallCatchup: 20
-    readonly property int wallRepeat: 70
     readonly property int wallRetries: 2
-    readonly property int wallEasing: 400
     readonly property int wallSourceW: thumbW * 2
     readonly property int wallSourceH: thumbH * 2
     readonly property real wallFocusScale: 1.15
@@ -175,7 +178,6 @@ Singleton {
     readonly property int batNubGap: 1
     readonly property color batNubColor: fg
     readonly property int batGap: clockGap
-    readonly property int batIconW: batGap + batW + batNubGap + batNubW
     readonly property int batRadius: 4
     readonly property int batFillRadius: 3
     readonly property int batBoltW: 5
@@ -332,8 +334,6 @@ Singleton {
     readonly property int brightGlide: 550
     readonly property int brightEasing: 275
 
-    readonly property real wallHoverOpacity: 0.82
-    readonly property real wallIdleOpacity: 0.7
     readonly property int launchSearchHandleRot: 45
     readonly property int launchTextRowGap: 1
     readonly property int recordTick: 1000
@@ -352,7 +352,6 @@ Singleton {
     readonly property real visFreqStep: 0.35
     readonly property real visOffset: 1.1
     readonly property int visSettle: speed
-    readonly property int visW: visBarW * visBars + visGap * (visBars - 1)
     readonly property color visFallback: accent
     readonly property int visSampleSize: 8
 
