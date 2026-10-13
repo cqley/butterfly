@@ -64,14 +64,10 @@ Fade {
         const k = e.key
         const w = !e.isAutoRepeat
         fast = e.isAutoRepeat
-        if (k === Qt.Key_Down || k === Qt.Key_J || k === Qt.Key_Tab)
+        if (k === Qt.Key_Down || k === Qt.Key_J || k === Qt.Key_L || k === Qt.Key_Tab || k === Qt.Key_PageDown)
             move(1, w)
-        else if (k === Qt.Key_Up || k === Qt.Key_K || k === Qt.Key_Backtab)
+        else if (k === Qt.Key_Up || k === Qt.Key_K || k === Qt.Key_H || k === Qt.Key_Backtab || k === Qt.Key_PageUp)
             move(-1, w)
-        else if (k === Qt.Key_PageDown)
-            move(rows, false)
-        else if (k === Qt.Key_PageUp)
-            move(-rows, false)
         else
             return false
         return true
