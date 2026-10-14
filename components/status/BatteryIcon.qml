@@ -86,7 +86,7 @@ Item {
                 width: root.charged ? Theme.batBoltW : Theme.batChargeW
                 height: root.charged ? Theme.batBoltH : Theme.batChargeH
                 x: (parent.width - width) / 2
-                y: (parent.height - height) / 2 + (root.charged ? Theme.batBoltYOffset : 0)
+                y: (parent.height - height) / 2 + Theme.batBoltYOffset
                 visible: root.boltEnter > 0
                 opacity: root.boltEnter
                 scale: Theme.batBoltScale + (1 - Theme.batBoltScale) * root.boltEnter

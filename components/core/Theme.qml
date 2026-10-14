@@ -192,13 +192,13 @@ Singleton {
     readonly property int batBoltW: 9
     readonly property int batBoltH: 12
     readonly property string batBoltPath: "M5.66 0L1.2 6.7H3.94L2.91 12L7.37 5.3H4.63Z"
-    readonly property real batChargeW: 8
-    readonly property real batChargeH: 11.5
-    readonly property string batChargePath: "M4,0 L8,5 L5.3,5 L5.3,11.5 L2.7,11.5 L2.7,5 L0,5 Z"
+    readonly property real batChargeW: 10
+    readonly property real batChargeH: 12
+    readonly property string batChargePath: "M2.9,0 L4.1,0 L4.1,4 L2.9,4 Z M5.9,0 L7.1,0 L7.1,4 L5.9,4 Z M2.9,4 L7.1,4 L9.2,6 L9.2,9 L0.8,9 L0.8,6 Z M0.8,9 L9.2,9 L5,12 Z"
     readonly property real batGlyphStroke: 1.4
     readonly property real batGlyphSoften: 0.9
-    readonly property real batChargeGlyphStroke: 0.55
-    readonly property real batChargeGlyphSoften: 0.3
+    readonly property real batChargeGlyphStroke: 0.6
+    readonly property real batChargeGlyphSoften: 0.35
     readonly property real batBoltYOffset: -0.5
     readonly property real batPopScale: slotScale
     readonly property real batBoltScale: 0.75
