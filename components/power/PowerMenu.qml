@@ -10,11 +10,11 @@ Fade {
     property real px: -1
     property real py: -1
     readonly property var items: [
-        { label: "lock", dx: 0, cmd: ["sh", "-c", "pidof hyprlock || exec hyprlock"], icon: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11ZM7 11V7A5 5 0 0 1 17 7V11" },
-        { label: "sleep", dx: 0, cmd: ["systemctl", "suspend"], icon: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" },
-        { label: "log out", dx: 0, cmd: ["sh", "-c", "loginctl terminate-session \"$XDG_SESSION_ID\" || hyprctl dispatch exit"], icon: "M9 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H9M16 17L21 12L16 7M21 12L9 12" },
-        { label: "reboot", dx: -1, cmd: ["systemctl", "reboot"], icon: "M23 4L23 10L17 10M20.49 15a9 9 0 1 1-2.12-9.36L23 10" },
-        { label: "power off", dx: 0, cmd: ["systemctl", "poweroff"], icon: "M18.36 6.64a9 9 0 1 1-12.73 0M12 2L12 12" }
+        { dx: 0, cmd: ["sh", "-c", "pidof hyprlock || exec hyprlock"], icon: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11ZM7 11V7A5 5 0 0 1 17 7V11" },
+        { dx: 0, cmd: ["systemctl", "suspend"], icon: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" },
+        { dx: 0, cmd: ["sh", "-c", "loginctl terminate-session \"$XDG_SESSION_ID\" || hyprctl dispatch exit"], icon: "M9 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H9M16 17L21 12L16 7M21 12L9 12" },
+        { dx: -1, cmd: ["systemctl", "reboot"], icon: "M23 4L23 10L17 10M20.49 15a9 9 0 1 1-2.12-9.36L23 10" },
+        { dx: 0, cmd: ["systemctl", "poweroff"], icon: "M18.36 6.64a9 9 0 1 1-12.73 0M12 2L12 12" }
     ]
 
     width: Theme.powerW - 2 * Theme.pwPad
@@ -102,7 +102,7 @@ Fade {
 
                 Shape {
                     x: Math.round((tile.width - width) / 2) + tile.modelData.dx
-                    y: Theme.pwIconY
+                    y: Math.round((tile.height - height) / 2)
                     width: Theme.iconGrid
                     height: Theme.iconGrid
                     preferredRendererType: Shape.CurveRenderer
@@ -116,14 +116,6 @@ Fade {
 
                         PathSvg { path: tile.modelData.icon }
                     }
-                }
-
-                Txt {
-                    x: Math.round((tile.width - width) / 2)
-                    y: Theme.pwLabelY
-                    text: tile.modelData.label
-                    color: tile.ink
-                    font.pixelSize: Theme.fsS
                 }
 
                 MouseArea {
