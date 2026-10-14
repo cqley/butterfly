@@ -29,7 +29,6 @@ Singleton {
     readonly property string stablePowerConnection:
         root.powerConnection !== "" ? root.powerConnection : root.lastPowerConnection
     readonly property bool pluggedIn: root.stablePowerConnection === "external"
-    readonly property bool charged: root.available && root.isChargedState(root.device.state) && root.pct >= Theme.batFullAt
 
     function connectionForState(state) {
         switch (state) {
@@ -75,7 +74,7 @@ Singleton {
                 Notifs.pushSystem(
                     connection === "external" ? "charger connected" : "charger disconnected",
                     connection === "external"
-                        ? root.isChargedState(powerState)
+                        ? percent >= 100
                             ? `battery full · ${percent}%`
                             : `battery charging · ${percent}%`
                         : `running on battery · ${percent}%`,

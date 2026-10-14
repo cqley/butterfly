@@ -372,7 +372,6 @@ Item {
                 pct: Battery.pct
                 tone: Battery.tone
                 pluggedIn: Battery.pluggedIn
-                charged: Battery.charged
                 leadingGap: Theme.clockGap
 
                 transform: Translate {

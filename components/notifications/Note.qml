@@ -123,7 +123,6 @@ Fade {
             pct: root.level >= 0 ? root.level : 1
             tone: Theme.batTone(root.level >= 0 ? root.level : 1, root.charging)
             pluggedIn: root.charging
-            charged: root.charging && root.level >= Theme.batFullAt
             leadingGap: 0
             scale: Theme.noteBatScale
         }
