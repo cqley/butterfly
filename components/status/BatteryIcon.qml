@@ -10,6 +10,7 @@ Item {
     property real pct: 0
     property color tone: Theme.batGreen
     property bool pluggedIn: false
+    property bool charged: false
     property real leadingGap: Theme.batGap
     property int settledGap: Math.round(leadingGap)
     readonly property bool active: root.shown && root.available
@@ -80,24 +81,26 @@ Item {
                 border.color: Theme.fg
                 border.width: Theme.batBorder
                 antialiasing: true
+            }
 
-                Shape {
-                    anchors.centerIn: parent
-                    width: Theme.batBoltW
-                    height: Theme.batBoltH
-                    visible: root.boltEnter > 0
-                    opacity: root.boltEnter
-                    scale: Theme.batBoltScale + (1 - Theme.batBoltScale) * root.boltEnter
-                    preferredRendererType: Shape.CurveRenderer
+            Shape {
+                anchors.centerIn: parent
+                width: root.charged ? Theme.batBoltW : Theme.batPlugW
+                height: root.charged ? Theme.batBoltH : Theme.batPlugH
+                visible: root.boltEnter > 0
+                opacity: root.boltEnter
+                scale: Theme.batBoltScale + (1 - Theme.batBoltScale) * root.boltEnter
+                preferredRendererType: Shape.CurveRenderer
 
-                    ShapePath {
-                        fillColor: Theme.fg
-                        strokeColor: "transparent"
-                        strokeWidth: 0
+                ShapePath {
+                    fillColor: Theme.fg
+                    strokeColor: Theme.bg
+                    strokeWidth: Theme.batGlyphStroke
+                    joinStyle: ShapePath.RoundJoin
+                    fillRule: ShapePath.WindingFill
 
-                        PathSvg {
-                            path: "M3.3 0L0.7 4.2H2.3L1.7 7L4.3 2.8H2.7Z"
-                        }
+                    PathSvg {
+                        path: root.charged ? Theme.batBoltPath : Theme.batPlugPath
                     }
                 }
             }
