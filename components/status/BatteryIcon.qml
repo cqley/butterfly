@@ -93,10 +93,24 @@ Item {
                 preferredRendererType: Shape.CurveRenderer
 
                 ShapePath {
-                    fillColor: Theme.fg
+                    fillColor: Theme.bg
                     strokeColor: Theme.bg
-                    strokeWidth: Theme.batGlyphStroke
+                    strokeWidth: Theme.batGlyphSoften + Theme.batGlyphStroke * 2
                     joinStyle: ShapePath.RoundJoin
+                    capStyle: ShapePath.RoundCap
+                    fillRule: ShapePath.WindingFill
+
+                    PathSvg {
+                        path: root.charged ? Theme.batBoltPath : Theme.batPlugPath
+                    }
+                }
+
+                ShapePath {
+                    fillColor: Theme.fg
+                    strokeColor: Theme.fg
+                    strokeWidth: Theme.batGlyphSoften
+                    joinStyle: ShapePath.RoundJoin
+                    capStyle: ShapePath.RoundCap
                     fillRule: ShapePath.WindingFill
 
                     PathSvg {
