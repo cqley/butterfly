@@ -83,19 +83,17 @@ Item {
 
             Shape {
                 id: glyph
-                width: root.charged ? Theme.batBoltW : Theme.batPlugW
-                height: root.charged ? Theme.batBoltH : Theme.batPlugH
+                width: root.charged ? Theme.batBoltW : Theme.batChargeW
+                height: root.charged ? Theme.batBoltH : Theme.batChargeH
                 x: (parent.width - width) / 2
-                y: root.charged
-                    ? (parent.height - height) / 2 + Theme.batBoltYOffset
-                    : -Theme.batPlugTopOverhang
+                y: (parent.height - height) / 2 + (root.charged ? Theme.batBoltYOffset : 0)
                 visible: root.boltEnter > 0
                 opacity: root.boltEnter
                 scale: Theme.batBoltScale + (1 - Theme.batBoltScale) * root.boltEnter
                 preferredRendererType: Shape.CurveRenderer
 
-                readonly property real softenW: root.charged ? Theme.batGlyphSoften : Theme.batPlugGlyphSoften
-                readonly property real strokeW: root.charged ? Theme.batGlyphStroke : Theme.batPlugGlyphStroke
+                readonly property real softenW: root.charged ? Theme.batGlyphSoften : Theme.batChargeGlyphSoften
+                readonly property real strokeW: root.charged ? Theme.batGlyphStroke : Theme.batChargeGlyphStroke
 
                 ShapePath {
                     fillColor: Theme.bg
@@ -106,7 +104,7 @@ Item {
                     fillRule: ShapePath.WindingFill
 
                     PathSvg {
-                        path: root.charged ? Theme.batBoltPath : Theme.batPlugPath
+                        path: root.charged ? Theme.batBoltPath : Theme.batChargePath
                     }
                 }
 
@@ -119,7 +117,7 @@ Item {
                     fillRule: ShapePath.WindingFill
 
                     PathSvg {
-                        path: root.charged ? Theme.batBoltPath : Theme.batPlugPath
+                        path: root.charged ? Theme.batBoltPath : Theme.batChargePath
                     }
                 }
             }

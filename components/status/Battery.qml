@@ -29,7 +29,7 @@ Singleton {
     readonly property string stablePowerConnection:
         root.powerConnection !== "" ? root.powerConnection : root.lastPowerConnection
     readonly property bool pluggedIn: root.stablePowerConnection === "external"
-    readonly property bool charged: root.available && root.isChargedState(root.device.state)
+    readonly property bool charged: root.available && root.isChargedState(root.device.state) && root.pct >= Theme.batFullAt
 
     function connectionForState(state) {
         switch (state) {
