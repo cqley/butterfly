@@ -194,7 +194,7 @@ Singleton {
     readonly property string batBoltPath: "M5.66 0L1.2 6.7H3.94L2.91 12L7.37 5.3H4.63Z"
     readonly property real batGlyphStroke: 1.4
     readonly property real batGlyphSoften: 0.9
-    readonly property real batBoltYOffset: -0.5
+    readonly property real batBoltYOffset: 0.1
     readonly property real batPopScale: slotScale
     readonly property real batBoltScale: 0.75
     readonly property int batBoltDuration: 140
