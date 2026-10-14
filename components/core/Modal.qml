@@ -25,6 +25,13 @@ Singleton {
             if (k !== except) m[k].open = false
     }
 
+    function dismiss() {
+        const p = registry.polkit
+        if (p && p.open)
+            p.cancel()
+        close("")
+    }
+
     function claim(name) {
         const owner = registry[name]
         if (!owner) return

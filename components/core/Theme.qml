@@ -1,13 +1,15 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 Singleton {
+    id: root
     readonly property string screen: "HDMI-A-1"
     readonly property string font: "sans-serif"
     readonly property var terminal: ["sh", "-c", 'for t in "$TERMINAL" alacritty kitty foot ghostty wezterm xterm; do command -v "$t" >/dev/null 2>&1 || continue; case $t in kitty) exec kitty "$@";; wezterm) exec wezterm start -- "$@";; *) exec "$t" -e "$@";; esac; done', "sh"]
     readonly property string wallDir: url(Quickshell.env("HOME") + "/pictures/wallpapers")
-    readonly property var wallCmd: ["colors"]
+    readonly property var wallCmd: [Quickshell.shellPath("components/core/scripts/colors.sh")]
     readonly property string recordDir: Quickshell.env("HOME") + "/videos/records"
     readonly property string recordBin: ""
     readonly property string recordBackend: ""
@@ -42,11 +44,12 @@ Singleton {
     readonly property int markCapH: 12
     readonly property int markCapY: -1
     readonly property int rowTextY: 0
-    readonly property color bg: "#000000"
-    readonly property color fg: "#ffffff"
-    readonly property color chip: "#1c1c1e"
-    readonly property color tile: "#2c2c2e"
-    readonly property color accent: "#f2b8e2"
+    property var pal: null
+    readonly property color bg: pal && pal.special ? pal.special.background : "#000000"
+    readonly property color fg: pal && pal.special ? pal.special.foreground : "#ffffff"
+    readonly property color chip: mix(bg, fg, 0.11)
+    readonly property color tile: mix(bg, fg, 0.172)
+    readonly property color accent: pal && pal.special && pal.special.accent ? pal.special.accent : "#f2b8e2"
     readonly property color red: "#e5534b"
     readonly property color green: "#34c759"
     readonly property string passChar: "∙"
@@ -369,6 +372,26 @@ Singleton {
         if (value === "" || /^[a-z][a-z0-9+.-]*:/i.test(value))
             return value
         return "file://" + value.split("/").map(encodeURIComponent).join("/")
+    }
+
+    function mix(a, b, t) {
+        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1)
+    }
+
+    FileView {
+        path: Quickshell.env("HOME") + "/.colors/colors.json"
+        preload: true
+        blockLoading: true
+        watchChanges: true
+        onFileChanged: reload()
+        onLoadFailed: root.pal = null
+        onLoaded: {
+            try {
+                root.pal = JSON.parse(text())
+            } catch (e) {
+                root.pal = null
+            }
+        }
     }
 }
 

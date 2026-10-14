@@ -69,9 +69,7 @@ Item {
             const point = root.hitTarget.mapFromItem(root, p.position)
             if (root.hitTarget.contains(point))
                 return
-            if (Polkit.open)
-                Polkit.cancel()
-            Modal.close("")
+            Modal.dismiss()
         }
     }
 
