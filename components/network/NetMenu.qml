@@ -32,7 +32,7 @@ Pick {
             return ""
         if (Net.pending === item.ssid && Net.phase !== "")
             return Net.phase
-        return item.active ? "connected" : ""
+        return ""
     }
 
     onVisibleChanged: {
@@ -242,6 +242,8 @@ Pick {
                     height: Theme.netRowH - Theme.selGap
                     radius: height / 2
                     color: Theme.selFill
+                    border.width: Theme.surfaceBorderWidth
+                    border.color: Theme.surfaceBorder
                     antialiasing: true
                     visible: !root.ask
 
@@ -314,28 +316,28 @@ Pick {
                             text: row.status
                             font.pixelSize: Theme.fsS
                             color: Theme.accent
-                            opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : row.status === "" ? 0 : Theme.dimMuted
+                            opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : 0
                             visible: text !== ""
-
-                            Behavior on opacity {
-                                enabled: row.status === "connected"
-                                NumberAnimation {
-                                    duration: Theme.glide
-                                    easing.type: Theme.ease
-                                }
-                            }
                         }
 
                         Lock {
                             anchors.verticalCenter: parent.verticalCenter
-                            visible: row.locked && row.status === ""
+                            visible: row.locked && !row.on && row.status === ""
                             opacity: Theme.dimMuted
                         }
 
                         Sig {
                             anchors.verticalCenter: parent.verticalCenter
                             level: Math.round(row.sig * Theme.sigBars)
+                            tint: row.on || row.aimed ? Theme.accent : Theme.fg
                             opacity: row.busy ? Theme.dimHint : 1
+
+                            Behavior on tint {
+                                ColorAnimation {
+                                    duration: Theme.glide
+                                    easing.type: Theme.ease
+                                }
+                            }
 
                             Behavior on opacity {
                                 NumberAnimation {

@@ -248,6 +248,8 @@ Pick {
                         height: Theme.rowH - Theme.selGap
                         radius: height / 2
                         color: Theme.selFill
+                        border.width: Theme.surfaceBorderWidth
+                        border.color: Theme.surfaceBorder
                         opacity: row.selected ? 1 : 0
                         antialiasing: true
 
