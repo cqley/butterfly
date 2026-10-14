@@ -115,8 +115,6 @@ Singleton {
             return "disconnecting…"
         if (d.pairing)
             return "pairing…"
-        if (d.connected)
-            return "connected"
         return ""
     }
 

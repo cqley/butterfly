@@ -196,6 +196,8 @@ Pick {
                     height: Theme.netRowH - Theme.selGap
                     radius: height / 2
                     color: Theme.selFill
+                    border.width: Theme.surfaceBorderWidth
+                    border.color: Theme.surfaceBorder
                     antialiasing: true
 
                     Mark {
@@ -217,7 +219,7 @@ Pick {
                     required property int index
                     readonly property bool on: !!modelData && !!modelData.connected
                     readonly property string status: Bt.statusOf(modelData)
-                    readonly property bool busy: status !== "" && status !== "connected"
+                    readonly property bool busy: status !== ""
                     readonly property bool selected: root.sel === row.index
 
                     width: list.width
@@ -255,8 +257,16 @@ Pick {
                             anchors.verticalCenter: parent.verticalCenter
                             text: row.modelData && row.modelData.batteryAvailable ? Math.round(row.modelData.battery * 100) + "%" : ""
                             font.pixelSize: Theme.fsS
+                            color: row.on ? Theme.accent : Theme.fg
                             opacity: row.busy ? Theme.dimHint : Theme.dimMuted
                             visible: text !== ""
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Theme.glide
+                                    easing.type: Theme.ease
+                                }
+                            }
 
                             Behavior on opacity {
                                 NumberAnimation {
@@ -271,16 +281,8 @@ Pick {
                             text: row.status
                             font.pixelSize: Theme.fsS
                             color: Theme.accent
-                            opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : row.status === "" ? 0 : Theme.dimMuted
+                            opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : 0
                             visible: text !== ""
-
-                            Behavior on opacity {
-                                enabled: row.status === "connected"
-                                NumberAnimation {
-                                    duration: Theme.glide
-                                    easing.type: Theme.ease
-                                }
-                            }
                         }
                     }
 

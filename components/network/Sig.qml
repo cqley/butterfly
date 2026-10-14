@@ -4,6 +4,7 @@ import QtQuick
 Row {
     id: root
     property int level: 0
+    property color tint: Theme.fg
     spacing: Theme.sigGap
 
     Repeater {
@@ -15,7 +16,7 @@ Row {
             width: Theme.sigW
             height: Theme.sigH + index * Theme.sigStep
             radius: Theme.sigR
-            color: Theme.fg
+            color: root.tint
             opacity: root.level > index ? Theme.sigOn : Theme.sigOff
             antialiasing: true
         }

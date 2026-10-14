@@ -86,6 +86,8 @@ Pick {
                     height: Theme.recordRowH - Theme.selGap
                     radius: height / 2
                     color: Theme.selFill
+                    border.width: Theme.surfaceBorderWidth
+                    border.color: Theme.surfaceBorder
                     antialiasing: true
 
                     Mark {

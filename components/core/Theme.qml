@@ -32,6 +32,8 @@ Singleton {
     readonly property int selInset: 4
     readonly property int selGap: 2
     readonly property color selFill: Qt.rgba(1, 1, 1, 0.06)
+    readonly property int surfaceBorderWidth: 1
+    readonly property color surfaceBorder: Qt.rgba(1, 1, 1, 0.16)
     readonly property int selDuration: feedbackDuration
     readonly property int markX: 7
     readonly property int markW: 3
@@ -104,12 +106,12 @@ Singleton {
     readonly property int launchIconBox: 24
     readonly property int launchIconSize: 16
     readonly property int launchIconSourceSize: 32
-    readonly property int launchIconRadius: 7
-    readonly property int launchIconBorderWidth: 1
+    readonly property int launchIconRadius: 10
+    readonly property int launchIconBorderWidth: surfaceBorderWidth
     readonly property real launchIconSelectedScale: 1.02
     readonly property color launchIconFill: Qt.rgba(chip.r, chip.g, chip.b, 0.36)
     readonly property color launchIconSelectedFill: chip
-    readonly property color launchIconBorder: Qt.rgba(1, 1, 1, 0.16)
+    readonly property color launchIconBorder: surfaceBorder
     readonly property color launchIconHoverBorder: Qt.rgba(1, 1, 1, 0.34)
     readonly property int launchTextGap: 10
     readonly property int launchFallbackPx: 10
