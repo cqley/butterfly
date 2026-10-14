@@ -308,7 +308,7 @@ Singleton {
         }
         onExited: code => {
             const canceled = root.canceling
-            const late = root.timedOut
+            const timedOut = root.timedOut
             const wasSent = root.sent
             const name = root.target
             root.canceling = false
@@ -330,7 +330,7 @@ Singleton {
             }
             const t = stderr.text.toLowerCase()
             const needsSecret = t.indexOf("password") >= 0 || t.indexOf("passphrase") >= 0 || t.indexOf("secret") >= 0
-            if (!late && needsSecret) {
+            if (!timedOut && needsSecret) {
                 root.asking = root.target
                 root.phase = ""
                 if (wasSent) {
@@ -343,7 +343,7 @@ Singleton {
                 root.target = ""
                 root.phase = ""
                 root.pending = ""
-                Notifs.pushSystem("can't connect", late ? name + " · timed out" : name, false, "net", true)
+                Notifs.pushSystem("can't connect", timedOut ? name + " · timed out" : name, false, "net", true)
                 root.open = false
             }
             root.refresh()

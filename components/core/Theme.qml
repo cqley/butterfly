@@ -276,9 +276,6 @@ Singleton {
     readonly property real authPressed: 0.82
     readonly property real authDisabled: 0.45
 
-    readonly property int pwIconY: 11
-    readonly property int pwLabelY: 42
-
     readonly property int weekCells: 9
     readonly property int weekCenter: 4
     readonly property int weekLead: 1
