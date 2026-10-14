@@ -10,7 +10,6 @@ Item {
     property real pct: 0
     property color tone: Theme.batGreen
     property bool pluggedIn: false
-    property bool charged: false
     property real leadingGap: Theme.batGap
     property int settledGap: Math.round(leadingGap)
     readonly property bool active: root.shown && root.available
@@ -83,8 +82,8 @@ Item {
 
             Shape {
                 id: glyph
-                width: root.charged ? Theme.batBoltW : Theme.batChargeW
-                height: root.charged ? Theme.batBoltH : Theme.batChargeH
+                width: Theme.batBoltW
+                height: Theme.batBoltH
                 x: (parent.width - width) / 2
                 y: (parent.height - height) / 2 + Theme.batBoltYOffset
                 visible: root.boltEnter > 0
@@ -92,32 +91,29 @@ Item {
                 scale: Theme.batBoltScale + (1 - Theme.batBoltScale) * root.boltEnter
                 preferredRendererType: Shape.CurveRenderer
 
-                readonly property real softenW: root.charged ? Theme.batGlyphSoften : Theme.batChargeGlyphSoften
-                readonly property real strokeW: root.charged ? Theme.batGlyphStroke : Theme.batChargeGlyphStroke
-
                 ShapePath {
                     fillColor: Theme.bg
                     strokeColor: Theme.bg
-                    strokeWidth: glyph.softenW + glyph.strokeW * 2
+                    strokeWidth: Theme.batGlyphSoften + Theme.batGlyphStroke * 2
                     joinStyle: ShapePath.RoundJoin
                     capStyle: ShapePath.RoundCap
                     fillRule: ShapePath.WindingFill
 
                     PathSvg {
-                        path: root.charged ? Theme.batBoltPath : Theme.batChargePath
+                        path: Theme.batBoltPath
                     }
                 }
 
                 ShapePath {
                     fillColor: Theme.fg
                     strokeColor: Theme.fg
-                    strokeWidth: glyph.softenW
+                    strokeWidth: Theme.batGlyphSoften
                     joinStyle: ShapePath.RoundJoin
                     capStyle: ShapePath.RoundCap
                     fillRule: ShapePath.WindingFill
 
                     PathSvg {
-                        path: root.charged ? Theme.batBoltPath : Theme.batChargePath
+                        path: Theme.batBoltPath
                     }
                 }
             }
