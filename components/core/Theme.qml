@@ -189,12 +189,12 @@ Singleton {
     readonly property int batRadius: 4
     readonly property int batFillRadius: 3
     readonly property int batFillMin: 2
-    readonly property int batBoltW: 9
+    readonly property real batBoltW: 4.63
     readonly property int batBoltH: 12
-    readonly property string batBoltPath: "M5.66 0L1.2 6.7H3.94L2.91 12L7.37 5.3H4.63Z"
-    readonly property real batPlugW: 8.4
-    readonly property real batPlugH: 11.5
-    readonly property string batPlugPath: "M1.5 0H2.9V3.8H1.5Z M5.5 0H6.9V3.8H5.5Z M1 3.4H7.4V7H1Z M3.3 6.6H5.1V11.5H3.3Z"
+    readonly property string batBoltPath: "M3.34 0L0 6.7H2.05L1.28 12L4.63 5.3H2.57Z"
+    readonly property real batPlugW: 7
+    readonly property real batPlugH: 9.8
+    readonly property string batPlugPath: "M1.2 0H2.4V3.4H1.2Z M4.6 0H5.8V3.4H4.6Z M0.8 2.9H6.2V5.9H0.8Z M2.7 5.6H4.3V9.8H2.7Z"
     readonly property real batGlyphStroke: 1.4
     readonly property real batGlyphSoften: 0.9
     readonly property real batPopScale: slotScale
@@ -216,7 +216,6 @@ Singleton {
     readonly property int noteBtBadge: 18
     readonly property real noteBtRingWidth: 1.5
     readonly property color noteBtTrack: Qt.rgba(green.r, green.g, green.b, 0.22)
-    readonly property color greenDim: Qt.darker(green, 1.8)
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"
     readonly property color batGreen: green
