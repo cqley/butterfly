@@ -55,23 +55,21 @@ Item {
             color: Theme.bg
             antialiasing: true
 
-            Item {
+            Rectangle {
                 id: fill
                 readonly property real span: body.width - Theme.batBorder * 2
+                readonly property real cornerRadius: Math.min(Theme.batFillRadius, width / 2)
                 x: Theme.batBorder
                 y: Theme.batBorder
                 width: root.pct > 0 ? Math.max(Theme.batFillMin, fill.span * root.pct) : 0
                 height: body.height - Theme.batBorder * 2
                 visible: width > 0
-                clip: true
-
-                Rectangle {
-                    width: fill.span
-                    height: fill.height
-                    radius: Theme.batFillRadius
-                    color: root.tone
-                    antialiasing: true
-                }
+                color: root.tone
+                antialiasing: true
+                topLeftRadius: fill.cornerRadius
+                bottomLeftRadius: fill.cornerRadius
+                topRightRadius: fill.cornerRadius
+                bottomRightRadius: fill.cornerRadius
             }
 
             Rectangle {
@@ -84,18 +82,25 @@ Item {
             }
 
             Shape {
-                anchors.centerIn: parent
+                id: glyph
                 width: root.charged ? Theme.batBoltW : Theme.batPlugW
                 height: root.charged ? Theme.batBoltH : Theme.batPlugH
+                x: (parent.width - width) / 2
+                y: root.charged
+                    ? (parent.height - height) / 2 + Theme.batBoltYOffset
+                    : -Theme.batPlugTopOverhang
                 visible: root.boltEnter > 0
                 opacity: root.boltEnter
                 scale: Theme.batBoltScale + (1 - Theme.batBoltScale) * root.boltEnter
                 preferredRendererType: Shape.CurveRenderer
 
+                readonly property real softenW: root.charged ? Theme.batGlyphSoften : Theme.batPlugGlyphSoften
+                readonly property real strokeW: root.charged ? Theme.batGlyphStroke : Theme.batPlugGlyphStroke
+
                 ShapePath {
                     fillColor: Theme.bg
                     strokeColor: Theme.bg
-                    strokeWidth: Theme.batGlyphSoften + Theme.batGlyphStroke * 2
+                    strokeWidth: glyph.softenW + glyph.strokeW * 2
                     joinStyle: ShapePath.RoundJoin
                     capStyle: ShapePath.RoundCap
                     fillRule: ShapePath.WindingFill
@@ -108,7 +113,7 @@ Item {
                 ShapePath {
                     fillColor: Theme.fg
                     strokeColor: Theme.fg
-                    strokeWidth: Theme.batGlyphSoften
+                    strokeWidth: glyph.softenW
                     joinStyle: ShapePath.RoundJoin
                     capStyle: ShapePath.RoundCap
                     fillRule: ShapePath.WindingFill
