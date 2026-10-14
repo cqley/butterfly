@@ -188,6 +188,7 @@ Singleton {
     readonly property int batGap: clockGap
     readonly property int batRadius: 4
     readonly property int batFillRadius: 3
+    readonly property int batFillMin: 2
     readonly property int batBoltW: 5
     readonly property int batBoltH: 7
     readonly property real batPopScale: slotScale
@@ -202,11 +203,13 @@ Singleton {
     readonly property int noteBatBorder: 1
     readonly property real noteSigScale: 0.8
     readonly property int noteBatRadius: 3
-    readonly property int noteBatBoltW: 4
-    readonly property int noteBatBoltH: 6
+    readonly property int noteBatBoltW: 5
+    readonly property int noteBatBoltH: 7
+    readonly property color noteBatBoltColor: bg
     readonly property int noteBtGlyph: 16
     readonly property int noteBtBadge: 18
     readonly property real noteBtRingWidth: 1.5
+    readonly property color noteBtTrack: Qt.rgba(green.r, green.g, green.b, 0.22)
     readonly property color greenDim: Qt.darker(green, 1.8)
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"

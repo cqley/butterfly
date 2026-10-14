@@ -147,8 +147,7 @@ Singleton {
             if (d && d.connected && !root.open) {
                 const name = root.displayName(d)
                 const level = d.batteryAvailable ? d.battery : -1
-                const body = level >= 0 ? `${name} · ${Math.round(level * 100)}%` : name
-                Notifs.pushSystem("connected", body, true, "bluetooth", false, level)
+                Notifs.pushSystem("connected", name, true, "bluetooth", false, level)
             }
             if (root.pendingConnects.length > 0)
                 connectNotifyDelay.restart()

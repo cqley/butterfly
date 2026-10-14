@@ -54,14 +54,23 @@ Item {
             color: Theme.bg
             antialiasing: true
 
-            Rectangle {
+            Item {
+                id: fill
+                readonly property real span: body.width - Theme.batBorder * 2
                 x: Theme.batBorder
                 y: Theme.batBorder
-                width: root.pct > 0 ? Math.max(1, Math.round((body.width - Theme.batBorder * 2) * root.pct)) : 0
+                width: root.pct > 0 ? Math.max(Theme.batFillMin, fill.span * root.pct) : 0
                 height: body.height - Theme.batBorder * 2
-                radius: Theme.batFillRadius
-                color: root.tone
-                antialiasing: true
+                visible: width > 0
+                clip: true
+
+                Rectangle {
+                    width: fill.span
+                    height: fill.height
+                    radius: Theme.batFillRadius
+                    color: root.tone
+                    antialiasing: true
+                }
             }
 
             Rectangle {
@@ -87,7 +96,7 @@ Item {
                         strokeWidth: 0
 
                         PathSvg {
-                            path: "M2.8 0L0.55 3.1H2.1L1.72 7L4.35 3.3H2.75L2.8 0Z"
+                            path: "M3.3 0L0.7 4.2H2.3L1.7 7L4.3 2.8H2.7Z"
                         }
                     }
                 }

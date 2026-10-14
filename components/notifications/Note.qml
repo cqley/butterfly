@@ -152,12 +152,12 @@ Fade {
                 preferredRendererType: Shape.CurveRenderer
 
                 ShapePath {
-                    fillColor: Theme.fg
+                    fillColor: Theme.noteBatBoltColor
                     strokeColor: "transparent"
                     strokeWidth: 0
 
                     PathSvg {
-                        path: "M2.25 0L0.45 2.65H1.72L1.45 6L3.6 3.05H2.2L2.25 0Z"
+                        path: "M3.3 0L0.7 4.2H2.3L1.7 7L4.3 2.8H2.7Z"
                     }
                 }
             }
@@ -209,7 +209,7 @@ Fade {
 
         ShapePath {
             strokeWidth: Theme.noteBtRingWidth
-            strokeColor: Theme.greenDim
+            strokeColor: Theme.noteBtTrack
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
 
