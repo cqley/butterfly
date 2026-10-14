@@ -1,5 +1,6 @@
 import "../core"
 import "../network"
+import "../status"
 import QtQuick
 import QtQuick.Shapes
 import Quickshell
@@ -23,8 +24,8 @@ Fade {
     property bool net: false
     property bool bluetooth: false
     property bool btConnected: false
-    property real btLevel: -1
-    readonly property bool hasLevel: bluetooth && btLevel >= 0
+    property real level: -1
+    readonly property bool hasLevel: bluetooth && level >= 0
     readonly property real wanted: Math.max(Theme.noteH, more.y + more.height + Theme.noteTop)
     readonly property int sideReserve: hasLevel ? Theme.noteBtBadge + Theme.noteTextGap : 0
 
@@ -65,7 +66,7 @@ Fade {
         bluetooth = !!n.system && n.kind === "bluetooth"
         charging = battery && !!n.charging
         btConnected = bluetooth && !!n.charging
-        btLevel = bluetooth ? Number(n.level) : -1
+        level = n.system && isFinite(Number(n.level)) ? Number(n.level) : -1
         critical = n.urgency === NotificationUrgency.Critical
 
         const name = String(n.appName || "").trim()
@@ -114,53 +115,17 @@ Fade {
             }
         }
 
-        Item {
+        BatteryIcon {
             anchors.centerIn: parent
-            width: Theme.noteBatW
-            height: Theme.noteBatH
             visible: root.battery
-
-            Rectangle {
-                id: batteryBody
-                width: Theme.noteBatW - Theme.noteBatNubW - Theme.noteBatGap
-                height: Theme.noteBatH
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                radius: Theme.noteBatRadius
-                color: Theme.batGreen
-                border.color: Theme.fg
-                border.width: Theme.noteBatBorder
-                antialiasing: true
-            }
-
-            Rectangle {
-                anchors.left: batteryBody.right
-                anchors.leftMargin: Theme.noteBatGap
-                anchors.verticalCenter: batteryBody.verticalCenter
-                width: Theme.noteBatNubW
-                height: Theme.noteBatNubH
-                radius: width / 2
-                color: Theme.noteBatNubColor
-                antialiasing: true
-            }
-
-            Shape {
-                anchors.centerIn: batteryBody
-                width: Theme.noteBatBoltW
-                height: Theme.noteBatBoltH
-                visible: root.charging
-                preferredRendererType: Shape.CurveRenderer
-
-                ShapePath {
-                    fillColor: Theme.noteBatBoltColor
-                    strokeColor: "transparent"
-                    strokeWidth: 0
-
-                    PathSvg {
-                        path: "M3.3 0L0.7 4.2H2.3L1.7 7L4.3 2.8H2.7Z"
-                    }
-                }
-            }
+            shown: root.battery
+            available: true
+            pct: root.level >= 0 ? root.level : 1
+            tone: Theme.batTone(root.level >= 0 ? root.level : 1, root.charging)
+            pluggedIn: root.charging
+            charged: root.charging && root.level >= Theme.batFullAt
+            leadingGap: 0
+            scale: Theme.noteBatScale
         }
 
         Sig {
@@ -235,7 +200,7 @@ Fade {
                 radiusX: (btBadge.width - Theme.noteBtRingWidth) / 2
                 radiusY: (btBadge.height - Theme.noteBtRingWidth) / 2
                 startAngle: -90
-                sweepAngle: 360 * Math.max(0, Math.min(1, root.btLevel))
+                sweepAngle: 360 * Math.max(0, Math.min(1, root.level))
             }
         }
     }

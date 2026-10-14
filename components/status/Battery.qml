@@ -24,9 +24,7 @@ Singleton {
         return isFinite(value) ? Math.max(0, Math.min(1, value)) : 0
     }
     readonly property int percent: Math.round(root.pct * 100)
-    readonly property color tone: root.pluggedIn ? Theme.batGreen
-        : root.pct <= Theme.batRedAt ? Theme.batRed
-        : root.pct <= Theme.batYellowAt ? Theme.batYellow : Theme.batGreen
+    readonly property color tone: Theme.batTone(root.pct, root.pluggedIn)
     readonly property string powerConnection: root.connectionForState(root.available ? root.device.state : null)
     readonly property string stablePowerConnection:
         root.powerConnection !== "" ? root.powerConnection : root.lastPowerConnection
@@ -81,7 +79,10 @@ Singleton {
                             ? `battery full · ${percent}%`
                             : `battery charging · ${percent}%`
                         : `running on battery · ${percent}%`,
-                    connection === "external"
+                    connection === "external",
+                    "battery",
+                    false,
+                    root.pct
                 )
             }
             if (connection === "battery") {
@@ -96,7 +97,7 @@ Singleton {
         if (reachedFull) {
             root.chargingSeen = false
             root.fullNotified = true
-            Notifs.pushSystem("battery full", `charging complete · ${percent}%`, false)
+            Notifs.pushSystem("battery full", `charging complete · ${percent}%`, true, "battery", false, root.pct)
         }
 
         root.lastPercent = percent

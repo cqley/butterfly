@@ -189,9 +189,9 @@ Singleton {
     readonly property int batRadius: 4
     readonly property int batFillRadius: 3
     readonly property int batFillMin: 2
-    readonly property real batBoltW: 4.63
+    readonly property int batBoltW: 9
     readonly property int batBoltH: 12
-    readonly property string batBoltPath: "M3.34 0L0 6.7H2.05L1.28 12L4.63 5.3H2.57Z"
+    readonly property string batBoltPath: "M5.66 0L1.2 6.7H3.94L2.91 12L7.37 5.3H4.63Z"
     readonly property real batPlugW: 7
     readonly property real batPlugH: 9.8
     readonly property string batPlugPath: "M1.2 0H2.4V3.4H1.2Z M4.6 0H5.8V3.4H4.6Z M0.8 2.9H6.2V5.9H0.8Z M2.7 5.6H4.3V9.8H2.7Z"
@@ -200,19 +200,9 @@ Singleton {
     readonly property real batPopScale: slotScale
     readonly property real batBoltScale: 0.75
     readonly property int batBoltDuration: 140
-    readonly property int noteBatW: 16
-    readonly property int noteBatH: 10
-    readonly property int noteBatNubW: 2
-    readonly property int noteBatNubH: 4
-    readonly property int noteBatGap: 1
-    readonly property color noteBatNubColor: fg
-    readonly property int noteBatBorder: 1
     readonly property real noteSigScale: 0.8
-    readonly property int noteBatRadius: 3
-    readonly property int noteBatBoltW: 5
-    readonly property int noteBatBoltH: 7
-    readonly property color noteBatBoltColor: bg
     readonly property int noteBtGlyph: 16
+    readonly property real noteBatScale: 0.88
     readonly property int noteBtBadge: 18
     readonly property real noteBtRingWidth: 1.5
     readonly property color noteBtTrack: Qt.rgba(green.r, green.g, green.b, 0.22)
@@ -251,6 +241,13 @@ Singleton {
     readonly property int notificationQueueMax: 32
     readonly property real batRedAt: 0.15
     readonly property real batYellowAt: 0.25
+    readonly property real batFullAt: 0.999
+
+    function batTone(pct, plugged) {
+        if (plugged)
+            return batGreen
+        return pct <= batRedAt ? batRed : pct <= batYellowAt ? batYellow : batGreen
+    }
     readonly property int ease: Easing.OutCubic
 
     readonly property int fsXXS: 9
