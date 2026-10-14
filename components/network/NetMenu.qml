@@ -451,10 +451,4 @@ Pick {
             }
         }
     }
-
-    Wheel {
-        anchors.fill: parent
-        enabled: !root.ask
-        onStep: n => root.move(n, false)
-    }
 }

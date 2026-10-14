@@ -6,11 +6,10 @@ Fade {
     property int rows: 5
     property int sel: 0
     property int start: 0
-    property bool fast: false
     property bool snap: false
     property real px: -1
     property real py: -1
-    readonly property int dur: fast ? Theme.fast : Theme.glide
+    readonly property int dur: Theme.glide
 
     Timer {
         id: release
@@ -33,7 +32,6 @@ Fade {
     }
 
     function reset() {
-        fast = false
         hold()
         sel = 0
         start = 0
@@ -61,9 +59,10 @@ Fade {
     }
 
     function nav(e) {
+        if (e.isAutoRepeat)
+            return true
         const k = e.key
-        const w = !e.isAutoRepeat
-        fast = e.isAutoRepeat
+        const w = true
         if (k === Qt.Key_Down || k === Qt.Key_J || k === Qt.Key_L || k === Qt.Key_Tab || k === Qt.Key_PageDown)
             move(1, w)
         else if (k === Qt.Key_Up || k === Qt.Key_K || k === Qt.Key_H || k === Qt.Key_Backtab || k === Qt.Key_PageUp)
@@ -78,10 +77,5 @@ Fade {
             start = sel
         else if (sel > start + rows - 1)
             start = sel - rows + 1
-    }
-
-    Keys.onReleased: e => {
-        if (!e.isAutoRepeat)
-            fast = false
     }
 }

@@ -134,6 +134,7 @@ Singleton {
     readonly property int wallRadius: 9
     readonly property int wallRing: 1
     readonly property int wallBleed: 1
+    readonly property color wallIdleBorder: surfaceBorder
     readonly property int wallVelocity: 600
     readonly property int wallCatchup: 20
     readonly property int wallRetries: 2
