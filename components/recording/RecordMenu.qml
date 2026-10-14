@@ -163,9 +163,4 @@ Pick {
             }
         }
     }
-
-    Wheel {
-        anchors.fill: parent
-        onStep: n => root.move(n, false)
-    }
 }

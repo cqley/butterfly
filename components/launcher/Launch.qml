@@ -93,7 +93,6 @@ Pick {
     onVisibleChanged: {
         if (visible) input.forceActiveFocus()
         else {
-            root.fast = false
             clear()
         }
     }
@@ -173,20 +172,19 @@ Pick {
                 clip: true
 
                 Keys.onPressed: e => {
+                    if (e.isAutoRepeat) {
+                        e.accepted = true
+                        return
+                    }
                     const k = e.key
                     const c = e.modifiers & Qt.ControlModifier
-                    const w = !e.isAutoRepeat
-                    root.fast = e.isAutoRepeat
+                    const w = true
                     if (k === Qt.Key_Escape) Launcher.open = false
                     else if (k === Qt.Key_Return || k === Qt.Key_Enter) root.run()
                     else if (k === Qt.Key_Down || k === Qt.Key_Tab || k === Qt.Key_PageDown || c && (k === Qt.Key_J || k === Qt.Key_N)) root.move(1, w)
                     else if (k === Qt.Key_Up || k === Qt.Key_Backtab || k === Qt.Key_PageUp || c && (k === Qt.Key_K || k === Qt.Key_P)) root.move(-1, w)
                     else return
                     e.accepted = true
-                }
-
-                Keys.onReleased: e => {
-                    if (!e.isAutoRepeat) root.fast = false
                 }
             }
 
@@ -310,10 +308,5 @@ Pick {
                 }
             }
         }
-    }
-
-    Wheel {
-        anchors.fill: parent
-        onStep: n => root.move(n, false)
     }
 }

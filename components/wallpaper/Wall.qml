@@ -193,6 +193,16 @@ Fade {
 
                         Rectangle {
                             anchors.fill: parent
+                            radius: Theme.wallRadius
+                            color: "transparent"
+                            border.width: Theme.surfaceBorderWidth
+                            border.color: Theme.wallIdleBorder
+                            opacity: 1 - cell.glowFast
+                            antialiasing: true
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
                             anchors.margins: -Theme.wallRing
                             radius: Theme.wallRadius + Theme.wallRing
                             color: "transparent"
