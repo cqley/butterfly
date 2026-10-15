@@ -292,6 +292,7 @@ Singleton {
     readonly property int calHeadH: 16
 
     readonly property int mediaColGap: 6
+    readonly property int mediaLenCap: 86400
     readonly property int mediaTextGap: 2
     readonly property int mediaCtlGap: 4
     readonly property int artR: 10
@@ -333,6 +334,7 @@ Singleton {
     readonly property int netPollBusy: 1500
     readonly property int netPoll: 4000
     readonly property int netRescanWait: 2500
+    readonly property int netMonitorRestart: 2000
 
     readonly property int brightW: 208
     readonly property int brightPad: 14

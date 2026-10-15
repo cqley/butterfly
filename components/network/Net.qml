@@ -56,9 +56,12 @@ Singleton {
         if (enabled)
             rescan.running = true
         poll.restart()
+        monitor.running = true
     } else {
-        if (!watch)
+        if (!watch) {
             poll.stop()
+            monitor.running = false
+        }
         if (asking !== "")
             cancelAsk()
         error = ""
@@ -108,8 +111,11 @@ Singleton {
     onWatchChanged: if (watch) {
         watchEnd.restart()
         poll.restart()
-    } else if (!open)
+        monitor.running = true
+    } else if (!open) {
         poll.stop()
+        monitor.running = false
+    }
 
     function refresh() {
         if (toggling)
@@ -348,6 +354,22 @@ Singleton {
         id: rescan
         command: ["nmcli", "device", "wifi", "rescan"]
         onExited: late.restart()
+    }
+
+    Process {
+        id: monitor
+        running: false
+        command: ["nmcli", "monitor"]
+        stdout: SplitParser {
+            onRead: root.refresh()
+        }
+        onExited: if (root.open || root.watch) monitorRestart.restart()
+    }
+
+    Timer {
+        id: monitorRestart
+        interval: Theme.netMonitorRestart
+        onTriggered: if (root.open || root.watch) monitor.running = true
     }
 
     Timer {

@@ -10,6 +10,19 @@ Singleton {
     readonly property var player: live || last
     readonly property bool playing: live !== null
     readonly property string title: player ? player.trackTitle || player.identity : ""
+    readonly property string artUrl: artFor(player)
+
+    function artFor(p) {
+        if (!p)
+            return ""
+        if (p.trackArtUrl)
+            return p.trackArtUrl
+        const url = p.metadata ? p.metadata["xesam:url"] || "" : ""
+        if (!url.startsWith("https://www.youtube.com/watch"))
+            return ""
+        const m = url.match(/[?&]v=([\w-]{11})/)
+        return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : ""
+    }
 
     function pick() {
         const v = Mpris.players.values
