@@ -48,19 +48,38 @@ Singleton {
         return "unknown device"
     }
 
-    property int devicesVersion: 0
+    property var order: []
+    property var items: []
 
-    readonly property var items: {
-        devicesVersion
-        if (!available)
-            return []
-        const list = [...adapter.devices.values].filter(d => d.paired || d.connected || named(d))
-        return list.sort(cmp)
+    function rebuild() {
+        if (!available) {
+            items = []
+            return
+        }
+        const devs = [...adapter.devices.values].filter(d => d.paired || d.connected || named(d))
+        const pos = Object.create(null)
+        for (let i = 0; i < order.length; i++)
+            pos[order[i]] = i
+        const kept = []
+        const fresh = []
+        for (const d of devs) {
+            if (pos[d.address] === undefined)
+                fresh.push(d)
+            else
+                kept.push(d)
+        }
+        kept.sort((a, b) => pos[a.address] - pos[b.address])
+        fresh.sort(cmp)
+        const out = kept.concat(fresh)
+        order = out.map(d => d.address)
+        items = out
     }
+
+    Component.onCompleted: rebuild()
 
     Connections {
         target: root.available ? root.adapter.devices : null
-        function onValuesChanged() { root.devicesVersion++ }
+        function onValuesChanged() { root.rebuild() }
     }
 
     readonly property bool busy: items.some(d =>
@@ -95,8 +114,11 @@ Singleton {
     }
 
     onOpenChanged: {
-        if (open)
+        if (open) {
             Modal.claim("bluetooth")
+            order = []
+            rebuild()
+        }
         if (available)
             adapter.discovering = open
     }

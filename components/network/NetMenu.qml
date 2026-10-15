@@ -13,22 +13,41 @@ Pick {
     height: col.height
     focus: shown
 
+    property string selSsid: ""
+
     function fresh() {
         reset()
+        selSsid = ""
         pass.text = ""
     }
 
+    function remember() {
+        if (items && items[sel])
+            selSsid = items[sel].ssid
+    }
+
     function syncSel() {
-        if (Net.pending !== "") {
-            for (let i = 0; i < root.n; i++) {
-                if (root.items[i] && root.items[i].ssid === Net.pending) {
-                    root.sel = i
+        if (!n) {
+            selSsid = ""
+            return
+        }
+        if (selSsid !== "") {
+            for (let i = 0; i < n; i++) {
+                if (items[i] && items[i].ssid === selSsid) {
+                    if (i !== sel) {
+                        hold()
+                        sel = i
+                    }
                     return
                 }
             }
         }
-        if (root.sel >= root.n)
-            root.sel = Math.max(0, root.n - 1)
+        const i = Math.max(0, Math.min(n - 1, sel))
+        if (i !== sel) {
+            hold()
+            sel = i
+        }
+        remember()
     }
 
     function run() {
@@ -73,7 +92,11 @@ Pick {
             root.forceActiveFocus()
         }
         function onListChanged() { root.syncSel() }
-        function onPendingChanged() { root.syncSel() }
+    }
+
+    Connections {
+        target: root
+        function onSelChanged() { root.remember() }
     }
 
     Keys.onPressed: e => {
@@ -271,7 +294,7 @@ Pick {
                     readonly property string status: root.statusOf(modelData)
                     readonly property real sig: modelData ? modelData.signal : 0
                     readonly property bool locked: !!modelData && !!modelData.locked
-                    readonly property bool selected: root.sel === row.index
+                    readonly property bool selected: !root.ask && root.sel === row.index
 
                     width: list.width
                     height: Theme.netRowH
