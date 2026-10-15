@@ -33,6 +33,15 @@ Pick {
             root.forceActiveFocus()
         }
         function onItemsChanged() {
+            if (Bt.connecting) {
+                const addr = Bt.connecting.address
+                for (let i = 0; i < root.n; i++) {
+                    if (root.items[i] && root.items[i].address === addr) {
+                        root.sel = i
+                        return
+                    }
+                }
+            }
             if (root.sel >= root.n)
                 root.sel = Math.max(0, root.n - 1)
         }

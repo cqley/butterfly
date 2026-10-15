@@ -119,7 +119,7 @@ Singleton {
     }
 
     function pick(d) {
-        if (!d)
+        if (!d || busy)
             return
         if (d.connected) {
             d.disconnect()
