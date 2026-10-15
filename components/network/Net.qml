@@ -41,6 +41,16 @@ Singleton {
         return "network"
     }
 
+    function startWatching() {
+        poll.restart()
+        monitor.running = true
+    }
+
+    function stopWatching() {
+        poll.stop()
+        monitor.running = false
+    }
+
     onOpenChanged: if (open) {
         Modal.claim("net")
         if (!open)
@@ -55,13 +65,10 @@ Singleton {
         refresh()
         if (enabled)
             rescan.running = true
-        poll.restart()
-        monitor.running = true
+        startWatching()
     } else {
-        if (!watch) {
-            poll.stop()
-            monitor.running = false
-        }
+        if (!watch)
+            stopWatching()
         if (asking !== "")
             cancelAsk()
         error = ""
@@ -110,12 +117,9 @@ Singleton {
 
     onWatchChanged: if (watch) {
         watchEnd.restart()
-        poll.restart()
-        monitor.running = true
-    } else if (!open) {
-        poll.stop()
-        monitor.running = false
-    }
+        startWatching()
+    } else if (!open)
+        stopWatching()
 
     function refresh() {
         if (toggling)
