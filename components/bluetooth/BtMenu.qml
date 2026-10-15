@@ -12,16 +12,52 @@ Pick {
     height: col.height
     focus: shown
 
+    property string selAddr: ""
+
     function run() {
         if (n)
             Bt.pick(items[sel])
+    }
+
+    function fresh() {
+        reset()
+        selAddr = ""
+    }
+
+    function remember() {
+        if (items && items[sel])
+            selAddr = items[sel].address
+    }
+
+    function syncSel() {
+        if (!n) {
+            selAddr = ""
+            return
+        }
+        if (selAddr !== "") {
+            for (let i = 0; i < n; i++) {
+                if (items[i] && items[i].address === selAddr) {
+                    if (i !== sel) {
+                        hold()
+                        sel = i
+                    }
+                    return
+                }
+            }
+        }
+        const i = Math.max(0, Math.min(n - 1, sel))
+        if (i !== sel) {
+            hold()
+            sel = i
+        }
+        remember()
     }
 
     onVisibleChanged: {
         if (visible)
             forceActiveFocus()
         else
-            reset()
+            fresh()
     }
 
     Connections {
@@ -29,22 +65,15 @@ Pick {
         function onOpenChanged() {
             if (!Bt.open)
                 return
-            root.reset()
+            root.fresh()
             root.forceActiveFocus()
         }
-        function onItemsChanged() {
-            if (Bt.connecting) {
-                const addr = Bt.connecting.address
-                for (let i = 0; i < root.n; i++) {
-                    if (root.items[i] && root.items[i].address === addr) {
-                        root.sel = i
-                        return
-                    }
-                }
-            }
-            if (root.sel >= root.n)
-                root.sel = Math.max(0, root.n - 1)
-        }
+        function onItemsChanged() { root.syncSel() }
+    }
+
+    Connections {
+        target: root
+        function onSelChanged() { root.remember() }
     }
 
     Keys.onPressed: e => {

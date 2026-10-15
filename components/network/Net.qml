@@ -23,10 +23,14 @@ Singleton {
     property bool sent: false
     property bool timedOut: false
     property bool watch: false
+    property bool askLocked: false
+    property var order: []
 
     readonly property string title: {
         if (!enabled)
             return "wifi off"
+        if (asking !== "")
+            return asking
         if (phase === "connecting")
             return "connecting…"
         if (phase === "disconnecting")
@@ -46,6 +50,7 @@ Singleton {
             pending = ""
             phase = ""
         }
+        order = []
         refresh()
         if (enabled)
             rescan.running = true
@@ -74,12 +79,12 @@ Singleton {
         poll.stop()
 
     function refresh() {
-        if (!toggling) {
+        if (toggling)
+            return
+        if (!radio.running)
             radio.running = true
+        if (!activeCon.running)
             activeCon.running = true
-        }
-        if (enabled && !activeCon.running)
-            scan.running = true
     }
 
     function toggleWifi() {
@@ -91,6 +96,7 @@ Singleton {
         watch = enabled
         if (!enabled) {
             list = []
+            order = []
             active = ""
             pending = ""
             phase = ""
@@ -119,6 +125,7 @@ Singleton {
         phase = "connecting"
         asking = ""
         target = item.ssid
+        askLocked = !!item.locked
         sent = false
         up.command = ["nmcli", "device", "wifi", "connect", item.ssid]
         up.running = true
@@ -141,8 +148,10 @@ Singleton {
     function cancelAsk() {
         canceling = up.running
         sent = false
-        if (up.running)
+        if (up.running) {
             up.signal(15)
+            kill.restart()
+        }
         asking = ""
         error = ""
         busy = false
@@ -170,8 +179,14 @@ Singleton {
         return out
     }
 
+    function rank(a, b) {
+        if (a.active !== b.active)
+            return a.active ? -1 : 1
+        return b.signal - a.signal
+    }
+
     function parseWifi(text) {
-        const rows = []
+        const best = Object.create(null)
         const lines = text.trim().split("\n")
         let cur = ""
         for (let i = 0; i < lines.length; i++) {
@@ -181,45 +196,50 @@ Singleton {
             const p = fields(line)
             if (p.length < 4)
                 continue
-            const active = p[0] === "yes"
-            const sig = parseInt(p[1]) || 0
             const ssid = p[2]
-            const sec = p[3]
             if (ssid === "" || ssid === "--")
                 continue
+            const active = p[0] === "yes"
+            const sig = Math.max(0, Math.min(100, parseInt(p[1]) || 0)) / 100
+            const sec = p[3]
             if (active)
                 cur = ssid
-            const locked = sec !== "" && sec !== "--" && sec.toLowerCase().indexOf("open") < 0
-            rows.push({
+            const prev = best[ssid]
+            if (prev && !(active && !prev.active) && !(active === prev.active && sig > prev.signal))
+                continue
+            best[ssid] = {
                 ssid: ssid,
-                signal: Math.max(0, Math.min(100, sig)) / 100,
+                signal: sig,
                 active: active,
                 connection: active ? root.activeConnection : ssid,
-                locked: locked,
+                locked: sec !== "" && sec !== "--" && sec.toLowerCase().indexOf("open") < 0,
                 security: sec
-            })
-        }
-        rows.sort((a, b) => {
-            if (root.pending !== "") {
-                const ap = a.ssid === root.pending
-                const bp = b.ssid === root.pending
-                if (ap !== bp)
-                    return ap ? -1 : 1
             }
-            if (a.active !== b.active)
-                return a.active ? -1 : 1
-            return b.signal - a.signal
-        })
-        const seen = Object.create(null)
-        const uniq = []
-        for (let i = 0; i < rows.length; i++) {
-            const r = rows[i]
-            if (seen[r.ssid])
-                continue
-            seen[r.ssid] = true
-            uniq.push(r)
         }
-        list = uniq
+        if (asking !== "" && !best[asking]) {
+            for (let i = 0; i < list.length; i++) {
+                if (list[i].ssid === asking) {
+                    best[asking] = list[i]
+                    break
+                }
+            }
+        }
+        const pos = Object.create(null)
+        for (let i = 0; i < order.length; i++)
+            pos[order[i]] = i
+        const kept = []
+        const fresh = []
+        for (const k in best) {
+            if (pos[k] === undefined)
+                fresh.push(best[k])
+            else
+                kept.push(best[k])
+        }
+        kept.sort((a, b) => pos[a.ssid] - pos[b.ssid])
+        fresh.sort(rank)
+        const out = kept.concat(fresh)
+        order = out.map(r => r.ssid)
+        list = out
         active = cur
     }
 
@@ -307,6 +327,7 @@ Singleton {
             waitForEnd: false
         }
         onExited: code => {
+            kill.stop()
             const canceled = root.canceling
             const timedOut = root.timedOut
             const wasSent = root.sent
@@ -330,7 +351,7 @@ Singleton {
             }
             const t = stderr.text.toLowerCase()
             const needsSecret = t.indexOf("password") >= 0 || t.indexOf("passphrase") >= 0 || t.indexOf("secret") >= 0
-            if (!timedOut && needsSecret) {
+            if (!timedOut && needsSecret && root.askLocked) {
                 root.asking = root.target
                 root.phase = ""
                 if (wasSent) {
@@ -372,7 +393,25 @@ Singleton {
             if (up.running) {
                 root.timedOut = true
                 up.signal(15)
+                kill.restart()
             }
+        }
+    }
+
+    Timer {
+        id: kill
+        interval: Theme.netKill
+        onTriggered: {
+            if (up.running)
+                up.signal(9)
+            root.canceling = false
+            root.timedOut = false
+            root.sent = false
+            root.busy = false
+            root.target = ""
+            root.pending = ""
+            root.phase = ""
+            root.refresh()
         }
     }
 
