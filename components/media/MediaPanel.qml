@@ -7,7 +7,7 @@ Fade {
     id: root
     readonly property var p: Media.player
     readonly property bool on: p !== null && p.isPlaying
-    readonly property real len: p && p.lengthSupported ? p.length : 0
+    readonly property real len: p && p.lengthSupported && p.length > 0 && p.length <= Theme.mediaLenCap ? p.length : 0
     readonly property real pos: p && p.positionSupported ? p.position : 0
     readonly property real frac: len > 0 ? Math.max(0, Math.min(1, (scrubbing ? scrub : pos) / len)) : 0
     property bool scrubbing: false
@@ -56,7 +56,7 @@ Fade {
                 StableImage {
                     id: img
                     anchors.fill: parent
-                    source: root.p ? root.p.trackArtUrl : ""
+                    source: Media.artUrl
                     fillMode: Image.PreserveAspectCrop
                     sourceSize: Qt.size(Theme.artS * 2, Theme.artS * 2)
                 }

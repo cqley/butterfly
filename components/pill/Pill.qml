@@ -357,7 +357,7 @@ Item {
                         id: vbars
                         anchors.centerIn: parent
                         playing: Media.playing
-                        artUrl: Media.player ? Media.player.trackArtUrl : ""
+                        artUrl: Media.artUrl
                     }
                 }
             }
