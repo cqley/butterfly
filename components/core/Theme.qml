@@ -329,6 +329,7 @@ Singleton {
     readonly property int netEmptyPad: 8
     readonly property int netSettle: 600
     readonly property int netKill: 3000
+    readonly property int netVerify: 600
     readonly property int netPollBusy: 1500
     readonly property int netPoll: 4000
     readonly property int netRescanWait: 2500

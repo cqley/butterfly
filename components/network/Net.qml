@@ -24,6 +24,7 @@ Singleton {
     property bool timedOut: false
     property bool watch: false
     property bool askLocked: false
+    property bool resolved: false
     property var order: []
 
     readonly property string title: {
@@ -67,9 +68,41 @@ Singleton {
         }
     }
 
-    onActiveChanged: if (watch && active !== "") {
+    onActiveChanged: {
+        if (!resolved && busy && phase === "connecting" && target !== "" && active === target)
+            finish(target)
+        else if (watch && active !== "") {
+            watch = false
+            Notifs.pushSystem("connected", active, false, "net")
+        }
+    }
+
+    function finish(name) {
+        resolved = true
+        kill.stop()
+        if (up.running)
+            up.signal(15)
+        busy = false
         watch = false
-        Notifs.pushSystem("connected", active, false, "net")
+        sent = false
+        askLocked = false
+        asking = ""
+        error = ""
+        target = ""
+        pending = ""
+        phase = ""
+        settle.restart()
+        Notifs.pushSystem("connected", name, false, "net")
+        open = false
+    }
+
+    function needsSecret(err) {
+        const t = err.toLowerCase()
+        if (t === "")
+            return false
+        if (t.indexOf("connection activated") >= 0 || t.indexOf("successfully") >= 0)
+            return false
+        return t.indexOf("secrets were required") >= 0 || t.indexOf("no secrets provided") >= 0 || t.indexOf("802-11-wireless-security.psk") >= 0 || t.indexOf("password") >= 0 || t.indexOf("passphrase") >= 0 || t.indexOf("secret") >= 0
     }
 
     onWatchChanged: if (watch) {
@@ -126,6 +159,7 @@ Singleton {
         asking = ""
         target = item.ssid
         askLocked = !!item.locked
+        resolved = false
         sent = false
         up.command = ["nmcli", "device", "wifi", "connect", item.ssid]
         up.running = true
@@ -140,6 +174,7 @@ Singleton {
         phase = "connecting"
         target = asking
         asking = ""
+        resolved = false
         sent = true
         up.command = ["nmcli", "device", "wifi", "connect", target, "password", psk]
         up.running = true
@@ -328,6 +363,13 @@ Singleton {
         }
         onExited: code => {
             kill.stop()
+            if (root.resolved) {
+                root.canceling = false
+                root.timedOut = false
+                root.sent = false
+                root.busy = false
+                return
+            }
             const canceled = root.canceling
             const timedOut = root.timedOut
             const wasSent = root.sent
@@ -349,9 +391,7 @@ Singleton {
                 root.open = false
                 return
             }
-            const t = stderr.text.toLowerCase()
-            const needsSecret = t.indexOf("password") >= 0 || t.indexOf("passphrase") >= 0 || t.indexOf("secret") >= 0
-            if (!timedOut && needsSecret && root.askLocked) {
+            if (!timedOut && root.needsSecret(stderr.text) && root.askLocked) {
                 root.asking = root.target
                 root.phase = ""
                 if (wasSent) {
@@ -433,7 +473,7 @@ Singleton {
 
     Timer {
         id: poll
-        interval: root.busy ? Theme.netPollBusy : Theme.netPoll
+        interval: root.phase === "connecting" ? Theme.netVerify : root.busy ? Theme.netPollBusy : Theme.netPoll
         repeat: true
         onTriggered: root.refresh()
     }
