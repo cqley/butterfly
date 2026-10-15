@@ -18,6 +18,19 @@ Pick {
         pass.text = ""
     }
 
+    function syncSel() {
+        if (Net.pending !== "") {
+            for (let i = 0; i < root.n; i++) {
+                if (root.items[i] && root.items[i].ssid === Net.pending) {
+                    root.sel = i
+                    return
+                }
+            }
+        }
+        if (root.sel >= root.n)
+            root.sel = Math.max(0, root.n - 1)
+    }
+
     function run() {
         if (ask) {
             Net.submitPsk(pass.text)
@@ -59,26 +72,14 @@ Pick {
             root.fresh()
             root.forceActiveFocus()
         }
-        function onListChanged() {
-            if (root.sel >= root.n)
-                root.sel = Math.max(0, root.n - 1)
-        }
-        function onPendingChanged() {
-            if (Net.pending === "")
-                return
-            for (let i = 0; i < root.n; i++) {
-                if (root.items[i] && root.items[i].ssid === Net.pending) {
-                    root.sel = i
-                    break
-                }
-            }
-        }
+        function onListChanged() { root.syncSel() }
+        function onPendingChanged() { root.syncSel() }
     }
 
     Keys.onPressed: e => {
         const k = e.key
         if (k === Qt.Key_Escape) {
-            if (ask || Net.busy)
+            if (ask || (Net.busy && Net.phase === "connecting"))
                 Net.cancelAsk()
             else
                 Net.open = false
