@@ -349,6 +349,34 @@ Singleton {
     readonly property int brightGlide: 550
     readonly property int brightEasing: 275
 
+    readonly property int audioW: 272
+    readonly property int audioPad: 14
+    readonly property int audioGap: 12
+    readonly property int audioBtn: 28
+    readonly property int audioBtnGap: 12
+    readonly property int audioIcon: 16
+    readonly property int audioCapGap: 5
+    readonly property int audioPctW: 32
+    readonly property int audioNameGap: 8
+    readonly property int audioRailH: 6
+    readonly property int audioKnob: 14
+    readonly property real audioKnobGrab: 1.14
+    readonly property int audioSlop: 4
+    readonly property int audioStep: 5
+    readonly property int audioFineStep: 1
+    readonly property int audioBigStep: 10
+    readonly property int audioGlide: glide
+    readonly property int audioEasing: 120
+    readonly property int audioMeterDecay: 90
+    readonly property real audioMeterGamma: 0.4
+    readonly property color audioFill: Qt.rgba(accent.r, accent.g, accent.b, 0.45)
+    readonly property real audioIconStroke: iconStroke * iconGrid / audioIcon
+    readonly property real audioSlashStroke: 2.2 * iconGrid / audioIcon
+    readonly property string audioOutPath: "M4 8H9.8V16H4Z M9.8 8L19 2.8V21.2L9.8 16Z"
+    readonly property string audioInPath: "M12 3A3.25 3.25 0 0 1 15.25 6.25V9.25A3.25 3.25 0 0 1 8.75 9.25V6.25A3.25 3.25 0 0 1 12 3Z"
+    readonly property string audioInCradlePath: "M18 10.5A6 6 0 0 1 6 10.5 M12 16.5V20.5"
+    readonly property string audioSlashPath: "M4 4L20 20"
+
     readonly property int launchSearchHandleRot: 45
     readonly property int launchTextRowGap: 1
     readonly property int recordTick: 1000
