@@ -11,8 +11,8 @@ Singleton {
 
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
-    readonly property var sinks: Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSink && !n.isStream)
-    readonly property var sources: Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSource && !n.isStream)
+    readonly property var sinks: open ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSink && !n.isStream) : []
+    readonly property var sources: open ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSource && !n.isStream) : []
     readonly property bool hasIn: !!source
     readonly property int count: hasIn ? 2 : 1
     readonly property bool outReady: node(0) !== null
@@ -47,7 +47,7 @@ Singleton {
 
     function peak(i) {
         const m = i === 0 ? outMeter : inMeter
-        return m.node && !muted(i) ? clamp(m.peak) : 0
+        return m.node && ready(i) && !muted(i) ? clamp(m.peak) : 0
     }
 
     function label(i) {
@@ -62,8 +62,11 @@ Singleton {
 
     function set(i, v) {
         const n = node(i)
-        if (n)
-            n.audio.volume = clamp(v)
+        if (!n)
+            return
+        const next = clamp(v)
+        if (next !== n.audio.volume)
+            n.audio.volume = next
     }
 
     function nudge(i, d) {
@@ -82,7 +85,7 @@ Singleton {
         if (all.length < 2)
             return
         const cur = i === 0 ? sink : source
-        let at = 0
+        let at = -1
         for (let k = 0; k < all.length; k++)
             if (cur && all[k].id === cur.id)
                 at = k

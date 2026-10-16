@@ -23,7 +23,7 @@ Item {
     signal cycled
 
     width: parent.width
-    height: label.height + Theme.audioCapGap + Theme.audioKnob
+    height: stack.height
     opacity: ready ? (muted ? Theme.dimSoft : 1) : Theme.dimEmpty
 
     function at(x) {
@@ -112,11 +112,13 @@ Item {
         id: stack
         x: Theme.audioBtn + Theme.audioBtnGap
         width: root.width - x
-        height: root.height
+        height: rail.y + rail.height
 
         Txt {
             id: label
             width: Math.max(0, parent.width - Theme.audioPctW - Theme.audioNameGap)
+            height: Theme.audioCapH
+            verticalAlignment: Text.AlignVCenter
             text: root.name
             elide: Text.ElideRight
             font.pixelSize: Theme.fsS
@@ -147,14 +149,16 @@ Item {
         Txt {
             anchors.right: parent.right
             width: Theme.audioPctW
+            height: Theme.audioCapH
             horizontalAlignment: Text.AlignRight
-            text: root.ready ? Math.round(root.value * 100) + "%" : "–"
+            verticalAlignment: Text.AlignVCenter
+            text: root.ready ? Math.round(root.value * 100) + Theme.audioPctChar : Theme.audioEmptyChar
             font.pixelSize: Theme.fsS
         }
 
         Item {
             id: rail
-            y: label.height + Theme.audioCapGap
+            y: Theme.audioCapH + Theme.audioCapGap
             width: parent.width
             height: Theme.audioKnob
 
