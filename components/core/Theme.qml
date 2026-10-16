@@ -355,7 +355,8 @@ Singleton {
     readonly property int audioBtn: 28
     readonly property int audioBtnGap: 12
     readonly property int audioIcon: 16
-    readonly property int audioCapGap: 5
+    readonly property int audioCapH: 14
+    readonly property int audioCapGap: 6
     readonly property int audioPctW: 32
     readonly property int audioNameGap: 8
     readonly property int audioRailH: 6
@@ -370,6 +371,8 @@ Singleton {
     readonly property int audioMeterDecay: 90
     readonly property real audioMeterGamma: 0.4
     readonly property color audioFill: Qt.rgba(accent.r, accent.g, accent.b, 0.45)
+    readonly property string audioPctChar: "%"
+    readonly property string audioEmptyChar: "–"
     readonly property real audioIconStroke: iconStroke * iconGrid / audioIcon
     readonly property real audioSlashStroke: 2.2 * iconGrid / audioIcon
     readonly property string audioOutPath: "M4 8H9.8V16H4Z M9.8 8L19 2.8V21.2L9.8 16Z"
