@@ -14,11 +14,13 @@ Fade {
     readonly property bool asking: !!flow && flow.isResponseRequired
     readonly property bool busy: shown && !!flow && !flow.isResponseRequired && !flow.isCompleted
     readonly property bool canSubmit: asking && input.text !== ""
+    readonly property bool armed: canSubmit || busy
     readonly property string lockPath: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11ZM7 11V7A5 5 0 0 1 17 7V11"
     readonly property string bodyPath: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11Z"
     readonly property string shacklePath: "M7 11V7A5 5 0 0 1 17 7V" + leg.toFixed(2)
     readonly property string crossPath: "M6.5 6.5L17.5 17.5M17.5 6.5L6.5 17.5"
-    readonly property bool unlocked: canSubmit || busy
+    property bool unlocked: false
+    property bool working: false
     property real leg: root.unlocked ? Theme.authLockOpen : Theme.authLockShut
 
     Behavior on leg { NumberAnimation { duration: Theme.authLockGlide; easing.type: Theme.ease } }
@@ -30,6 +32,16 @@ Fade {
     onFlowChanged: if (flow) {
         reset()
         take()
+    }
+
+    onArmedChanged: hold()
+    onBusyChanged: hold()
+
+    function hold() {
+        if (!flow || flow.isCompleted)
+            return
+        unlocked = armed
+        working = busy
     }
 
     function take() {
@@ -55,8 +67,12 @@ Fade {
     }
 
     function reset() {
+        shake.stop()
+        field.x = 0
         input.text = ""
         slip = false
+        unlocked = false
+        working = false
         fault = root.failText
     }
 
@@ -88,12 +104,11 @@ Fade {
             input.text = ""
             input.forceActiveFocus()
         }
-        function onFailedChanged() {
-            if (!Polkit.flow || !Polkit.flow.failed) return
+        function onAuthenticationFailed() {
             root.take()
             root.slip = true
             shake.restart()
-            input.forceActiveFocus()
+            root.forceActiveFocus()
         }
         function onSupplementaryMessageChanged() {
             root.take()
@@ -256,7 +271,7 @@ Fade {
                     width: input.width
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.hint
-                    visible: input.text === "" && !root.busy
+                    visible: input.text === "" && !root.working
                     elide: Text.ElideRight
                     opacity: Theme.dimHint
                     font.pixelSize: Theme.fsL
@@ -268,7 +283,7 @@ Fade {
                     anchors.rightMargin: Theme.authFieldTextX
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.authDotGap
-                    opacity: root.busy ? 1 : 0
+                    opacity: root.working ? 1 : 0
 
                     Behavior on opacity { NumberAnimation { duration: Theme.fade; easing.type: Theme.ease } }
 
@@ -285,7 +300,7 @@ Fade {
                             antialiasing: true
 
                             SequentialAnimation on opacity {
-                                running: root.busy
+                                running: root.working
                                 loops: Animation.Infinite
 
                                 PauseAnimation { duration: index * Theme.authDotStagger }
@@ -375,7 +390,7 @@ Fade {
                 }
 
                 Rectangle {
-                    readonly property bool live: root.canSubmit
+                    readonly property bool live: root.unlocked && !root.working
                     width: Theme.authBtnH
                     height: Theme.authBtnH
                     radius: height / 2
@@ -417,7 +432,7 @@ Fade {
                     MouseArea {
                         id: okArea
                         anchors.fill: parent
-                        enabled: parent.live
+                        enabled: root.canSubmit
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.submit()

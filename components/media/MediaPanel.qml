@@ -6,17 +6,33 @@ import Quickshell.Widgets
 Fade {
     id: root
     readonly property var p: Media.player
-    readonly property bool on: p !== null && p.isPlaying
     readonly property real len: p && p.lengthSupported && p.length > 0 && p.length <= Theme.mediaLenCap ? p.length : 0
     readonly property real pos: p && p.positionSupported ? p.position : 0
-    readonly property real frac: len > 0 ? Math.max(0, Math.min(1, (scrubbing ? scrub : pos) / len)) : 0
     readonly property bool seekable: p !== null && p.canSeek && p.positionSupported && len > 0
+    readonly property bool srcOn: p !== null && p.isPlaying
+    readonly property string srcTitle: Media.title
+    readonly property string srcArtist: p ? p.trackArtist || "" : ""
+    readonly property string srcArt: Media.artUrl
+    readonly property real srcFrac: len > 0 ? Math.max(0, Math.min(1, (scrubbing ? scrub : pos) / len)) : 0
+    property bool on: false
+    property string title: ""
+    property string artist: ""
+    property string artUrl: ""
+    property real frac: 0
+    property real dur: 0
     property bool scrubbing: false
     property real scrub: 0
+
+    onSrcOnChanged: hold()
+    onSrcTitleChanged: hold()
+    onSrcArtistChanged: hold()
+    onSrcArtChanged: hold()
+    onSrcFracChanged: hold()
 
     onPChanged: {
         scrubbing = false
         scrub = 0
+        hold()
     }
 
     onVisibleChanged: if (!visible) {
@@ -24,8 +40,21 @@ Fade {
         scrub = 0
     }
 
+    Component.onCompleted: hold()
+
     width: Theme.mediaW
     height: col.height
+
+    function hold() {
+        if (!p)
+            return
+        on = srcOn
+        title = srcTitle
+        artist = srcArtist
+        artUrl = srcArt
+        frac = srcFrac
+        dur = len
+    }
 
     function seekTo(x, w) {
         if (!root.seekable) return
@@ -45,7 +74,7 @@ Fade {
     }
 
     FrameAnimation {
-        running: root.visible && root.on && !root.scrubbing
+        running: root.visible && root.srcOn && !root.scrubbing
         onTriggered: if (root.p && root.p.positionSupported) root.p.positionChanged()
     }
 
@@ -73,7 +102,7 @@ Fade {
                 StableImage {
                     id: img
                     anchors.fill: parent
-                    source: Media.artUrl
+                    source: root.artUrl
                     fillMode: Image.PreserveAspectCrop
                     sourceSize: Qt.size(Theme.artS * 2, Theme.artS * 2)
                 }
@@ -136,7 +165,7 @@ Fade {
                     width: parent.width
                     height: Theme.mediaTitleH
                     verticalAlignment: Text.AlignVCenter
-                    text: Media.title
+                    text: root.title
                     elide: Text.ElideRight
                     maximumLineCount: 1
                     font.pixelSize: Theme.fsL
@@ -147,7 +176,7 @@ Fade {
                     width: parent.width
                     height: Theme.mediaArtistH
                     verticalAlignment: Text.AlignVCenter
-                    text: root.p ? root.p.trackArtist : ""
+                    text: root.artist
                     visible: text !== ""
                     elide: Text.ElideRight
                     maximumLineCount: 1
@@ -238,8 +267,8 @@ Fade {
                 verticalAlignment: Text.AlignVCenter
                 visible: Theme.mediaTimes
                 font.pixelSize: Theme.fsXS
-                opacity: root.len > 0 ? Theme.dimMuted : 0
-                text: root.clock(root.scrubbing ? root.scrub : root.pos)
+                opacity: root.dur > 0 ? Theme.dimMuted : 0
+                text: root.clock(root.frac * root.dur)
             }
 
             Txt {
@@ -250,8 +279,8 @@ Fade {
                 horizontalAlignment: Text.AlignRight
                 visible: Theme.mediaTimes
                 font.pixelSize: Theme.fsXS
-                opacity: root.len > 0 ? Theme.dimHint : 0
-                text: root.clock(root.len)
+                opacity: root.dur > 0 ? Theme.dimHint : 0
+                text: root.clock(root.dur)
             }
         }
     }
