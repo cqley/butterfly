@@ -8,17 +8,29 @@ Fade {
     property bool slip: false
     property string heading: ""
     property string detail: ""
-    property string fault: ""
     property string hint: ""
+    readonly property string failText: "authentication failed, try again"
+    property string fault: root.failText
     readonly property bool asking: !!flow && flow.isResponseRequired
     readonly property bool busy: shown && !!flow && !flow.isResponseRequired && !flow.isCompleted
+    readonly property bool canSubmit: asking && input.text !== ""
     readonly property string lockPath: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11ZM7 11V7A5 5 0 0 1 17 7V11"
+    readonly property string bodyPath: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11Z"
+    readonly property string shacklePath: "M7 11V7A5 5 0 0 1 17 7V" + leg.toFixed(2)
+    readonly property string crossPath: "M6.5 6.5L17.5 17.5M17.5 6.5L6.5 17.5"
+    readonly property bool unlocked: canSubmit || busy
+    property real leg: root.unlocked ? Theme.authLockOpen : Theme.authLockShut
+
+    Behavior on leg { NumberAnimation { duration: Theme.authLockGlide; easing.type: Theme.ease } }
 
     width: Theme.authW - 2 * Theme.authPad
     height: col.height
     focus: shown
 
-    onFlowChanged: take()
+    onFlowChanged: if (flow) {
+        reset()
+        take()
+    }
 
     function take() {
         if (!flow)
@@ -27,9 +39,8 @@ Fade {
         heading = (flow.message || "").toLowerCase()
         detail = flow.actionId || ""
         hint = p === "" ? "password" : p
-        fault = flow.supplementaryIsError && flow.supplementaryMessage !== ""
-            ? flow.supplementaryMessage.toLowerCase()
-            : "authentication failed, try again"
+        if (flow.supplementaryIsError && flow.supplementaryMessage !== "")
+            fault = flow.supplementaryMessage.toLowerCase()
     }
 
     function submit() {
@@ -46,6 +57,7 @@ Fade {
     function reset() {
         input.text = ""
         slip = false
+        fault = root.failText
     }
 
     onVisibleChanged: {
@@ -241,9 +253,11 @@ Fade {
 
                 Txt {
                     x: input.x
+                    width: input.width
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.hint
                     visible: input.text === "" && !root.busy
+                    elide: Text.ElideRight
                     opacity: Theme.dimHint
                     font.pixelSize: Theme.fsL
                 }
@@ -296,9 +310,9 @@ Fade {
             }
 
             Txt {
-                x: Theme.authFieldTextX
+                x: Theme.authStatusX
                 y: Theme.authFieldH + Theme.authStatusGap
-                width: parent.width - 2 * Theme.authFieldTextX
+                width: parent.width - Theme.authStatusX
                 height: Theme.authStatusH
                 verticalAlignment: Text.AlignVCenter
                 text: root.slip ? root.fault : root.detail
@@ -321,7 +335,7 @@ Fade {
                 spacing: Theme.authBtnGap
 
                 Rectangle {
-                    width: Math.round(cancelTxt.width + Theme.authBtnPadX)
+                    width: Theme.authBtnH
                     height: Theme.authBtnH
                     radius: height / 2
                     color: cancelArea.containsMouse ? Theme.tile : Theme.chip
@@ -332,11 +346,23 @@ Fade {
                     Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
                     Behavior on color { ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
 
-                    Txt {
-                        id: cancelTxt
+                    Shape {
                         anchors.centerIn: parent
-                        text: "cancel"
-                        font.pixelSize: Theme.fsL
+                        width: Theme.iconGrid
+                        height: Theme.iconGrid
+                        scale: Theme.authGlyph / Theme.iconGrid
+                        preferredRendererType: Shape.CurveRenderer
+
+                        ShapePath {
+                            strokeWidth: Theme.iconStroke
+                            strokeColor: cancelArea.containsMouse ? Theme.redSoft : Theme.fg
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+                            joinStyle: ShapePath.RoundJoin
+                            PathSvg { path: root.crossPath }
+
+                            Behavior on strokeColor { ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
+                        }
                     }
 
                     MouseArea {
@@ -349,8 +375,8 @@ Fade {
                 }
 
                 Rectangle {
-                    readonly property bool live: root.asking && input.text !== ""
-                    width: Math.round(okTxt.width + Theme.authBtnPadX)
+                    readonly property bool live: root.canSubmit
+                    width: Theme.authBtnH
                     height: Theme.authBtnH
                     radius: height / 2
                     color: Theme.accent
@@ -362,13 +388,30 @@ Fade {
                     Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
                     Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
 
-                    Txt {
-                        id: okTxt
+                    Shape {
                         anchors.centerIn: parent
-                        text: "authenticate"
-                        color: Theme.bg
-                        font.pixelSize: Theme.fsL
-                        font.weight: Font.DemiBold
+                        width: Theme.iconGrid
+                        height: Theme.iconGrid
+                        scale: Theme.authGlyph / Theme.iconGrid
+                        preferredRendererType: Shape.CurveRenderer
+
+                        ShapePath {
+                            strokeWidth: Theme.iconStroke
+                            strokeColor: Theme.bg
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+                            joinStyle: ShapePath.RoundJoin
+                            PathSvg { path: root.bodyPath }
+                        }
+
+                        ShapePath {
+                            strokeWidth: Theme.iconStroke
+                            strokeColor: Theme.bg
+                            fillColor: "transparent"
+                            capStyle: ShapePath.RoundCap
+                            joinStyle: ShapePath.RoundJoin
+                            PathSvg { path: root.shacklePath }
+                        }
                     }
 
                     MouseArea {
