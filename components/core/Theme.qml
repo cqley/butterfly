@@ -52,6 +52,7 @@ Singleton {
     readonly property color tile: mix(bg, fg, 0.172)
     readonly property color accent: pal && pal.special && pal.special.accent ? pal.special.accent : "#f2b8e2"
     readonly property color red: "#e5534b"
+    readonly property color redSoft: mix(red, "#ffffff", 0.35)
     readonly property color green: "#34c759"
     readonly property string passChar: "∙"
 
@@ -273,11 +274,14 @@ Singleton {
     readonly property int authMsgLines: 3
     readonly property int authStatusGap: 6
     readonly property int authStatusH: 13
+    readonly property int authStatusX: 6
+    readonly property real authLockShut: 11
+    readonly property real authLockOpen: 6
+    readonly property int authLockGlide: 260
     readonly property int authBtnGap: 8
     readonly property int authGlyph: 18
     readonly property int authIconR: 12
     readonly property int authFieldTextX: 14
-    readonly property int authBtnPadX: 28
     readonly property int authDots: 3
     readonly property int authDotS: 4
     readonly property int authDotGap: 4
