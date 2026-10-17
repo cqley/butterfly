@@ -85,16 +85,13 @@ Fade {
                 visible: index < root.n
                 bodyPath: modelData.body
                 strokePath: modelData.stroke
-                name: Audio.label(index)
                 value: Audio.level(index)
                 peak: Audio.peak(index)
                 ready: Audio.ready(index)
                 muted: Audio.muted(index)
-                switchable: Audio.list(index).length > 1
                 focused: root.n > 1 && root.sel === index
                 onPicked: root.sel = index
                 onToggled: Audio.toggleMute(index)
-                onCycled: Audio.cycle(index)
                 onMoved: v => Audio.set(index, v)
                 onStepped: d => {
                     root.sel = index
