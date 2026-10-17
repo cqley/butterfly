@@ -10,6 +10,7 @@ Fade {
     readonly property real len: p && p.lengthSupported && p.length > 0 && p.length <= Theme.mediaLenCap ? p.length : 0
     readonly property real pos: p && p.positionSupported ? p.position : 0
     readonly property real frac: len > 0 ? Math.max(0, Math.min(1, (scrubbing ? scrub : pos) / len)) : 0
+    readonly property bool seekable: p !== null && p.canSeek && p.positionSupported && len > 0
     property bool scrubbing: false
     property real scrub: 0
 
@@ -27,9 +28,20 @@ Fade {
     height: col.height
 
     function seekTo(x, w) {
-        if (!root.p || !root.p.canSeek || !root.p.positionSupported || root.len <= 0) return
+        if (!root.seekable) return
         const f = Math.max(0, Math.min(1, x / w))
         root.p.position = f * root.len
+    }
+
+    function clock(t) {
+        const n = Math.max(0, Math.floor(t))
+        const s = n % 60
+        const m = Math.floor(n / 60) % 60
+        const h = Math.floor(n / 3600)
+        const ss = s < 10 ? "0" + s : "" + s
+        if (h === 0)
+            return m + ":" + ss
+        return h + ":" + (m < 10 ? "0" + m : "" + m) + ":" + ss
     }
 
     FrameAnimation {
@@ -52,6 +64,11 @@ Fade {
                 height: Theme.artS
                 radius: Theme.artR
                 color: Theme.chip
+                transformOrigin: Item.Center
+                scale: (root.on ? 1 : Theme.mediaPausedArt)
+                    * (artArea.pressed ? Theme.feedbackPressScale : artArea.containsMouse ? Theme.feedbackHoverScale : 1)
+
+                Behavior on scale { NumberAnimation { duration: Theme.mediaArtDuration; easing.type: Theme.ease } }
 
                 StableImage {
                     id: img
@@ -81,14 +98,44 @@ Fade {
                 }
             }
 
+            Rectangle {
+                x: art.x
+                y: art.y
+                width: art.width
+                height: art.height
+                radius: art.radius
+                scale: art.scale
+                transformOrigin: Item.Center
+                color: "transparent"
+                border.width: Theme.surfaceBorderWidth
+                border.color: artArea.containsMouse ? Theme.mediaArtBorderHover : Theme.surfaceBorder
+                antialiasing: true
+
+                Behavior on border.color { ColorAnimation { duration: Theme.feedbackDuration } }
+            }
+
+            MouseArea {
+                id: artArea
+                x: art.x
+                y: art.y
+                width: art.width
+                height: art.height
+                enabled: root.p !== null && root.p.canRaise
+                hoverEnabled: true
+                onClicked: root.p.raise()
+            }
+
             Column {
+                id: meta
                 x: art.width + Theme.mediaGap
-                width: parent.width - x - Theme.ctlS * 2 - Theme.playS - Theme.mediaGap * 2
+                width: parent.width - x - ctls.width - Theme.mediaGap
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.mediaTextGap
 
                 Txt {
                     width: parent.width
+                    height: Theme.mediaTitleH
+                    verticalAlignment: Text.AlignVCenter
                     text: Media.title
                     elide: Text.ElideRight
                     maximumLineCount: 1
@@ -98,6 +145,8 @@ Fade {
 
                 Txt {
                     width: parent.width
+                    height: Theme.mediaArtistH
+                    verticalAlignment: Text.AlignVCenter
                     text: root.p ? root.p.trackArtist : ""
                     visible: text !== ""
                     elide: Text.ElideRight
@@ -108,12 +157,14 @@ Fade {
             }
 
             Row {
+                id: ctls
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.mediaCtlGap
 
                 Btn {
                     anchors.verticalCenter: parent.verticalCenter
+                    dir: -1
                     path: "M19 20L9 12L19 4L19 20ZM5 19L5 5"
                     enabled: root.p !== null && root.p.canGoPrevious
                     onClicked: root.p.previous()
@@ -130,6 +181,7 @@ Fade {
 
                 Btn {
                     anchors.verticalCenter: parent.verticalCenter
+                    dir: 1
                     path: "M5 4L15 12L5 20L5 4ZM19 5L19 19"
                     enabled: root.p !== null && root.p.canGoNext
                     onClicked: root.p.next()
@@ -139,40 +191,22 @@ Fade {
 
         Item {
             width: parent.width
-            height: Theme.barH + Theme.barPad
+            height: Theme.barH + (Theme.mediaTimes ? Theme.mediaTimeGap + Theme.mediaTimeH : 0)
 
             Rectangle {
                 id: bar
-                property bool hovered: seekArea.containsMouse
-                y: Theme.barPad
                 width: parent.width
                 height: Theme.barH
                 radius: height / 2
-                color: Theme.tile
+                color: Theme.mediaTrack
                 antialiasing: true
 
                 Rectangle {
                     width: parent.width * root.frac
                     height: parent.height
-                    radius: height / 2
+                    radius: Math.min(height / 2, width / 2)
                     color: Theme.accent
                     antialiasing: true
-                }
-
-                Rectangle {
-                    x: Math.max(0, Math.min(parent.width - width, parent.width * root.frac - width / 2))
-                    y: Theme.knobY
-                    width: Theme.knobS
-                    height: Theme.knobS
-                    radius: width / 2
-                    color: Theme.accent
-                    transformOrigin: Item.Center
-                    scale: root.scrubbing ? Theme.knobScrub : bar.hovered ? 1 : 0
-                    opacity: root.scrubbing || bar.hovered ? 1 : 0
-                    antialiasing: true
-
-                    Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
-                    Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
                 }
 
                 MouseArea {
@@ -180,7 +214,7 @@ Fade {
                     anchors.fill: parent
                     anchors.topMargin: -Theme.barHit
                     anchors.bottomMargin: -Theme.barHit
-                    enabled: root.p !== null && root.p.canSeek && root.p.positionSupported && root.len > 0
+                    enabled: root.seekable
                     cursorShape: Qt.PointingHandCursor
                     onPressed: m => {
                         root.scrubbing = true
@@ -196,6 +230,28 @@ Fade {
                     }
                     onCanceled: root.scrubbing = false
                 }
+            }
+
+            Txt {
+                y: Theme.barH + Theme.mediaTimeGap
+                height: Theme.mediaTimeH
+                verticalAlignment: Text.AlignVCenter
+                visible: Theme.mediaTimes
+                font.pixelSize: Theme.fsXS
+                opacity: root.len > 0 ? Theme.dimMuted : 0
+                text: root.clock(root.scrubbing ? root.scrub : root.pos)
+            }
+
+            Txt {
+                anchors.right: parent.right
+                y: Theme.barH + Theme.mediaTimeGap
+                height: Theme.mediaTimeH
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignRight
+                visible: Theme.mediaTimes
+                font.pixelSize: Theme.fsXS
+                opacity: root.len > 0 ? Theme.dimHint : 0
+                text: root.clock(root.len)
             }
         }
     }

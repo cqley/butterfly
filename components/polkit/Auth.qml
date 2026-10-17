@@ -1,31 +1,55 @@
 import "../core"
 import QtQuick
 import QtQuick.Shapes
-import Quickshell
 
 Fade {
     id: root
-    readonly property var flow: Polkit.flow
+    property var flow: Polkit.flow
+    property bool slip: false
+    property string heading: ""
+    property string detail: ""
+    property string fault: ""
+    property string hint: ""
+    readonly property bool asking: !!flow && flow.isResponseRequired
+    readonly property bool busy: shown && !!flow && !flow.isResponseRequired && !flow.isCompleted
     readonly property string lockPath: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11ZM7 11V7A5 5 0 0 1 17 7V11"
 
     width: Theme.authW - 2 * Theme.authPad
     height: col.height
     focus: shown
 
+    onFlowChanged: take()
+
+    function take() {
+        if (!flow)
+            return
+        const p = (flow.inputPrompt || "").trim().replace(/:$/, "").trim().toLowerCase()
+        heading = (flow.message || "").toLowerCase()
+        detail = flow.actionId || ""
+        hint = p === "" ? "password" : p
+        fault = flow.supplementaryIsError && flow.supplementaryMessage !== ""
+            ? flow.supplementaryMessage.toLowerCase()
+            : "authentication failed, try again"
+    }
+
     function submit() {
-        if (!flow || !flow.isResponseRequired) return
-        flow.submit(input.text)
+        if (!root.asking || input.text === "") return
+        root.flow.submit(input.text)
         input.text = ""
         input.forceActiveFocus()
     }
 
     function cancel() {
         Polkit.cancel()
+    }
+
+    function reset() {
         input.text = ""
+        slip = false
     }
 
     onVisibleChanged: {
-        input.text = ""
+        reset()
         if (visible) {
             forceActiveFocus()
             input.forceActiveFocus()
@@ -35,22 +59,34 @@ Fade {
     Connections {
         target: Polkit
         function onOpenChanged() {
-            input.text = ""
-            if (Polkit.open) {
-                root.forceActiveFocus()
-                input.forceActiveFocus()
-            }
+            if (!Polkit.open)
+                return
+            root.reset()
+            root.forceActiveFocus()
+            input.forceActiveFocus()
         }
     }
 
     Connections {
         target: Polkit.flow
+        function onInputPromptChanged() { root.take() }
         function onIsResponseRequiredChanged() {
+            if (!root.asking)
+                return
             input.text = ""
-            if (Polkit.flow && Polkit.flow.isResponseRequired) input.forceActiveFocus()
+            input.forceActiveFocus()
         }
         function onFailedChanged() {
-            if (Polkit.flow && Polkit.flow.failed) input.forceActiveFocus()
+            if (!Polkit.flow || !Polkit.flow.failed) return
+            root.take()
+            root.slip = true
+            shake.restart()
+            input.forceActiveFocus()
+        }
+        function onSupplementaryMessageChanged() {
+            root.take()
+            if (Polkit.flow && Polkit.flow.supplementaryIsError && Polkit.flow.supplementaryMessage !== "")
+                root.slip = true
         }
     }
 
@@ -61,19 +97,64 @@ Fade {
         }
     }
 
+    SequentialAnimation {
+        id: shake
+
+        NumberAnimation {
+            target: field
+            property: "x"
+            to: Theme.authShake
+            duration: Theme.authShakeStep
+            easing.type: Easing.OutSine
+        }
+
+        SequentialAnimation {
+            loops: 2
+
+            NumberAnimation {
+                target: field
+                property: "x"
+                to: -Theme.authShake
+                duration: Theme.authShakeStep * 2
+                easing.type: Easing.InOutSine
+            }
+
+            NumberAnimation {
+                target: field
+                property: "x"
+                to: Theme.authShake
+                duration: Theme.authShakeStep * 2
+                easing.type: Easing.InOutSine
+            }
+        }
+
+        NumberAnimation {
+            target: field
+            property: "x"
+            to: 0
+            duration: Theme.authShakeStep
+            easing.type: Easing.InSine
+        }
+    }
+
     Column {
         id: col
         width: parent.width
         spacing: Theme.authSpacing
 
-        Row {
-            spacing: Theme.authHeadGap
+        Item {
+            width: parent.width
+            height: Math.max(Theme.authIcon, head.height)
 
             Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
                 width: Theme.authIcon
                 height: Theme.authIcon
                 radius: Theme.authIconR
                 color: Theme.chip
+                border.width: Theme.surfaceBorderWidth
+                border.color: Theme.surfaceBorder
+                antialiasing: true
 
                 Shape {
                     anchors.centerIn: parent
@@ -93,89 +174,141 @@ Fade {
                 }
             }
 
-            Txt {
+            Column {
+                id: head
+                x: Theme.authIcon + Theme.authHeadGap
+                width: parent.width - x
                 anchors.verticalCenter: parent.verticalCenter
-                text: "authentication required"
-                font.pixelSize: Theme.fsXXL
-                font.weight: Font.DemiBold
+                spacing: Theme.authHeadTextGap
+
+                Txt {
+                    width: parent.width
+                    height: Theme.authTitleH
+                    verticalAlignment: Text.AlignVCenter
+                    text: "authentication required"
+                    font.pixelSize: Theme.fsL
+                    font.weight: Font.DemiBold
+                }
+
+                Txt {
+                    width: parent.width
+                    visible: text !== ""
+                    text: root.heading
+                    wrapMode: Text.Wrap
+                    maximumLineCount: Theme.authMsgLines
+                    elide: Text.ElideRight
+                    opacity: Theme.dimMuted
+                    font.pixelSize: Theme.fsS
+                }
             }
         }
 
-        Txt {
+        Item {
             width: parent.width
-            text: root.flow ? (root.flow.message || "").toLowerCase() : ""
-            wrapMode: Text.Wrap
-            font.pixelSize: Theme.fsL
-        }
+            height: Theme.authFieldH + Theme.authStatusGap + Theme.authStatusH
 
-        Txt {
-            width: parent.width
-            visible: text !== ""
-            text: root.flow ? (root.flow.actionId || "") : ""
-            elide: Text.ElideMiddle
-            opacity: Theme.dimGhost
-            font.pixelSize: Theme.fsS
-        }
+            Rectangle {
+                id: field
+                width: parent.width
+                height: Theme.authFieldH
+                radius: Theme.authFieldR
+                color: Theme.chip
+                border.width: Theme.surfaceBorderWidth
+                border.color: root.slip ? Theme.red : input.activeFocus ? Theme.accent : Theme.surfaceBorder
+                antialiasing: true
 
-        Txt {
-            width: parent.width
-            visible: !!root.flow && (root.flow.failed || (root.flow.supplementaryIsError && root.flow.supplementaryMessage !== ""))
-            text: root.flow && root.flow.supplementaryIsError && root.flow.supplementaryMessage !== "" ? root.flow.supplementaryMessage.toLowerCase() : "authentication failed, try again"
-            color: Theme.red
-            wrapMode: Text.Wrap
-            font.pixelSize: Theme.fsM
-        }
+                Behavior on border.color { ColorAnimation { duration: Theme.feedbackDuration } }
 
-        Rectangle {
-            width: parent.width
-            height: Theme.authFieldH
-            radius: Theme.authFieldR
-            color: Theme.chip
+                TextInput {
+                    id: input
+                    x: Theme.authFieldTextX
+                    width: parent.width - 2 * Theme.authFieldTextX - dots.width
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: Theme.fg
+                    selectionColor: Theme.accent
+                    selectedTextColor: Theme.bg
+                    echoMode: root.flow && root.flow.responseVisible ? TextInput.Normal : TextInput.Password
+                    passwordCharacter: Theme.passChar
+                    selectByMouse: true
+                    clip: true
+                    font.family: Theme.font
+                    font.pixelSize: Theme.fsL
+                    font.weight: Font.Medium
+                    enabled: root.asking
+                    onTextEdited: root.slip = false
+                    onAccepted: root.submit()
+                }
 
-            Shape {
-                x: Theme.authFieldIconX
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.iconGrid
-                height: Theme.iconGrid
-                scale: Theme.authGlyph / Theme.iconGrid
-                preferredRendererType: Shape.CurveRenderer
+                Txt {
+                    x: input.x
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.hint
+                    visible: input.text === "" && !root.busy
+                    opacity: Theme.dimHint
+                    font.pixelSize: Theme.fsL
+                }
 
-                ShapePath {
-                    strokeWidth: Theme.iconStroke
-                    strokeColor: Theme.fg
-                    fillColor: "transparent"
-                    capStyle: ShapePath.RoundCap
-                    joinStyle: ShapePath.RoundJoin
-                    PathSvg { path: root.lockPath }
+                Row {
+                    id: dots
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.authFieldTextX
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.authDotGap
+                    opacity: root.busy ? 1 : 0
+
+                    Behavior on opacity { NumberAnimation { duration: Theme.fade; easing.type: Theme.ease } }
+
+                    Repeater {
+                        model: Theme.authDots
+
+                        Rectangle {
+                            required property int index
+                            width: Theme.authDotS
+                            height: Theme.authDotS
+                            radius: width / 2
+                            color: Theme.fg
+                            opacity: Theme.dimHint
+                            antialiasing: true
+
+                            SequentialAnimation on opacity {
+                                running: root.busy
+                                loops: Animation.Infinite
+
+                                PauseAnimation { duration: index * Theme.authDotStagger }
+
+                                NumberAnimation {
+                                    to: 1
+                                    duration: Theme.authDotStep
+                                    easing.type: Easing.InOutSine
+                                }
+
+                                NumberAnimation {
+                                    to: Theme.dimHint
+                                    duration: Theme.authDotStep
+                                    easing.type: Easing.InOutSine
+                                }
+
+                                PauseAnimation { duration: (Theme.authDots - 1 - index) * Theme.authDotStagger }
+                            }
+                        }
+                    }
                 }
             }
 
-            TextInput {
-                id: input
-                x: Theme.authFieldTextX
-                width: parent.width - Theme.authFieldTextPad
-                anchors.verticalCenter: parent.verticalCenter
-                color: Theme.fg
-                selectionColor: Theme.accent
-                selectedTextColor: Theme.bg
-                echoMode: root.flow && root.flow.responseVisible ? TextInput.Normal : TextInput.Password
-                passwordCharacter: Theme.passChar
-                selectByMouse: true
-                clip: true
-                font.family: Theme.font
-                font.pixelSize: Theme.fsL
-                font.weight: Font.Medium
-                enabled: !!root.flow && root.flow.isResponseRequired
-                onAccepted: root.submit()
-            }
-
             Txt {
-                x: input.x
-                anchors.verticalCenter: parent.verticalCenter
-                text: "password"
-                visible: input.text === ""
-                opacity: Theme.dimHint
-                font.pixelSize: Theme.fsL
+                x: Theme.authFieldTextX
+                y: Theme.authFieldH + Theme.authStatusGap
+                width: parent.width - 2 * Theme.authFieldTextX
+                height: Theme.authStatusH
+                verticalAlignment: Text.AlignVCenter
+                text: root.slip ? root.fault : root.detail
+                color: root.slip ? Theme.red : Theme.fg
+                opacity: root.slip ? 1 : Theme.dimGhost
+                elide: root.slip ? Text.ElideRight : Text.ElideMiddle
+                font.pixelSize: Theme.fsXS
+
+                Behavior on color { ColorAnimation { duration: Theme.feedbackDuration } }
+                Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
             }
         }
 
@@ -190,9 +323,9 @@ Fade {
                 Rectangle {
                     width: Math.round(cancelTxt.width + Theme.authBtnPadX)
                     height: Theme.authBtnH
-                    radius: Theme.authBtnH / 2
-                    color: mouse.containsMouse ? Theme.tile : Theme.chip
-                    scale: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
+                    radius: height / 2
+                    color: cancelArea.containsMouse ? Theme.tile : Theme.chip
+                    scale: cancelArea.pressed ? Theme.feedbackPressScale : cancelArea.containsMouse ? Theme.feedbackHoverScale : 1
                     antialiasing: true
                     transformOrigin: Item.Center
 
@@ -207,7 +340,7 @@ Fade {
                     }
 
                     MouseArea {
-                        id: mouse
+                        id: cancelArea
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
@@ -216,12 +349,13 @@ Fade {
                 }
 
                 Rectangle {
+                    readonly property bool live: root.asking && input.text !== ""
                     width: Math.round(okTxt.width + Theme.authBtnPadX)
                     height: Theme.authBtnH
-                    radius: Theme.authBtnH / 2
+                    radius: height / 2
                     color: Theme.accent
-                    opacity: input.text.length > 0 ? (mouse2.pressed ? Theme.authPressed : 1) : Theme.authDisabled
-                    scale: input.text.length > 0 ? (mouse2.pressed ? Theme.feedbackPressScale : mouse2.containsMouse ? Theme.feedbackHoverScale : 1) : 1
+                    opacity: live ? (okArea.pressed ? Theme.authPressed : 1) : Theme.authDisabled
+                    scale: live && okArea.pressed ? Theme.feedbackPressScale : live && okArea.containsMouse ? Theme.feedbackHoverScale : 1
                     antialiasing: true
                     transformOrigin: Item.Center
 
@@ -238,9 +372,9 @@ Fade {
                     }
 
                     MouseArea {
-                        id: mouse2
+                        id: okArea
                         anchors.fill: parent
-                        enabled: input.text.length > 0
+                        enabled: parent.live
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.submit()
