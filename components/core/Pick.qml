@@ -14,6 +14,7 @@ Fade {
 
     Timer {
         id: release
+        interval: 0
         onTriggered: root.snap = false
     }
 

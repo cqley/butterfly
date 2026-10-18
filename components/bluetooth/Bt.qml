@@ -13,10 +13,18 @@ Singleton {
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property bool available: !!adapter
     readonly property bool enabled: available && adapter.enabled
+    readonly property bool blocked: available && adapter.state === BluetoothAdapterState.Blocked
+    property bool powering: false
 
     readonly property string title: {
         if (!available)
             return "no adapter"
+        if (blocked)
+            return "bluetooth blocked"
+        if (adapter.state === BluetoothAdapterState.Enabling)
+            return "turning on…"
+        if (adapter.state === BluetoothAdapterState.Disabling)
+            return "turning off…"
         if (!enabled)
             return "bluetooth off"
         return adapter.name || "bluetooth"
@@ -82,6 +90,42 @@ Singleton {
         function onValuesChanged() { root.rebuild() }
     }
 
+    Connections {
+        target: root.available ? root.adapter : null
+        function onStateChanged() { root.settlePower() }
+        function onEnabledChanged() {
+            root.settlePower()
+            root.syncScan()
+        }
+    }
+
+    function syncScan() {
+        if (!available || !enabled)
+            return
+        const want = open && !busy
+        if (adapter.discovering !== want)
+            adapter.discovering = want
+    }
+
+    function settlePower() {
+        if (!available)
+            return
+        if (adapter.state === BluetoothAdapterState.Enabling || adapter.state === BluetoothAdapterState.Disabling)
+            return
+        powerSettle.stop()
+        powering = false
+        syncScan()
+    }
+
+    Timer {
+        id: powerSettle
+        interval: Theme.btPowerSettle
+        onTriggered: {
+            root.powering = false
+            root.syncScan()
+        }
+    }
+
     readonly property bool busy: items.some(d =>
         d.state === BluetoothDeviceState.Connecting ||
         d.state === BluetoothDeviceState.Disconnecting ||
@@ -91,9 +135,8 @@ Singleton {
         if (!busy) {
             connectTimeout.stop()
             connecting = null
-            if (open && available)
-                adapter.discovering = true
         }
+        syncScan()
     }
 
     property var connecting: null
@@ -119,13 +162,18 @@ Singleton {
             order = []
             rebuild()
         }
-        if (available)
-            adapter.discovering = open
+        syncScan()
     }
 
     function toggleAdapter() {
-        if (available)
-            adapter.enabled = !adapter.enabled
+        if (!available || blocked || powering)
+            return
+        const on = !adapter.enabled
+        powering = true
+        powerSettle.restart()
+        adapter.enabled = on
+        if (!open)
+            Notifs.pushSystem(on ? "bluetooth on" : "bluetooth off", "", on, "bluetooth")
     }
 
     function statusOf(d) {
@@ -161,7 +209,7 @@ Singleton {
 
     Timer {
         id: connectNotifyDelay
-        interval: 1200
+        interval: Theme.btBatteryWait
         onTriggered: {
             if (root.pendingConnects.length === 0)
                 return
@@ -189,7 +237,7 @@ Singleton {
                     root.pendingConnects.push(modelData)
                     if (!connectNotifyDelay.running)
                         connectNotifyDelay.restart()
-                } else {
+                } else if (!root.powering && root.enabled) {
                     Notifs.pushSystem("disconnected", root.displayName(modelData), false, "bluetooth")
                 }
             }
@@ -199,9 +247,22 @@ Singleton {
     IpcHandler {
         target: "bluetooth"
         function toggle(): void { root.open = !root.open }
+        function power(): void {
+            if (!root.available) {
+                Notifs.pushSystem("bluetooth unavailable", "no adapter found", false, "bluetooth", true)
+                return
+            }
+            if (root.blocked) {
+                Notifs.pushSystem("bluetooth unavailable", "blocked by hardware", false, "bluetooth", true)
+                return
+            }
+            root.toggleAdapter()
+        }
         function status(): string {
             if (!root.available)
                 return "no adapter"
+            if (root.blocked)
+                return "blocked"
             return root.enabled ? "on" : "off"
         }
     }
