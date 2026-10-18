@@ -51,11 +51,14 @@ Fade {
 
     Keys.onPressed: e => {
         const k = e.key
+        const s = e.modifiers & Qt.ShiftModifier
         const n = root.items.length
         if (k === Qt.Key_Escape) Power.open = false
         else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) root.run(root.sel)
-        else if (k === Qt.Key_Right || k === Qt.Key_L || k === Qt.Key_Tab) root.sel = (root.sel + 1) % n
-        else if (k === Qt.Key_Left || k === Qt.Key_H || k === Qt.Key_Backtab) root.sel = (root.sel + n - 1) % n
+        else if (k === Qt.Key_Right || k === Qt.Key_L || k === Qt.Key_J || k === Qt.Key_Tab) root.sel = (root.sel + 1) % n
+        else if (k === Qt.Key_Left || k === Qt.Key_H || k === Qt.Key_K || k === Qt.Key_Backtab) root.sel = (root.sel + n - 1) % n
+        else if (k === Qt.Key_End || k === Qt.Key_G && s) root.sel = n - 1
+        else if (k === Qt.Key_Home || k === Qt.Key_G) root.sel = 0
         else return
         e.accepted = true
     }

@@ -161,15 +161,60 @@ Fade {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.mediaTextGap
 
-                Txt {
+                Item {
+                    id: titleBox
+                    readonly property real over: Math.max(0, Math.floor(metrics.width - width))
+                    readonly property bool rolling: Theme.mediaScroll && over > 0
+                    readonly property int travel: Math.max(Theme.fast, Math.round(over / Theme.mediaScrollSpeed * 1000))
+                    property real roll: 0
+
                     width: parent.width
                     height: Theme.mediaTitleH
-                    verticalAlignment: Text.AlignVCenter
-                    text: root.title
-                    elide: Text.ElideRight
-                    maximumLineCount: 1
-                    font.pixelSize: Theme.fsL
-                    font.weight: Font.DemiBold
+                    clip: rolling
+
+                    TextMetrics {
+                        id: metrics
+                        font: label.font
+                        text: root.title
+                    }
+
+                    Txt {
+                        id: label
+                        x: titleBox.rolling ? -titleBox.over * titleBox.roll : 0
+                        width: parent.width
+                        height: parent.height
+                        verticalAlignment: Text.AlignVCenter
+                        text: root.title
+                        elide: titleBox.rolling ? Text.ElideNone : Text.ElideRight
+                        maximumLineCount: 1
+                        font.pixelSize: Theme.fsL
+                        font.weight: Font.DemiBold
+                    }
+
+                    SequentialAnimation {
+                        running: titleBox.rolling && root.visible
+                        loops: Animation.Infinite
+
+                        PauseAnimation { duration: Theme.mediaScrollHold }
+
+                        NumberAnimation {
+                            target: titleBox
+                            property: "roll"
+                            from: 0
+                            to: 1
+                            duration: titleBox.travel
+                        }
+
+                        PauseAnimation { duration: Theme.mediaScrollHold }
+
+                        NumberAnimation {
+                            target: titleBox
+                            property: "roll"
+                            from: 1
+                            to: 0
+                            duration: titleBox.travel
+                        }
+                    }
                 }
 
                 Txt {

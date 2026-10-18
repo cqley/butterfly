@@ -7,6 +7,19 @@ Singleton {
     id: root
     readonly property string screen: "HDMI-A-1"
     readonly property string font: "sans-serif"
+    readonly property real fontScale: 1
+    readonly property int fsXXS: fs(9)
+    readonly property int fsXS: fs(10)
+    readonly property int fsS: fs(11)
+    readonly property int fsM: fs(12)
+    readonly property int fsL: fs(13)
+    readonly property int fsXL: fs(14)
+    readonly property int fsXXL: fs(15)
+
+    function fs(px) {
+        return Math.max(1, Math.round(px * fontScale))
+    }
+
     readonly property var terminal: ["sh", "-c", 'for t in "$TERMINAL" alacritty kitty foot ghostty wezterm xterm; do command -v "$t" >/dev/null 2>&1 || continue; case $t in kitty) exec kitty "$@";; wezterm) exec wezterm start -- "$@";; *) exec "$t" -e "$@";; esac; done', "sh"]
     readonly property string wallDir: url(Quickshell.env("HOME") + "/pictures/wallpapers")
     readonly property var wallCmd: [Quickshell.shellPath("components/core/scripts/colors.sh")]
@@ -59,10 +72,6 @@ Singleton {
     readonly property int listGap: 6
     readonly property int rowX: 18
     readonly property int rowR: 14
-    readonly property int fsXS: 10
-    readonly property int fsS: 11
-    readonly property int fsM: 12
-    readonly property int fsL: 13
 
     readonly property int gap: 6
     readonly property int pad: 16
@@ -119,7 +128,7 @@ Singleton {
     readonly property color launchIconBorder: surfaceBorder
     readonly property color launchIconHoverBorder: surfaceBorderHover
     readonly property int launchTextGap: 10
-    readonly property int launchFallbackPx: 10
+    readonly property int launchFallbackPx: fs(10)
 
     readonly property int pwW: 68
     readonly property int pwH: 66
@@ -166,7 +175,7 @@ Singleton {
     readonly property int playGlyph: 14
     readonly property int barH: 4
     readonly property int micS: 12
-    readonly property int clockPx: 14
+    readonly property int clockPx: fs(14)
     readonly property int idleOffsetX: 0
     readonly property int idleOffsetY: 0
     readonly property int idleTopOffsetY: 0
@@ -250,9 +259,6 @@ Singleton {
     }
     readonly property int ease: Easing.OutCubic
 
-    readonly property int fsXXS: 9
-    readonly property int fsXL: 14
-    readonly property int fsXXL: 15
     readonly property int iconGrid: 24
     readonly property real iconStroke: 1.8
     readonly property real btnStroke: 2
@@ -317,6 +323,9 @@ Singleton {
     readonly property int mediaTimeH: 11
     readonly property int artR: 12
     readonly property bool mediaTimes: false
+    readonly property bool mediaScroll: false
+    readonly property int mediaScrollSpeed: 24
+    readonly property int mediaScrollHold: 1600
     readonly property real mediaPausedArt: 0.94
     readonly property int mediaArtDuration: 260
     readonly property color mediaArtBorderHover: surfaceBorderHover

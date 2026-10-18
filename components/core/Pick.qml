@@ -10,6 +10,7 @@ Fade {
     property real px: -1
     property real py: -1
     readonly property int dur: Theme.glide
+    readonly property int jump: Math.max(1, rows)
 
     Timer {
         id: release
@@ -62,11 +63,21 @@ Fade {
         if (e.isAutoRepeat)
             return true
         const k = e.key
+        const c = e.modifiers & Qt.ControlModifier
+        const s = e.modifiers & Qt.ShiftModifier
         const w = true
-        if (k === Qt.Key_Down || k === Qt.Key_J || k === Qt.Key_L || k === Qt.Key_Tab || k === Qt.Key_PageDown)
+        if (k === Qt.Key_Down || k === Qt.Key_J || k === Qt.Key_L || k === Qt.Key_Tab || c && k === Qt.Key_N)
             move(1, w)
-        else if (k === Qt.Key_Up || k === Qt.Key_K || k === Qt.Key_H || k === Qt.Key_Backtab || k === Qt.Key_PageUp)
+        else if (k === Qt.Key_Up || k === Qt.Key_K || k === Qt.Key_H || k === Qt.Key_Backtab || c && k === Qt.Key_P)
             move(-1, w)
+        else if (k === Qt.Key_PageDown)
+            move(jump, false)
+        else if (k === Qt.Key_PageUp)
+            move(-jump, false)
+        else if (k === Qt.Key_End || k === Qt.Key_G && s)
+            move(n, false)
+        else if (k === Qt.Key_Home || k === Qt.Key_G)
+            move(-n, false)
         else
             return false
         return true
