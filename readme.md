@@ -1,10 +1,4 @@
-# butterfly
-
 ## ipc
-
-```
-quickshell ipc call <target> <action>
-```
 
 | target | actions |
 | --- | --- |
@@ -21,9 +15,13 @@ quickshell ipc call <target> <action>
 | `battery` | `toggle` `status` |
 | `visualizer` | `toggle` `status` |
 
+```
+quickshell ipc call <target> <action>
+```
+
 ## dependencies
 
-| | |
+| for | needs |
 | --- | --- |
 | shell | `quickshell`, `hyprland` |
 | network | `nmcli` |
