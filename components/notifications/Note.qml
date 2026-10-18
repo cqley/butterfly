@@ -22,6 +22,7 @@ Fade {
     property bool battery: false
     property bool charging: false
     property bool net: false
+    property bool netOn: false
     property bool bluetooth: false
     property bool btConnected: false
     property real level: -1
@@ -65,6 +66,7 @@ Fade {
         net = !!n.system && n.kind === "net"
         bluetooth = !!n.system && n.kind === "bluetooth"
         charging = battery && !!n.charging
+        netOn = net && !!n.charging
         btConnected = bluetooth && !!n.charging
         level = n.system && isFinite(Number(n.level)) ? Number(n.level) : -1
         critical = n.urgency === NotificationUrgency.Critical
@@ -100,7 +102,7 @@ Fade {
         width: Theme.noteIcon
         height: Theme.noteIcon
         radius: Theme.noteIconR
-        color: root.critical ? Theme.red : root.net ? Theme.green : root.bluetooth && root.btConnected ? Theme.green : Theme.chip
+        color: root.critical ? Theme.red : root.netOn || root.btConnected ? Theme.green : Theme.chip
 
         StableImage {
             id: img
@@ -130,7 +132,7 @@ Fade {
         Sig {
             anchors.centerIn: parent
             visible: root.net
-            level: Theme.sigBars
+            level: root.netOn ? Theme.sigBars : 0
             scale: Theme.noteSigScale
         }
 

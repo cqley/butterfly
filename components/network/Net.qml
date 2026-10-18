@@ -26,8 +26,16 @@ Singleton {
     property bool askLocked: false
     property bool resolved: false
     property var order: []
+    property bool hw: true
+    property bool device: true
+    property bool wantPower: false
+    property bool probed: false
+
+    readonly property bool available: hw && device
 
     readonly property string title: {
+        if (!available)
+            return "no wifi"
         if (!enabled)
             return "wifi off"
         if (asking !== "")
@@ -51,10 +59,13 @@ Singleton {
         monitor.running = false
     }
 
+    Component.onCompleted: probe()
+
     onOpenChanged: if (open) {
         Modal.claim("net")
         if (!open)
             return
+        probe()
         asking = ""
         error = ""
         if (!busy) {
@@ -83,7 +94,7 @@ Singleton {
             finish(target)
         else if (watch && active !== "") {
             watch = false
-            Notifs.pushSystem("connected", active, false, "net")
+            Notifs.pushSystem("connected", active, true, "net")
         }
     }
 
@@ -102,7 +113,7 @@ Singleton {
         pending = ""
         phase = ""
         settle.restart()
-        Notifs.pushSystem("connected", name, false, "net")
+        Notifs.pushSystem("connected", name, true, "net")
         open = false
     }
 
@@ -130,22 +141,58 @@ Singleton {
             activeCon.running = true
     }
 
-    function toggleWifi() {
+    function probe() {
+        if (!devs.running)
+            devs.running = true
+    }
+
+    function setRadio(on) {
         if (toggling || busy)
             return
-        const next = enabled ? "off" : "on"
         toggling = true
-        enabled = next === "on"
-        watch = enabled
-        if (!enabled) {
+        enabled = on
+        watch = on
+        if (!on) {
             list = []
             order = []
             active = ""
             pending = ""
             phase = ""
         }
-        radioSet.command = ["nmcli", "radio", "wifi", next]
+        radioSet.command = ["nmcli", "radio", "wifi", on ? "on" : "off"]
         radioSet.running = true
+    }
+
+    function toggleWifi() {
+        if (!available)
+            return
+        setRadio(!enabled)
+    }
+
+    function requestPower() {
+        if (wantPower || toggling || busy)
+            return
+        wantPower = true
+        probed = false
+        powerGuard.restart()
+        probe()
+    }
+
+    function applyPower() {
+        if (!wantPower)
+            return
+        powerGuard.stop()
+        wantPower = false
+        if (!available) {
+            Notifs.pushSystem("wifi unavailable", hw ? "no wifi device" : "blocked by hardware", false, "net", true)
+            return
+        }
+        setRadio(!enabled)
+    }
+
+    function afterRadio() {
+        if (wantPower && probed)
+            applyPower()
     }
 
     function pick(item) {
@@ -286,33 +333,73 @@ Singleton {
         order = out.map(r => r.ssid)
         list = out
         active = cur
+        if (out.length > 0)
+            device = true
     }
 
     Process {
         id: radioSet
         onExited: code => {
             root.toggling = false
-            radio.running = true
-            activeCon.running = true
+            if (code !== 0) {
+                root.watch = false
+                Notifs.pushSystem(root.enabled ? "couldn't turn wifi on" : "couldn't turn wifi off", "", false, "net", true)
+            } else if (!root.open)
+                Notifs.pushSystem(root.enabled ? "wifi on" : "wifi off", "", root.enabled, "net")
+            root.refresh()
+        }
+    }
+
+    Process {
+        id: devs
+        command: ["nmcli", "-t", "-f", "TYPE", "device", "status"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.trim().split("\n")
+                let found = false
+                for (let i = 0; i < lines.length; i++)
+                    if (lines[i].trim() === "wifi")
+                        found = true
+                root.device = found
+                root.probed = true
+                if (root.wantPower && !radio.running)
+                    radio.running = true
+            }
+        }
+    }
+
+    Timer {
+        id: powerGuard
+        interval: Theme.netProbe
+        onTriggered: {
+            if (!root.probed) {
+                root.device = false
+                root.probed = true
+            }
+            root.applyPower()
         }
     }
 
     Process {
         id: radio
-        command: ["nmcli", "-t", "-f", "WIFI", "radio"]
+        command: ["nmcli", "-t", "-f", "WIFI-HW,WIFI", "radio"]
         stdout: StdioCollector {
             onStreamFinished: {
-                if (root.toggling)
-                    return
-                const t = text.trim().toLowerCase()
-                root.enabled = t === "enabled"
-                if (!root.enabled) {
-                    root.list = []
-                    root.active = ""
-                    root.activeConnection = ""
-                    root.pending = ""
-                    root.phase = ""
+                const p = root.fields(text.trim().toLowerCase())
+                if (p.length >= 2) {
+                    root.hw = p[0] === "enabled"
+                    if (!root.toggling) {
+                        root.enabled = p[1] === "enabled"
+                        if (!root.enabled) {
+                            root.list = []
+                            root.active = ""
+                            root.activeConnection = ""
+                            root.pending = ""
+                            root.phase = ""
+                        }
+                    }
                 }
+                root.afterRadio()
             }
         }
     }
@@ -413,7 +500,7 @@ Singleton {
                 root.phase = ""
                 root.refresh()
                 settle.restart()
-                Notifs.pushSystem("connected", name, false, "net")
+                Notifs.pushSystem("connected", name, true, "net")
                 root.open = false
                 return
             }
@@ -507,7 +594,10 @@ Singleton {
     IpcHandler {
         target: "network"
         function toggle(): void { root.open = !root.open }
+        function power(): void { root.requestPower() }
         function status(): string {
+            if (!root.available)
+                return "no wifi"
             if (!root.enabled)
                 return "wifi off"
             if (root.phase !== "")

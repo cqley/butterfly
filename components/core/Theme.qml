@@ -369,6 +369,9 @@ Singleton {
     readonly property int netPoll: 4000
     readonly property int netRescanWait: 2500
     readonly property int netMonitorRestart: 2000
+    readonly property int netProbe: 2000
+    readonly property int btBatteryWait: 1200
+    readonly property int btPowerSettle: 4000
 
     readonly property int brightW: 208
     readonly property int brightPad: 14

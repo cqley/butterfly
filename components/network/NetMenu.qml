@@ -130,7 +130,7 @@ Pick {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Net.title
                 font.weight: Font.DemiBold
-                color: !Net.enabled ? Theme.red : Net.phase !== "" ? Theme.accent : Theme.fg
+                color: Net.phase !== "" ? Theme.accent : !Net.available || !Net.enabled ? Theme.red : Theme.fg
                 opacity: pulse.running ? Theme.dimMuted + (1 - Theme.dimMuted) * pulse.val : 1
 
 
@@ -181,7 +181,7 @@ Pick {
                 height: Theme.netToggleH
                 radius: height / 2
                 color: Net.enabled ? Theme.accent : Theme.tile
-                opacity: Net.busy ? Theme.dimMid : 1
+                opacity: !Net.available || Net.busy || Net.toggling ? Theme.dimMid : 1
                 transformOrigin: Item.Center
                 scale: toggleArea.pressed ? Theme.feedbackPressScale : toggleArea.containsMouse ? Theme.feedbackHoverScale : 1
                 antialiasing: true
@@ -220,7 +220,7 @@ Pick {
                 MouseArea {
                     id: toggleArea
                     anchors.fill: parent
-                    enabled: !Net.busy
+                    enabled: Net.available && !Net.busy && !Net.toggling
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Net.toggleWifi()
@@ -230,28 +230,23 @@ Pick {
 
         Item {
             width: parent.width
-            height: list.height
-            visible: Net.enabled && root.n > 0
+            height: Math.min(root.n, Theme.netRows) * Theme.netRowH
+            clip: true
+            visible: Net.available && Net.enabled && root.n > 0
 
-            ListView {
+            ScriptModel {
+                id: netModel
+                values: root.items
+                objectProp: "ssid"
+            }
+
+            Item {
                 id: list
                 width: parent.width
-                height: Math.min(root.n, Theme.netRows) * Theme.netRowH
-                clip: true
-                interactive: false
-                ScriptModel {
-                    id: netModel
-                    values: root.items
-                    objectProp: "ssid"
-                }
+                height: root.n * Theme.netRowH
+                y: -root.start * Theme.netRowH
 
-                model: netModel
-                cacheBuffer: Theme.netRowH * Theme.netRows * 2
-                reuseItems: true
-                contentY: root.start * Theme.netRowH
-                highlightFollowsCurrentItem: false
-
-                Behavior on contentY {
+                Behavior on y {
                     enabled: !root.snap
                     NumberAnimation {
                         duration: root.dur
@@ -259,7 +254,7 @@ Pick {
                     }
                 }
 
-                highlight: Rectangle {
+                Rectangle {
                     x: Theme.selInset
                     y: root.sel * Theme.netRowH + Theme.selGap / 2
                     width: list.width - Theme.selInset * 2
@@ -284,107 +279,112 @@ Pick {
                     }
                 }
 
-                delegate: Item {
-                    id: row
-                    required property var modelData
-                    required property int index
-                    readonly property bool on: !!modelData && !!modelData.active
-                    readonly property bool aimed: !!modelData && Net.pending === modelData.ssid
-                    readonly property bool busy: aimed && Net.phase !== ""
-                    readonly property string status: root.statusOf(modelData)
-                    readonly property real sig: modelData ? modelData.signal : 0
-                    readonly property bool locked: !!modelData && !!modelData.locked
-                    readonly property bool selected: !root.ask && root.sel === row.index
+                Repeater {
+                    model: netModel
 
-                    width: list.width
-                    height: Theme.netRowH
-                    opacity: root.ask && Net.asking !== (modelData ? modelData.ssid : "") ? Theme.dimHint : 1
+                    delegate: Item {
+                        id: row
+                        required property var modelData
+                        required property int index
+                        readonly property bool on: !!modelData && !!modelData.active
+                        readonly property bool aimed: !!modelData && Net.pending === modelData.ssid
+                        readonly property bool busy: aimed && Net.phase !== ""
+                        readonly property string status: root.statusOf(modelData)
+                        readonly property real sig: modelData ? modelData.signal : 0
+                        readonly property bool locked: !!modelData && !!modelData.locked
+                        readonly property bool selected: !root.ask && root.sel === row.index
 
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Theme.glide
-                            easing.type: Theme.ease
-                        }
-                    }
+                        y: row.index * Theme.netRowH
+                        width: list.width
+                        height: Theme.netRowH
+                        opacity: root.ask && Net.asking !== (modelData ? modelData.ssid : "") ? Theme.dimHint : 1
 
-                    Txt {
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.rowX
-                        anchors.right: meta.left
-                        anchors.rightMargin: Theme.rowGap
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: Theme.rowTextY
-                        text: row.modelData ? row.modelData.ssid : ""
-                        elide: Text.ElideRight
-                        font.pixelSize: Theme.fsL
-                        font.weight: row.on || row.aimed ? Font.DemiBold : Font.Normal
-                        color: row.on || row.aimed || row.selected ? Theme.accent : Theme.fg
-
-                        Behavior on color {
-                            ColorAnimation {
+                        Behavior on opacity {
+                            NumberAnimation {
                                 duration: Theme.glide
                                 easing.type: Theme.ease
                             }
                         }
-                    }
-
-                    Row {
-                        id: meta
-                        anchors.right: parent.right
-                        anchors.rightMargin: Theme.netMetaR
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Theme.rowGap
 
                         Txt {
+                            anchors.left: parent.left
+                            anchors.leftMargin: Theme.rowX
+                            anchors.right: meta.left
+                            anchors.rightMargin: Theme.rowGap
                             anchors.verticalCenter: parent.verticalCenter
-                            text: row.status
-                            font.pixelSize: Theme.fsS
-                            color: Theme.accent
-                            opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : 0
-                            visible: text !== ""
-                        }
+                            anchors.verticalCenterOffset: Theme.rowTextY
+                            text: row.modelData ? row.modelData.ssid : ""
+                            elide: Text.ElideRight
+                            font.pixelSize: Theme.fsL
+                            font.weight: row.on || row.aimed ? Font.DemiBold : Font.Normal
+                            color: row.on || row.aimed || row.selected ? Theme.accent : Theme.fg
 
-                        Lock {
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: row.locked && !row.on && row.status === ""
-                            opacity: Theme.dimMuted
-                        }
-
-                        Sig {
-                            anchors.verticalCenter: parent.verticalCenter
-                            level: Math.round(row.sig * Theme.sigBars)
-                            tint: row.on || row.aimed ? Theme.accent : Theme.fg
-                            opacity: row.busy ? Theme.dimHint : 1
-
-                            Behavior on tint {
+                            Behavior on color {
                                 ColorAnimation {
                                     duration: Theme.glide
                                     easing.type: Theme.ease
                                 }
                             }
+                        }
 
-                            Behavior on opacity {
-                                NumberAnimation {
-                                    duration: Theme.glide
-                                    easing.type: Theme.ease
+                        Row {
+                            id: meta
+                            anchors.right: parent.right
+                            anchors.rightMargin: Theme.netMetaR
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: Theme.rowGap
+
+                            Txt {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: row.status
+                                font.pixelSize: Theme.fsS
+                                color: Theme.accent
+                                opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : 0
+                                visible: text !== ""
+                            }
+
+                            Lock {
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: row.locked && !row.on && row.status === ""
+                                opacity: Theme.dimMuted
+                            }
+
+                            Sig {
+                                anchors.verticalCenter: parent.verticalCenter
+                                level: Math.round(row.sig * Theme.sigBars)
+                                tint: row.on || row.aimed ? Theme.accent : Theme.fg
+                                opacity: row.busy ? Theme.dimHint : 1
+
+                                Behavior on tint {
+                                    ColorAnimation {
+                                        duration: Theme.glide
+                                        easing.type: Theme.ease
+                                    }
+                                }
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: Theme.glide
+                                        easing.type: Theme.ease
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onPositionChanged: m => {
-                            if (!root.ask)
-                                root.aim(mapToItem(null, m.x, m.y), row.index)
-                        }
-                        onClicked: {
-                            if (root.ask)
-                                Net.cancelAsk()
-                            root.sel = row.index
-                            root.run()
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onPositionChanged: m => {
+                                if (!root.ask)
+                                    root.aim(mapToItem(null, m.x, m.y), row.index)
+                            }
+                            onClicked: {
+                                if (root.ask)
+                                    Net.cancelAsk()
+                                root.sel = row.index
+                                root.run()
+                            }
                         }
                     }
                 }
@@ -394,7 +394,7 @@ Pick {
         Item {
             width: parent.width
             height: empty.implicitHeight + Theme.netEmptyPad
-            visible: Net.enabled && root.n === 0
+            visible: Net.available && Net.enabled && root.n === 0
 
             Txt {
                 id: empty
