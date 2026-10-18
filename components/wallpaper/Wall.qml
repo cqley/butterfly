@@ -84,6 +84,11 @@ Fade {
         go(cursor + d, false)
     }
 
+    function jump(i) {
+        if (!n) return
+        go(Math.max(0, Math.min(n - 1, i)), false)
+    }
+
     function apply() {
         if (!n) return
         Quickshell.execDetached(Theme.wallCmd.concat([files[sel].path]))
@@ -119,10 +124,15 @@ Fade {
             return
         }
         const k = e.key
+        const s = e.modifiers & Qt.ShiftModifier
         if (k === Qt.Key_Escape) Wallpaper.open = false
         else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) root.apply()
-        else if (k === Qt.Key_Right || k === Qt.Key_Down || k === Qt.Key_L || k === Qt.Key_Tab || k === Qt.Key_PageDown) root.move(1)
-        else if (k === Qt.Key_Left || k === Qt.Key_Up || k === Qt.Key_H || k === Qt.Key_Backtab || k === Qt.Key_PageUp) root.move(-1)
+        else if (k === Qt.Key_Right || k === Qt.Key_Down || k === Qt.Key_L || k === Qt.Key_J || k === Qt.Key_Tab) root.move(1)
+        else if (k === Qt.Key_Left || k === Qt.Key_Up || k === Qt.Key_H || k === Qt.Key_K || k === Qt.Key_Backtab) root.move(-1)
+        else if (k === Qt.Key_PageDown) root.move(Theme.wallN)
+        else if (k === Qt.Key_PageUp) root.move(-Theme.wallN)
+        else if (k === Qt.Key_End || k === Qt.Key_G && s) root.jump(root.n - 1)
+        else if (k === Qt.Key_Home || k === Qt.Key_G) root.jump(0)
         else return
         e.accepted = true
     }
