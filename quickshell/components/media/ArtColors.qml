@@ -13,7 +13,10 @@ Item {
             b = Theme.visFallback
             return
         }
-        cv.loadImage(source)
+        if (cv.isImageLoaded(source))
+            cv.requestPaint()
+        else
+            cv.loadImage(source)
     }
 
     Canvas {
