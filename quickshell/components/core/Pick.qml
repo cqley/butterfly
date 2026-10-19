@@ -10,7 +10,6 @@ Fade {
     property real px: -1
     property real py: -1
     readonly property int dur: Theme.glide
-    readonly property int jump: Math.max(1, rows)
 
     Timer {
         id: release
@@ -27,7 +26,7 @@ Fade {
         if (!n)
             return
         const t = wrap ? ((sel + d) % n + n) % n : Math.max(0, Math.min(n - 1, sel + d))
-        snap = Math.abs(t - sel) > rows
+        snap = Math.abs(t - sel) !== 1
         sel = t
         if (snap)
             release.restart()
@@ -72,9 +71,9 @@ Fade {
         else if (k === Qt.Key_Up || k === Qt.Key_K || k === Qt.Key_H || k === Qt.Key_Backtab || c && k === Qt.Key_P)
             move(-1, w)
         else if (k === Qt.Key_PageDown)
-            move(jump, false)
+            move(1, false)
         else if (k === Qt.Key_PageUp)
-            move(-jump, false)
+            move(-1, false)
         else if (k === Qt.Key_End || k === Qt.Key_G && s)
             move(n, false)
         else if (k === Qt.Key_Home || k === Qt.Key_G)

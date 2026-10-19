@@ -14,6 +14,8 @@
 | `mic` | `toggle` `status` |
 | `battery` | `toggle` `status` |
 | `visualizer` | `toggle` `status` |
+| `notifications` | `toggle` `clear` `status` |
+| `dnd` | `toggle` `status` |
 
 ```
 quickshell ipc call <target> <action>

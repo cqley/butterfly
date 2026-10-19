@@ -2,6 +2,7 @@ pragma Singleton
 import "../core"
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Notifications
 
 Singleton {
@@ -9,6 +10,137 @@ Singleton {
     property var current: null
     property var queue: []
     property bool hovered: false
+    property bool open: false
+    property bool dnd: false
+    property var history: []
+    property int seq: 0
+
+    onOpenChanged: if (open) Modal.claim("notifs")
+
+    function plain(text) {
+        return String(text || "")
+            .replace(/^\s*<a[^>]*>.*?<\/a>\s*/i, "")
+            .replace(/<[^>]*>/g, "")
+            .replace(/\s+/g, " ")
+            .trim()
+    }
+
+    function fileUrl(value) {
+        const v = String(value || "").trim()
+        if (v === "")
+            return ""
+        if (/^[a-z][a-z0-9+.-]*:/i.test(v))
+            return v
+        if (v.startsWith("/"))
+            return Theme.url(v)
+        const hit = Quickshell.iconPath(v, true)
+        if (!hit)
+            return ""
+        if (hit.startsWith("/") || /^[a-z][a-z0-9+.-]*:/i.test(hit))
+            return Theme.url(hit)
+        return hit
+    }
+
+    function snap(n) {
+        const own = !!n.system
+        const name = String(n.appName || "").trim()
+        const raw = own ? "" : String(n.image || "")
+        return {
+            key: "",
+            nid: own ? -1 : n.id,
+            system: own,
+            kind: own ? String(n.kind || "") : "",
+            summary: plain(n.summary),
+            body: plain(n.body),
+            app: own ? "system" : name.toLowerCase(),
+            letter: ((name || "?")[0] || "?").toLowerCase(),
+            picture: own || /^image:\/\/qsimage\//i.test(raw) ? "" : fileUrl(raw),
+            mark: own ? "" : (fileUrl(n.appIcon) || fileUrl(n.desktopEntry)),
+            critical: n.urgency === NotificationUrgency.Critical,
+            on: !!n.charging,
+            level: own && isFinite(Number(n.level)) ? Number(n.level) : -1,
+            time: Date.now()
+        }
+    }
+
+    function echoes(a, b) {
+        return a && b && a.system && b.system && a.kind === b.kind && a.summary === b.summary && a.body === b.body
+    }
+
+    function remember(n) {
+        if (!n)
+            return
+        const e = snap(n)
+        const h = history.slice()
+        if (echoes(h[0], e)) {
+            e.key = h[0].key
+            h[0] = e
+            history = h
+            return
+        }
+        const i = e.system ? -1 : h.findIndex(x => !x.system && x.nid === e.nid)
+        if (i >= 0) {
+            e.key = h[i].key
+            e.time = h[i].time
+            h[i] = e
+        } else {
+            e.key = "h" + (++seq)
+            h.unshift(e)
+        }
+        history = h.slice(0, Theme.notificationHistoryMax)
+    }
+
+    function forget(key) {
+        const e = history.find(x => x.key === key)
+        history = history.filter(x => x.key !== key)
+        if (!e)
+            return
+        if (e.system) {
+            if (echoes(current, e))
+                next()
+            queue = queue.filter(x => !echoes(x, e))
+            return
+        }
+        if (current && !current.system && current.id === e.nid) {
+            dismiss()
+            return
+        }
+        const hit = queue.find(x => x && !x.system && x.id === e.nid)
+        if (!hit)
+            return
+        queue = queue.filter(x => x !== hit)
+        hit.dismiss()
+    }
+
+    function flush(expire) {
+        for (const x of queue) {
+            if (!x || x.system)
+                continue
+            if (expire)
+                x.expire()
+            else
+                x.dismiss()
+        }
+        queue = []
+        if (!current)
+            return
+        if (expire)
+            drop()
+        else
+            dismiss()
+    }
+
+    function clear() {
+        history = []
+        flush(false)
+    }
+
+    function toggleDnd() {
+        dnd = !dnd
+        if (dnd)
+            flush(true)
+        pushSystem(dnd ? "do not disturb on" : "do not disturb off", "", dnd, "dnd")
+    }
 
     onHoveredChanged: if (current) {
         if (hovered)
@@ -55,6 +187,7 @@ Singleton {
     }
 
     function touched() {
+        remember(current)
         if (current && !hovered)
             armHold(current)
     }
@@ -67,6 +200,12 @@ Singleton {
         if (!n)
             return
         n.tracked = true
+        remember(n)
+
+        if (dnd) {
+            n.expire()
+            return
+        }
 
         if (sameId(current, n)) {
             current = n
@@ -89,11 +228,7 @@ Singleton {
     }
 
     function pushSystem(summary, body, charging, kind = "battery", failed = false, level = -1) {
-        const same = n => n && n.system && n.kind === kind && n.summary === summary && (kind === "battery" || n.body === body)
-        if (same(current) || queue.some(same))
-            return
-
-        queue = trim([...queue, {
+        const item = {
             system: true,
             kind: kind,
             summary: summary,
@@ -104,7 +239,20 @@ Singleton {
             urgency: failed ? NotificationUrgency.Critical : NotificationUrgency.Normal,
             charging: charging,
             level: level
-        }])
+        }
+        const mode = kind === "dnd"
+        if (!mode)
+            remember(item)
+        if (dnd && !mode)
+            return
+        if (open && mode)
+            return
+
+        const same = n => n && n.system && n.kind === kind && n.summary === summary && (kind === "battery" || n.body === body)
+        if (same(current) || queue.some(same))
+            return
+
+        queue = trim([...queue, item])
         if (current === null && !gap.running)
             pump()
     }
@@ -183,5 +331,20 @@ Singleton {
         imageSupported: true
         keepOnReload: false
         onNotification: n => root.push(n)
+    }
+
+    IpcHandler {
+        target: "notifications"
+        function toggle(): void { root.open = !root.open }
+        function clear(): void { root.clear() }
+        function status(): string {
+            return (root.open ? "open" : "closed") + " · " + (root.dnd ? "dnd" : "on") + " · " + root.history.length
+        }
+    }
+
+    IpcHandler {
+        target: "dnd"
+        function toggle(): void { root.toggleDnd() }
+        function status(): string { return root.dnd ? "on" : "off" }
     }
 }
