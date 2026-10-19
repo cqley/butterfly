@@ -238,6 +238,14 @@ Singleton {
 
     readonly property int speed: 300
     readonly property int fade: 60
+    readonly property int rise: speed
+    readonly property int fall: fade
+    readonly property int swapRise: rise
+    readonly property int idleRise: speed
+    readonly property int idleFall: fade
+    readonly property int idleWait: 0
+    readonly property bool holdPill: false
+    readonly property bool blockSwap: false
     readonly property int glide: 240
     readonly property int fast: 60
     readonly property int feedbackDuration: 120
