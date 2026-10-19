@@ -5,15 +5,22 @@ import QtQuick.Shapes
 Item {
     id: root
     property string path
-    property bool solid: false
+    property var player: null
+    property bool can: false
+    property bool seen: false
+    property bool primary: false
     property int dir: 0
     property int dx: 0
     property string shown: ""
     property string prev: ""
     property real morph: 1
     property real bump: 0
-    readonly property color ink: solid ? Theme.bg : Theme.fg
+    readonly property bool live: player !== null && (can || seen)
+    readonly property real glyph: primary ? Theme.playGlyph : Theme.glyphS
     signal clicked
+
+    onCanChanged: if (can) seen = true
+    onPlayerChanged: seen = false
 
     onPathChanged: {
         if (shown === "") {
@@ -26,11 +33,11 @@ Item {
         morphAnim.restart()
     }
 
-    width: solid ? Theme.playS : Theme.ctlS
+    width: primary ? Theme.playS : Theme.ctlS
     height: width
     transformOrigin: Item.Center
-    scale: !enabled ? 1 : area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1
-    opacity: !enabled ? Theme.btnDisabled : solid || area.containsMouse ? 1 : Theme.btnIdle
+    scale: !live ? 1 : area.pressed ? Theme.btnPressScale : area.containsMouse ? Theme.btnHoverScale : 1
+    opacity: live ? 1 : Theme.btnDisabled
 
     Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
     Behavior on opacity { NumberAnimation { duration: Theme.fade; easing.type: Theme.ease } }
@@ -65,28 +72,6 @@ Item {
         }
     }
 
-    Rectangle {
-        anchors.fill: parent
-        radius: height / 2
-        color: Theme.accent
-        visible: root.solid
-        opacity: area.pressed ? Theme.btnPressed : 1
-        antialiasing: true
-
-        Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
-    }
-
-    Rectangle {
-        anchors.fill: parent
-        anchors.margins: Theme.ctlFillInset
-        radius: height / 2
-        color: Theme.fg
-        opacity: !root.solid && area.containsMouse ? (area.pressed ? Theme.feedbackPressFill : Theme.feedbackHoverFill) : 0
-        antialiasing: true
-
-        Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
-    }
-
     Item {
         anchors.fill: parent
 
@@ -97,15 +82,16 @@ Item {
             y: Math.round((root.height - height) / 2)
             width: Theme.iconGrid
             height: Theme.iconGrid
+            scale: root.glyph / Theme.iconGrid
             visible: root.morph < 1
             opacity: 1 - root.morph
-            scale: (root.solid ? Theme.playGlyph : Theme.glyphS) / Theme.iconGrid * (1 + (1 - Theme.mediaMorphScale) * (1 - root.morph))
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
                 strokeWidth: Theme.btnStroke
-                strokeColor: root.ink
-                fillColor: root.solid ? root.ink : "transparent"
+                strokeColor: Theme.fg
+                fillColor: Theme.fg
+                fillRule: ShapePath.WindingFill
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
 
@@ -118,14 +104,15 @@ Item {
             y: Math.round((root.height - height) / 2)
             width: Theme.iconGrid
             height: Theme.iconGrid
+            scale: root.glyph / Theme.iconGrid
             opacity: root.morph
-            scale: (root.solid ? Theme.playGlyph : Theme.glyphS) / Theme.iconGrid * (Theme.mediaMorphScale + (1 - Theme.mediaMorphScale) * root.morph)
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
                 strokeWidth: Theme.btnStroke
-                strokeColor: root.ink
-                fillColor: root.solid ? root.ink : "transparent"
+                strokeColor: Theme.fg
+                fillColor: Theme.fg
+                fillRule: ShapePath.WindingFill
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
 
@@ -137,6 +124,7 @@ Item {
     MouseArea {
         id: area
         anchors.fill: parent
+        enabled: root.live
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: {

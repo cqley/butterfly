@@ -166,16 +166,15 @@ Singleton {
     readonly property int authBtnH: 38
     readonly property int authIcon: 36
 
-    readonly property int mediaPillW: 300
+    readonly property int mediaPillW: 324
     readonly property int mediaW: mediaPillW - 2 * pad
-    readonly property int mediaGap: 10
-    readonly property int artS: 44
-    readonly property int ctlS: 26
-    readonly property int ctlFillInset: 2
-    readonly property int playS: 32
-    readonly property int glyphS: 14
-    readonly property int playGlyph: 14
-    readonly property int barH: 4
+    readonly property int mediaGap: 12
+    readonly property int artS: 88
+    readonly property int ctlS: 30
+    readonly property int playS: 30
+    readonly property int glyphS: 20
+    readonly property int playGlyph: 23
+    readonly property int barH: 5
     readonly property int micS: 12
     readonly property int clockPx: fs(14)
     readonly property int idleOffsetX: 0
@@ -244,8 +243,6 @@ Singleton {
     readonly property int feedbackDuration: 120
     readonly property real feedbackHoverScale: 1.03
     readonly property real feedbackPressScale: 0.97
-    readonly property real feedbackHoverFill: 0.06
-    readonly property real feedbackPressFill: 0.1
     readonly property real feedbackFocusBorder: 1
     readonly property int dwell: 5000
     readonly property int dwellCritical: 10000
@@ -263,7 +260,7 @@ Singleton {
 
     readonly property int iconGrid: 24
     readonly property real iconStroke: 1.8
-    readonly property real btnStroke: 2
+    readonly property real btnStroke: 5
     readonly property real dimHint: 0.35
     readonly property real dimGhost: 0.4
     readonly property real dimEmpty: 0.45
@@ -315,32 +312,32 @@ Singleton {
     readonly property int calTitleX: 4
     readonly property int calHeadH: 16
 
-    readonly property int mediaColGap: 9
     readonly property int mediaLenCap: 86400
     readonly property int mediaTextGap: 2
-    readonly property int mediaCtlGap: 2
+    readonly property int mediaCtlGap: 15
     readonly property int mediaTitleH: 16
     readonly property int mediaArtistH: 13
-    readonly property int mediaTimeGap: 4
+    readonly property int mediaTimeGap: 5
     readonly property int mediaTimeH: 11
-    readonly property int artR: 12
+    readonly property string mediaRemainChar: "−"
+    readonly property int artR: 18
+    readonly property int artGlyph: 32
     readonly property bool mediaTimes: false
     readonly property bool mediaScroll: false
     readonly property int mediaScrollSpeed: 24
     readonly property int mediaScrollHold: 1600
-    readonly property real mediaPausedArt: 0.94
+    readonly property real mediaPausedArt: 0.97
     readonly property int mediaArtDuration: 260
     readonly property color mediaArtBorderHover: surfaceBorderHover
     readonly property int mediaMorph: 150
-    readonly property real mediaMorphScale: 0.7
     readonly property int mediaNudge: 2
     readonly property int mediaNudgeDuration: 110
-    readonly property int playNudge: 1
+    readonly property int playNudge: 0
     readonly property int barHit: 7
     readonly property color mediaTrack: tile
     readonly property real btnDisabled: 0.3
-    readonly property real btnIdle: 0.75
-    readonly property real btnPressed: 0.85
+    readonly property real btnHoverScale: 1.06
+    readonly property real btnPressScale: 0.94
 
     readonly property int sigBars: 4
     readonly property int sigGap: 2
