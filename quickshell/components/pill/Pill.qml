@@ -18,6 +18,23 @@ import "../wallpaper"
 
 Item {
     id: root
+
+    Timer {
+        id: grow
+        interval: root.panelRise
+        onTriggered: Modal.flush()
+    }
+
+    Timer {
+        id: hold
+        interval: Theme.fall
+    }
+
+    Timer {
+        id: wake
+        interval: Theme.idleWait
+    }
+
     property bool full: false
     readonly property bool hot: hover.hovered
     readonly property bool modal: Modal.any
@@ -29,6 +46,14 @@ Item {
     readonly property bool resizing:
         Math.abs(root.wAnim - root.targetW) > Theme.settleEps ||
         Math.abs(root.hAnim - root.targetH) > Theme.settleEps
+    readonly property string face: Modal.any ? Modal.which : root.alert ? "note" : "idle"
+    readonly property bool moving: hold.running || root.resizing
+    readonly property bool panelReady: !root.moving
+    readonly property int panelRise: root.swapped ? Theme.swapRise : Theme.rise
+    property bool wasMenu: false
+    property bool swapped: false
+    property real holdW: Theme.w
+    property real holdH: Theme.h
     property bool media: false
     property real wAnim: Theme.w
     property real hAnim: Theme.h
@@ -36,6 +61,24 @@ Item {
     onModalChanged: full = false
     onAlertChanged: if (!alert) full = false
     onHotChanged: sync()
+    onFaceChanged: {
+        swapped = root.wasMenu && Modal.any
+        wasMenu = Modal.any
+    }
+    onPanelReadyChanged: if (Theme.blockSwap && root.panelReady && Modal.any) grow.restart()
+    onCalmChanged: if (calm && Theme.idleWait > 0) wake.restart()
+    onWantWChanged: root.brake()
+    onWantHChanged: root.brake()
+
+    function brake() {
+        if (!Theme.holdPill || hold.running || root.resizing)
+            return
+        if (root.wantW < root.wAnim - Theme.settleEps || root.wantH < root.hAnim - Theme.settleEps) {
+            holdW = root.wAnim
+            holdH = root.hAnim
+            hold.restart()
+        }
+    }
     Component.onCompleted: {
         sync()
         Modal.register("launcher", Launcher)
@@ -58,6 +101,12 @@ Item {
         target: Media
         function onPlayingChanged() { root.sync() }
         function onPlayerChanged() { root.sync() }
+    }
+
+    Binding {
+        target: Modal
+        property: "busy"
+        value: grow.running
     }
 
     anchors.fill: parent
@@ -90,7 +139,10 @@ Item {
         Theme.w,
         clockSlot.width + battery.targetWidth + mic.targetWidth + record.targetWidth + Theme.pad
     )
-    readonly property real targetW: Polkit.open ? Theme.authW
+    readonly property real targetW: hold.running ? root.holdW : root.wantW
+    readonly property real targetH: hold.running ? root.holdH : root.wantH
+
+    readonly property real wantW: Polkit.open ? Theme.authW
         : root.alert ? (root.hot ? Theme.noteOpenW : Theme.noteW)
         : Launcher.open ? Theme.launchW
         : Power.open ? Theme.powerW
@@ -104,7 +156,7 @@ Item {
         : root.hot ? (root.media && !root.full ? Theme.mediaPillW : Theme.openW)
         : root.calm ? root.idleTargetW : Theme.w
 
-    readonly property real targetH: Polkit.open ? auth.y + auth.height + Theme.authPad
+    readonly property real wantH: Polkit.open ? auth.y + auth.height + Theme.authPad
         : root.alert ? (root.hot ? note.wanted : Theme.noteH)
         : Launcher.open ? launch.y + launch.height + Theme.lpad
         : Power.open ? power.y + power.height + Theme.pwPad
@@ -182,7 +234,8 @@ Item {
             y: Theme.body
             now: clock.date
             shown: root.hot && !root.full && root.calm && !root.media
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         MediaPanel {
@@ -190,7 +243,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.body
             shown: root.hot && !root.full && root.calm && root.media
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         Calendar {
@@ -199,7 +253,8 @@ Item {
             y: Theme.pad
             now: clock.date
             shown: root.hot && root.full && root.calm
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         Note {
@@ -210,7 +265,8 @@ Item {
             n: Notifs.current
             expanded: root.hot
             shown: root.alert
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         Launch {
@@ -218,7 +274,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.lpad
             shown: Launcher.open
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         PowerMenu {
@@ -226,7 +283,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.pwPad
             shown: Power.open
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         Wall {
@@ -234,7 +292,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.wallPad
             shown: Wallpaper.open
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         RecordMenu {
@@ -242,7 +301,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.recordPad
             shown: Record.open
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         NetMenu {
@@ -250,7 +310,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.netPad
             shown: Net.open
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         BrightnessMenu {
@@ -258,7 +319,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.brightPad
             shown: Brightness.open
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         AudioMenu {
@@ -266,7 +328,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.audioPad
             shown: Audio.open
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         BtMenu {
@@ -274,7 +337,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.netPad
             shown: Bt.open
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
 
         Center {
@@ -282,7 +346,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.centerPad
             shown: Notifs.open
-            ready: !root.resizing && center.settled
+            ready: root.panelReady && center.settled
+            rise: root.panelRise
         }
 
         Auth {
@@ -290,7 +355,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.authPad
             shown: Polkit.open
-            ready: !root.resizing
+            ready: root.panelReady
+            rise: root.panelRise
         }
     }
 
@@ -303,6 +369,9 @@ Item {
         width: row.width
         height: Theme.h
         shown: root.calm
+        ready: !wake.running
+        rise: Theme.idleRise
+        fall: Theme.idleFall
         scale: active ? 1 : Theme.slotScale
         z: 2
 
@@ -368,7 +437,8 @@ Item {
                     width: vbars.width
                     height: parent.height
                     shown: root.showVisualizer
-                    ready: !root.resizing
+                    ready: root.panelReady
+                    rise: root.panelRise
                     scale: active ? 1 : Theme.slotScale
 
                     Behavior on scale {

@@ -4,6 +4,8 @@ Item {
     id: root
     property bool shown
     property bool ready: true
+    property int rise: Theme.rise
+    property int fall: Theme.fall
     readonly property bool active: root.shown && root.ready
 
     opacity: 0
@@ -20,7 +22,7 @@ Item {
             to: "on"
             NumberAnimation {
                 property: "opacity"
-                duration: Theme.speed
+                duration: root.rise
                 easing.type: Theme.ease
             }
         },
@@ -28,7 +30,7 @@ Item {
             from: "on"
             NumberAnimation {
                 property: "opacity"
-                duration: Theme.fade
+                duration: root.fall
                 easing.type: Theme.ease
             }
         }
