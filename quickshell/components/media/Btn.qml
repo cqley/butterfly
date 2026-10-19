@@ -37,10 +37,8 @@ Item {
     height: width
     transformOrigin: Item.Center
     scale: !live ? 1 : area.pressed ? Theme.btnPressScale : area.containsMouse ? Theme.btnHoverScale : 1
-    opacity: live ? 1 : Theme.btnDisabled
 
     Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
-    Behavior on opacity { NumberAnimation { duration: Theme.fade; easing.type: Theme.ease } }
 
     NumberAnimation {
         id: morphAnim
@@ -74,6 +72,9 @@ Item {
 
     Item {
         anchors.fill: parent
+        layer.enabled: true
+        layer.smooth: true
+        layer.textureSize: Qt.size(root.width * 2, root.height * 2)
 
         transform: Translate { x: root.bump + root.dx }
 

@@ -317,6 +317,7 @@ Singleton {
     readonly property int mediaCtlGap: 15
     readonly property int mediaTitleH: 16
     readonly property int mediaArtistH: 13
+    readonly property int mediaTrackSettle: 400
     readonly property int mediaTimeGap: 5
     readonly property int mediaTimeH: 11
     readonly property string mediaRemainChar: "−"

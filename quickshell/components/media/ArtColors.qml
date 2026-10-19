@@ -34,19 +34,24 @@ Item {
             ctx.drawImage(root.source, 0, 0, width, height)
             const d = ctx.getImageData(0, 0, width, height).data
             let sr = 0, sg = 0, sb = 0, n = 0
-            let br = 0, bg = 0, bb = 0, bestSat = -1
+            let br = 0, bg = 0, bb = 0, best = -1
             for (let i = 0; i < d.length; i += 4) {
+                if (d[i + 3] === 0)
+                    continue
                 const r = d[i], g = d[i + 1], bl = d[i + 2]
                 sr += r; sg += g; sb += bl; n++
                 const mx = Math.max(r, g, bl), mn = Math.min(r, g, bl)
-                const sat = mx === 0 ? 0 : (mx - mn) / mx
-                if (sat > bestSat) {
-                    bestSat = sat
+                const score = mx === 0 ? 0 : (mx - mn) / 255
+                if (score > best) {
+                    best = score
                     br = r; bg = g; bb = bl
                 }
             }
-            if (n === 0)
+            if (n === 0) {
+                root.a = Theme.visFallback
+                root.b = Theme.visFallback
                 return
+            }
             root.a = Qt.rgba(sr / n / 255, sg / n / 255, sb / n / 255, 1)
             root.b = Qt.rgba(br / 255, bg / 255, bb / 255, 1)
         }
