@@ -1,11 +1,7 @@
 import "../core"
-import "../network"
-import "../status"
 import QtQuick
 import QtQuick.Shapes
-import Quickshell
 import Quickshell.Services.Notifications
-import Quickshell.Widgets
 
 Fade {
     id: root
@@ -15,71 +11,57 @@ Fade {
     property string body: ""
     property string appLabel: ""
     property string letter: "?"
-    property string source: ""
+    property string kind: ""
     property string picture: ""
     property string mark: ""
     property bool critical: false
-    property bool battery: false
+    readonly property bool battery: root.kind === "battery"
+    readonly property bool net: root.kind === "net"
+    readonly property bool bluetooth: root.kind === "bluetooth"
+    readonly property bool dnd: root.kind === "dnd"
     property bool charging: false
-    property bool net: false
     property bool netOn: false
-    property bool bluetooth: false
     property bool btConnected: false
+    property bool dndOn: false
     property real level: -1
     readonly property bool hasLevel: bluetooth && level >= 0
     readonly property real wanted: Math.max(Theme.noteH, more.y + more.height + Theme.noteTop)
     readonly property int sideReserve: hasLevel ? Theme.noteBtBadge + Theme.noteTextGap : 0
 
-    anchors.fill: parent
+    width: root.expanded ? Theme.noteOpenW : Theme.noteW
+    height: root.expanded ? root.wanted : Theme.noteH
 
-    function plain(text) {
-        return String(text || "")
-            .replace(/^\s*<a[^>]*>.*?<\/a>\s*/i, "")
-            .replace(/<[^>]*>/g, "")
-            .replace(/\s+/g, " ")
-            .trim()
+    Behavior on width {
+        NumberAnimation { duration: Theme.speed; easing.type: Theme.ease }
     }
 
-    function fileUrl(value) {
-        const v = String(value || "").trim()
-        if (v === "")
-            return ""
-        if (/^[a-z][a-z0-9+.-]*:/i.test(v))
-            return v
-        if (v.startsWith("/"))
-            return Theme.url(v)
-        const hit = Quickshell.iconPath(v, true)
-        if (!hit)
-            return ""
-        if (hit.startsWith("/") || /^[a-z][a-z0-9+.-]*:/i.test(hit))
-            return Theme.url(hit)
-        return hit
+    Behavior on height {
+        NumberAnimation { duration: Theme.speed; easing.type: Theme.ease }
     }
 
     function refresh() {
         if (!n)
             return
 
-        summary = plain(n.summary)
-        body = plain(n.body)
-        battery = !!n.system && n.kind === "battery"
-        net = !!n.system && n.kind === "net"
-        bluetooth = !!n.system && n.kind === "bluetooth"
-        charging = battery && !!n.charging
-        netOn = net && !!n.charging
-        btConnected = bluetooth && !!n.charging
+        summary = Notifs.plain(n.summary)
+        body = Notifs.plain(n.body)
+        const k = n.system ? String(n.kind || "") : ""
+        const good = !!n.charging
+        kind = k
+        charging = k === "battery" && good
+        netOn = k === "net" && good
+        btConnected = k === "bluetooth" && good
+        dndOn = k === "dnd" && good
         level = n.system && isFinite(Number(n.level)) ? Number(n.level) : -1
         critical = n.urgency === NotificationUrgency.Critical
 
         const name = String(n.appName || "").trim()
-        const own = battery || net || bluetooth
+        const own = k !== ""
         appLabel = own ? "system" : name.toLowerCase()
         letter = ((name || "?")[0] || "?").toLowerCase()
-        picture = own ? "" : fileUrl(n.image)
-        mark = own ? "" : (fileUrl(n.appIcon) || fileUrl(n.desktopEntry))
-        source = picture || mark
-        if (img.failed)
-            img.reload()
+        picture = own ? "" : Notifs.fileUrl(n.image)
+        mark = own ? "" : (Notifs.fileUrl(n.appIcon) || Notifs.fileUrl(n.desktopEntry))
+        chip.refresh()
     }
 
     onNChanged: refresh()
@@ -95,72 +77,17 @@ Fade {
         function onUrgencyChanged() { root.refresh() }
     }
 
-    ClippingRectangle {
+    Chip {
         id: chip
         x: Theme.noteIconX
         y: Theme.noteTop
-        width: Theme.noteIcon
-        height: Theme.noteIcon
-        radius: Theme.noteIconR
-        color: root.critical ? Theme.red : root.netOn || root.btConnected ? Theme.green : Theme.chip
-
-        StableImage {
-            id: img
-            anchors.fill: parent
-            source: root.source
-            retries: 2
-            fillMode: Image.PreserveAspectCrop
-            sourceSize: Qt.size(Theme.noteIcon * 2, Theme.noteIcon * 2)
-            onFailedChanged: {
-                if (failed && root.source === root.picture && root.mark !== "" && root.mark !== root.picture)
-                    root.source = root.mark
-            }
-        }
-
-        BatteryIcon {
-            anchors.centerIn: parent
-            visible: root.battery
-            shown: root.battery
-            available: true
-            pct: root.level >= 0 ? root.level : 1
-            tone: Theme.batTone(root.level >= 0 ? root.level : 1, root.charging)
-            pluggedIn: root.charging
-            leadingGap: 0
-            scale: Theme.noteBatScale
-        }
-
-        Sig {
-            anchors.centerIn: parent
-            visible: root.net
-            level: root.netOn ? Theme.sigBars : 0
-            scale: Theme.noteSigScale
-        }
-
-        Shape {
-            anchors.centerIn: parent
-            width: Theme.iconGrid
-            height: Theme.iconGrid
-            scale: Theme.noteBtGlyph / Theme.iconGrid
-            visible: root.bluetooth
-            preferredRendererType: Shape.CurveRenderer
-
-            ShapePath {
-                strokeWidth: Theme.iconStroke
-                strokeColor: Theme.fg
-                fillColor: "transparent"
-                capStyle: ShapePath.RoundCap
-                joinStyle: ShapePath.RoundJoin
-                PathSvg { path: "M7 7L17 17L12 22L12 2L17 7L7 17" }
-            }
-        }
-
-        Txt {
-            anchors.centerIn: parent
-            text: root.letter
-            visible: !root.battery && !root.net && !root.bluetooth && img.showPlaceholder
-            font.pixelSize: Theme.fsM
-            font.weight: Font.Bold
-        }
+        picture: root.picture
+        mark: root.mark
+        letter: root.letter
+        kind: root.kind
+        critical: root.critical
+        on: root.charging || root.netOn || root.btConnected || root.dndOn
+        level: root.level
     }
 
     Shape {
@@ -212,8 +139,8 @@ Fade {
 
         Column {
             x: chip.x + chip.width + Theme.noteTextGap
-            width: parent.width - x - Theme.noteTextRight - root.sideReserve
-            anchors.verticalCenter: parent.verticalCenter
+            y: Theme.noteTop + (Theme.noteIcon - height) / 2
+            width: Theme.noteW - x - Theme.noteTextRight - root.sideReserve
             spacing: Theme.noteLineGap
 
             Txt {

@@ -129,8 +129,8 @@ Fade {
         else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) root.apply()
         else if (k === Qt.Key_Right || k === Qt.Key_Down || k === Qt.Key_L || k === Qt.Key_J || k === Qt.Key_Tab) root.move(1)
         else if (k === Qt.Key_Left || k === Qt.Key_Up || k === Qt.Key_H || k === Qt.Key_K || k === Qt.Key_Backtab) root.move(-1)
-        else if (k === Qt.Key_PageDown) root.move(Theme.wallN)
-        else if (k === Qt.Key_PageUp) root.move(-Theme.wallN)
+        else if (k === Qt.Key_PageDown) root.move(1)
+        else if (k === Qt.Key_PageUp) root.move(-1)
         else if (k === Qt.Key_End || k === Qt.Key_G && s) root.jump(root.n - 1)
         else if (k === Qt.Key_Home || k === Qt.Key_G) root.jump(0)
         else return

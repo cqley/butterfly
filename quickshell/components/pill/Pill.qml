@@ -47,6 +47,7 @@ Item {
         Modal.register("brightness", Brightness)
         Modal.register("audio", Audio)
         Modal.register("bluetooth", Bt)
+        Modal.register("notifs", Notifs)
     }
 
     function sync() {
@@ -99,6 +100,7 @@ Item {
         : Brightness.open ? Theme.brightW
         : Audio.open ? Theme.audioW
         : Bt.open ? Theme.btW
+        : Notifs.open ? Theme.centerW
         : root.hot ? (root.media && !root.full ? Theme.mediaPillW : Theme.openW)
         : root.calm ? root.idleTargetW : Theme.w
 
@@ -112,6 +114,7 @@ Item {
         : Brightness.open ? bright.y + bright.height + Theme.brightPad
         : Audio.open ? audio.y + audio.height + Theme.audioPad
         : Bt.open ? bt.y + bt.height + Theme.netPad
+        : Notifs.open ? center.y + center.height + Theme.centerPad
         : root.full ? cal.y + cal.height + Theme.pad
         : root.hot ? (root.media ? tune.y + tune.height + Theme.pad : Theme.openH)
         : Theme.h
@@ -201,6 +204,9 @@ Item {
 
         Note {
             id: note
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.alignWhenCentered: false
+            y: 0
             n: Notifs.current
             expanded: root.hot
             shown: root.alert
@@ -269,6 +275,14 @@ Item {
             y: Theme.netPad
             shown: Bt.open
             ready: !root.resizing
+        }
+
+        Center {
+            id: center
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Theme.centerPad
+            shown: Notifs.open
+            ready: !root.resizing && center.settled
         }
 
         Auth {

@@ -64,9 +64,11 @@ Singleton {
     readonly property color chip: mix(bg, fg, 0.11)
     readonly property color tile: mix(bg, fg, 0.172)
     readonly property color accent: pal && pal.special && pal.special.accent ? pal.special.accent : "#f2b8e2"
+    readonly property color white: "#ffffff"
     readonly property color red: "#e5534b"
-    readonly property color redSoft: mix(red, "#ffffff", 0.35)
+    readonly property color redSoft: mix(red, white, 0.35)
     readonly property color green: "#34c759"
+    readonly property color greenSoft: mix(green, white, 0.35)
     readonly property string passChar: "∙"
 
     readonly property int listGap: 6
@@ -408,6 +410,38 @@ Singleton {
     readonly property string audioInPath: "M12 3A3.25 3.25 0 0 1 15.25 6.25V9.25A3.25 3.25 0 0 1 8.75 9.25V6.25A3.25 3.25 0 0 1 12 3Z"
     readonly property string audioInCradlePath: "M18 10.5A6 6 0 0 1 6 10.5 M12 16.5V20.5"
     readonly property string audioSlashPath: "M4 4L20 20"
+
+    readonly property int centerW: 320
+    readonly property int centerPad: 14
+    readonly property int centerHeadH: 28
+    readonly property int centerBtn: 28
+    readonly property int centerBtnGap: 8
+    readonly property int centerGlyph: 15
+    readonly property int centerRowH: 56
+    readonly property int centerRows: 3
+    readonly property int centerAxis: selInset + (centerRowH - selGap) / 2
+    readonly property int centerIconX: centerAxis - noteIcon / 2
+    readonly property int centerHeadInset: centerAxis - centerBtn / 2
+    readonly property int centerDot: 8
+    readonly property int centerDotRight: centerAxis - centerDot / 2
+    readonly property int centerTextGap: 10
+    readonly property int centerDotGap: 10
+    readonly property int centerLineGap: 2
+    readonly property int centerFresh: 180000
+    readonly property int centerTick: 1000
+    readonly property int centerBodyLines: 2
+    readonly property int centerEmptyH: 72
+    readonly property int centerEmptyGlyph: 32
+    readonly property color centerEmptyTone: mix(bg, fg, dimHint)
+    readonly property int notificationHistoryMax: 50
+    readonly property string bellPath: "M18 8.5A6 6 0 0 0 6 8.5C6 15 3 17 3 17H21S18 15 18 8.5Z"
+    readonly property string bellClapperPath: "M13.7 20.5A2 2 0 0 1 10.3 20.5"
+    readonly property string trashPath: "M3.5 6.5H20.5 M18.5 6.5V19.5A2 2 0 0 1 16.5 21.5H7.5A2 2 0 0 1 5.5 19.5V6.5 M9 6.5V4.5A2 2 0 0 1 11 2.5H13A2 2 0 0 1 15 4.5V6.5"
+    readonly property string moonPath: "M21 12.8A9 9 0 1 1 11.2 3A7 7 0 0 0 21 12.8Z"
+    readonly property color dndTone: "#ff9f0a"
+    readonly property color dndToneHover: mix(dndTone, white, 0.16)
+    readonly property color dndGlyph: white
+    readonly property int noteMoonGlyph: 15
 
     readonly property int launchSearchHandleRot: 45
     readonly property int launchTextRowGap: 1

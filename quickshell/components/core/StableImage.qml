@@ -14,7 +14,9 @@ Item {
     readonly property int status: image.status
     readonly property bool ready: image.status === Image.Ready
     readonly property bool failed: image.status === Image.Error
-    readonly property bool showPlaceholder: root.source === "" || root.failed || !root.everReady
+    readonly property bool blank: String(root.source) === ""
+    readonly property bool loading: image.status === Image.Loading
+    readonly property bool showPlaceholder: root.blank || root.failed || !root.everReady
 
     onReadyChanged: if (ready) everReady = true
     onSourceChanged: tried = 0
@@ -44,7 +46,7 @@ Item {
         smooth: root.smooth
         fillMode: root.fillMode
         sourceSize: root.sourceSize.width > 0 && root.sourceSize.height > 0 ? root.sourceSize : undefined
-        visible: root.source !== "" && root.status !== Image.Error
+        visible: !root.blank && root.status !== Image.Error
         //@ if hasQtVersion(6, 8)
         retainWhileLoading: root.retain
         //@ endif

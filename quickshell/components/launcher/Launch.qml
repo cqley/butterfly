@@ -183,8 +183,8 @@ Pick {
                     else if (k === Qt.Key_Return || k === Qt.Key_Enter) root.run()
                     else if (k === Qt.Key_Down || k === Qt.Key_Tab || c && (k === Qt.Key_J || k === Qt.Key_N)) root.move(1, w)
                     else if (k === Qt.Key_Up || k === Qt.Key_Backtab || c && (k === Qt.Key_K || k === Qt.Key_P)) root.move(-1, w)
-                    else if (k === Qt.Key_PageDown) root.move(root.jump, false)
-                    else if (k === Qt.Key_PageUp) root.move(-root.jump, false)
+                    else if (k === Qt.Key_PageDown) root.move(1, false)
+                    else if (k === Qt.Key_PageUp) root.move(-1, false)
                     else if (c && k === Qt.Key_End) root.move(root.n, false)
                     else if (c && k === Qt.Key_Home) root.move(-root.n, false)
                     else return
