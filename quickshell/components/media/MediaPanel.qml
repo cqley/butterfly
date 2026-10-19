@@ -13,7 +13,7 @@ Fade {
     readonly property string srcTitle: Media.title
     readonly property string srcArtist: p ? p.trackArtist || "" : ""
     readonly property string srcArt: Media.artUrl
-    readonly property real srcFrac: len > 0 ? Math.max(0, Math.min(1, (scrubbing ? scrub : pos) / len)) : 0
+    readonly property real srcFrac: len > 0 && !settle.running ? Math.max(0, Math.min(1, (scrubbing ? scrub : pos) / len)) : 0
     property bool on: false
     property string title: ""
     property string artist: ""
@@ -76,6 +76,20 @@ Fade {
         if (h === 0)
             return pad(m) + ":" + pad(s)
         return h + ":" + pad(m) + ":" + pad(s)
+    }
+
+    Timer {
+        id: settle
+        interval: Theme.mediaTrackSettle
+    }
+
+    Connections {
+        target: root.p
+        function onTrackChanged() {
+            root.scrubbing = false
+            root.frac = 0
+            settle.restart()
+        }
     }
 
     FrameAnimation {
@@ -230,7 +244,7 @@ Fade {
         Row {
             id: ctls
             anchors.horizontalCenter: parent.horizontalCenter
-            y: Math.round((head.height + bar.y - height) / 2)
+            y: Math.round((Theme.mediaTitleH + Theme.mediaTextGap + Theme.mediaArtistH + bar.y - height) / 2)
             spacing: Theme.mediaCtlGap
 
             Btn {
@@ -238,7 +252,7 @@ Fade {
                 path: "M22 5L11.25 12L22 19Z M12.75 5L2 12L12.75 19Z"
                 player: root.p
                 can: root.p !== null && root.p.canGoPrevious
-                onClicked: root.p.previous()
+                onClicked: if (root.p.canGoPrevious) root.p.previous()
             }
 
             Btn {
@@ -247,7 +261,7 @@ Fade {
                 path: root.on ? "M6 5.5H8.5V18.5H6Z M15.5 5.5H18V18.5H15.5Z" : "M7.5 5L20.5 12L7.5 19Z"
                 player: root.p
                 can: root.p !== null && root.p.canTogglePlaying
-                onClicked: root.p.togglePlaying()
+                onClicked: if (root.p.canTogglePlaying) root.p.togglePlaying()
             }
 
             Btn {
@@ -255,7 +269,7 @@ Fade {
                 path: "M2 5L12.75 12L2 19Z M11.25 5L22 12L11.25 19Z"
                 player: root.p
                 can: root.p !== null && root.p.canGoNext
-                onClicked: root.p.next()
+                onClicked: if (root.p.canGoNext) root.p.next()
             }
         }
 

@@ -7,6 +7,7 @@ Singleton {
     id: root
     property var last: null
     property var live: null
+    property var recent: null
     readonly property var player: live || last
     readonly property bool playing: live !== null
     readonly property string title: player ? player.trackTitle || player.identity : ""
@@ -18,16 +19,16 @@ Singleton {
         if (p.trackArtUrl)
             return p.trackArtUrl
         const url = p.metadata ? p.metadata["xesam:url"] || "" : ""
-        if (!url.startsWith("https://www.youtube.com/watch"))
-            return ""
-        const m = url.match(/[?&]v=([\w-]{11})/)
+        const m = url.match(/^https:\/\/(?:www|music)\.youtube\.com\/watch.*[?&]v=([\w-]{11})/)
         return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : ""
     }
 
     function pick() {
         const v = Mpris.players.values
         let found = null
-        for (let i = 0; i < v.length; i++) {
+        if (recent && v.indexOf(recent) >= 0 && recent.isPlaying)
+            found = recent
+        for (let i = 0; !found && i < v.length; i++) {
             if (v[i].isPlaying) {
                 found = v[i]
                 break
@@ -58,7 +59,11 @@ Singleton {
         Connections {
             required property var modelData
             target: modelData
-            function onIsPlayingChanged() { root.pick() }
+            function onIsPlayingChanged() {
+                if (modelData.isPlaying)
+                    root.recent = modelData
+                root.pick()
+            }
         }
     }
 
