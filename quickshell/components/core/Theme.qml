@@ -33,6 +33,22 @@ Singleton {
     readonly property int recordRowH: 34
     readonly property int recordRows: 6
     readonly property int recordStopGrace: 3000
+    readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"
+    readonly property string screenshotBin: ""
+    readonly property int screenshotCheckDelay: 300
+    readonly property int screenshotW: 220
+    readonly property int screenshotPad: 12
+    readonly property int screenshotRowH: 34
+    readonly property int screenshotRows: 6
+    readonly property int regionMinSize: 4
+    readonly property real regionDim: 0.45
+    readonly property int regionBorderWidth: 2
+    readonly property int regionRadius: 4
+    readonly property int regionLabelGap: 8
+    readonly property int regionLabelPadX: 8
+    readonly property int regionLabelPadY: 4
+    readonly property int regionLabelR: 8
+    readonly property real regionGuideOpacity: 0.25
     readonly property int netW: 320
     readonly property int netPad: 12
     readonly property int netRowH: 36
@@ -448,6 +464,9 @@ Singleton {
     readonly property color dndToneHover: mix(dndTone, white, 0.16)
     readonly property color dndGlyph: white
     readonly property int noteMoonGlyph: 15
+    readonly property string shotBodyPath: "M5 8H10L12 6H16L18 8H19A2 2 0 0 1 21 10V17A2 2 0 0 1 19 19H5A2 2 0 0 1 3 17V10A2 2 0 0 1 5 8Z"
+    readonly property string shotLensPath: "M8 13A4 4 0 1 0 16 13A4 4 0 1 0 8 13Z"
+    readonly property int noteShotGlyph: 16
 
     readonly property int launchSearchHandleRot: 45
     readonly property int launchTextRowGap: 1

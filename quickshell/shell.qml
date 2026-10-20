@@ -3,49 +3,54 @@ import Quickshell.Wayland
 import QtQuick
 import "components/core"
 import "components/pill"
+import "components/screenshot"
 
-Variants {
-    model: {
-        const m = Quickshell.screens.filter(s => s.name === Theme.screen)
-        return m.length ? m : Quickshell.screens.slice(0, 1)
-    }
-
-    Scope {
-        required property var modelData
-
-        PanelWindow {
-            screen: modelData
-            anchors {
-                top: true
-                left: true
-                right: true
-            }
-            implicitHeight: Theme.zone
-            exclusiveZone: Theme.zone
-            aboveWindows: false
-            color: "transparent"
-            mask: Region {}
+Scope {
+    Variants {
+        model: {
+            const m = Quickshell.screens.filter(s => s.name === Theme.screen)
+            return m.length ? m : Quickshell.screens.slice(0, 1)
         }
 
-        PanelWindow {
-            id: win
-            readonly property bool modal: Modal.any
-            property var pillMask: Region { item: pill.hitTarget }
-            property var openMask: Region { width: win.width; height: win.height }
+        Scope {
+            required property var modelData
 
-            screen: modelData
-            anchors {
-                top: true
-                bottom: true
-                left: true
-                right: true
+            PanelWindow {
+                screen: modelData
+                anchors {
+                    top: true
+                    left: true
+                    right: true
+                }
+                implicitHeight: Theme.zone
+                exclusiveZone: Theme.zone
+                aboveWindows: false
+                color: "transparent"
+                mask: Region {}
             }
-            exclusionMode: ExclusionMode.Ignore
-            color: "transparent"
-            mask: modal ? openMask : pillMask
-            WlrLayershell.keyboardFocus: modal ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-            Pill { id: pill }
+            PanelWindow {
+                id: win
+                readonly property bool modal: Modal.any
+                property var pillMask: Region { item: pill.hitTarget }
+                property var openMask: Region { width: win.width; height: win.height }
+
+                screen: modelData
+                anchors {
+                    top: true
+                    bottom: true
+                    left: true
+                    right: true
+                }
+                exclusionMode: ExclusionMode.Ignore
+                color: "transparent"
+                mask: modal ? openMask : pillMask
+                WlrLayershell.keyboardFocus: modal ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+                Pill { id: pill }
+            }
         }
     }
+
+    RegionPicker {}
 }

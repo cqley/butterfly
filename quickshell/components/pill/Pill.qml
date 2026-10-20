@@ -13,6 +13,7 @@ import "../notifications"
 import "../polkit"
 import "../power"
 import "../recording"
+import "../screenshot"
 import "../status"
 import "../wallpaper"
 
@@ -86,6 +87,7 @@ Item {
         Modal.register("wallpaper", Wallpaper)
         Modal.register("polkit", Polkit)
         Modal.register("record", Record)
+        Modal.register("screenshot", Screenshot)
         Modal.register("net", Net)
         Modal.register("brightness", Brightness)
         Modal.register("audio", Audio)
@@ -148,6 +150,7 @@ Item {
         : Power.open ? Theme.powerW
         : Wallpaper.open ? Theme.wallW
         : Record.open ? Theme.recordW
+        : Screenshot.open ? Theme.screenshotW
         : Net.open ? Theme.netW
         : Brightness.open ? Theme.brightW
         : Audio.open ? Theme.audioW
@@ -162,6 +165,7 @@ Item {
         : Power.open ? power.y + power.height + Theme.pwPad
         : Wallpaper.open ? wall.y + wall.height + Theme.wallPad
         : Record.open ? rec.y + rec.height + Theme.recordPad
+        : Screenshot.open ? shot.y + shot.height + Theme.screenshotPad
         : Net.open ? net.y + net.height + Theme.netPad
         : Brightness.open ? bright.y + bright.height + Theme.brightPad
         : Audio.open ? audio.y + audio.height + Theme.audioPad
@@ -301,6 +305,15 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.recordPad
             shown: Record.open
+            ready: root.panelReady
+            rise: root.panelRise
+        }
+
+        ScreenshotMenu {
+            id: shot
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Theme.screenshotPad
+            shown: Screenshot.open
             ready: root.panelReady
             rise: root.panelRise
         }
