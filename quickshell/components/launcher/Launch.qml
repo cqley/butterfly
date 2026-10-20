@@ -16,8 +16,11 @@ Pick {
     }))
     readonly property var raw: find(input.text)
     property var results: raw
+    property var view: results
+    property bool churn: false
+    readonly property bool settled: !root.churn
 
-    n: results.length
+    n: view.length
     rows: Theme.rows
     width: Theme.launchW - 2 * Theme.lpad
     height: col.height
@@ -71,8 +74,18 @@ Pick {
         input.text = ""
     }
 
+    Timer {
+        id: swap
+        interval: Theme.fade
+        onTriggered: {
+            root.hold()
+            root.view = root.results
+            root.churn = false
+        }
+    }
+
     function run() {
-        const item = results[sel]
+        const item = view[sel]
         const a = item ? item.app : null
         if (!a) return
         Launcher.bump(item.id)
@@ -88,6 +101,15 @@ Pick {
         if (!changed) return
         results = raw
         sel = 0
+    }
+
+    onResultsChanged: {
+        if (!shown) {
+            view = results
+            return
+        }
+        churn = true
+        swap.restart()
     }
 
     onVisibleChanged: {
@@ -216,7 +238,7 @@ Pick {
                 interactive: false
                 ScriptModel {
                     id: appModel
-                    values: root.results
+                    values: root.view
                     objectProp: "id"
                 }
 
@@ -227,8 +249,7 @@ Pick {
                 highlightFollowsCurrentItem: false
 
                 Behavior on contentY {
-                    enabled: !root.snap
-                    NumberAnimation { duration: root.dur; easing.type: Theme.ease }
+                    NumberAnimation { duration: root.snap ? 0 : root.dur; easing.type: Theme.ease }
                 }
 
                 delegate: Item {

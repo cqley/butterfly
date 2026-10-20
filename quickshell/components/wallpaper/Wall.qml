@@ -22,17 +22,15 @@ Fade {
     readonly property int winStart: n ? Math.round(centerIndex) - Math.floor(win / 2) : 0
 
     Behavior on trackX {
-        enabled: !root.snap
         NumberAnimation {
-            duration: root.trackDur
+            duration: root.snap ? 0 : root.trackDur
             easing.type: Theme.ease
         }
     }
 
     Behavior on focusPos {
-        enabled: !root.snap
         NumberAnimation {
-            duration: Theme.feedbackDuration
+            duration: root.snap ? 0 : Theme.feedbackDuration
             easing.type: Theme.ease
         }
     }
