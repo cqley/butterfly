@@ -1,0 +1,162 @@
+import "../core"
+import QtQuick
+import Quickshell
+
+Pick {
+    id: root
+    readonly property var items: Screenshot.items
+
+    n: items.length
+    rows: Theme.screenshotRows
+    width: Theme.screenshotW - 2 * Theme.screenshotPad
+    height: col.height
+    focus: shown
+
+    function run() {
+        if (n)
+            Screenshot.pick(items[sel])
+    }
+
+    onVisibleChanged: {
+        if (visible)
+            forceActiveFocus()
+        else
+            reset()
+    }
+
+    Connections {
+        target: Screenshot
+        function onOpenChanged() {
+            if (!Screenshot.open)
+                return
+            root.reset()
+            root.forceActiveFocus()
+        }
+        function onItemsChanged() {
+            if (root.sel >= root.n)
+                root.sel = Math.max(0, root.n - 1)
+        }
+    }
+
+    Keys.onPressed: e => {
+        const k = e.key
+        if (k === Qt.Key_Escape)
+            Screenshot.open = false
+        else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space)
+            run()
+        else if (!nav(e))
+            return
+        e.accepted = true
+    }
+
+    Column {
+        id: col
+        width: parent.width
+        spacing: Theme.listGap
+
+        Item {
+            width: parent.width
+            height: list.height
+            visible: root.n > 0
+
+            ListView {
+                id: list
+                width: parent.width
+                height: Math.min(root.n, Theme.screenshotRows) * Theme.screenshotRowH
+                clip: true
+                interactive: false
+                model: root.items
+                cacheBuffer: Theme.screenshotRowH * Theme.screenshotRows * 2
+                reuseItems: true
+                contentY: root.start * Theme.screenshotRowH
+                highlightFollowsCurrentItem: false
+
+                Behavior on contentY {
+                    NumberAnimation {
+                        duration: root.snap ? 0 : root.dur
+                        easing.type: Theme.ease
+                    }
+                }
+
+                highlight: Rectangle {
+                    x: Theme.selInset
+                    y: root.sel * Theme.screenshotRowH + Theme.selGap / 2
+                    width: list.width - Theme.selInset * 2
+                    height: Theme.screenshotRowH - Theme.selGap
+                    radius: height / 2
+                    color: Theme.selFill
+                    border.width: Theme.surfaceBorderWidth
+                    border.color: Theme.surfaceBorder
+                    antialiasing: true
+
+                    Mark {
+                        label: root.items[root.sel] ? root.items[root.sel].label : ""
+                    }
+
+                    Behavior on y {
+                        NumberAnimation {
+                            duration: root.snap ? 0 : root.dur
+                            easing.type: Theme.ease
+                        }
+                    }
+                }
+
+                delegate: Item {
+                    id: row
+                    required property var modelData
+                    required property int index
+                    readonly property bool selected: root.sel === row.index
+
+                    width: list.width
+                    height: Theme.screenshotRowH
+
+                    Txt {
+                        anchors.left: parent.left
+                        anchors.leftMargin: Theme.rowX
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.rowR
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.verticalCenterOffset: Theme.rowTextY
+                        text: row.modelData ? row.modelData.label : ""
+                        elide: Text.ElideRight
+                        font.pixelSize: Theme.fsL
+                        font.weight: Font.Normal
+                        color: row.selected ? Theme.accent : Theme.fg
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.glide
+                                easing.type: Theme.ease
+                            }
+                        }
+                    }
+
+                    MouseArea {
+                        id: area
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
+                        onClicked: {
+                            root.sel = row.index
+                            root.run()
+                        }
+                    }
+                }
+            }
+        }
+
+        Item {
+            width: parent.width
+            height: empty.implicitHeight + Theme.netEmptyPad
+            visible: root.n === 0
+
+            Txt {
+                id: empty
+                anchors.centerIn: parent
+                text: "no backend"
+                opacity: Theme.dimEmpty
+            }
+        }
+    }
+}

@@ -18,7 +18,8 @@ ClippingRectangle {
     readonly property bool net: root.kind === "net"
     readonly property bool bluetooth: root.kind === "bluetooth"
     readonly property bool dnd: root.kind === "dnd"
-    readonly property bool own: root.battery || root.net || root.bluetooth || root.dnd
+    readonly property bool shot: root.kind === "shot"
+    readonly property bool own: root.battery || root.net || root.bluetooth || root.dnd || root.shot
     property string source: ""
 
     function refresh() {
@@ -102,6 +103,29 @@ ClippingRectangle {
             fillColor: Theme.dndGlyph
             fillRule: ShapePath.WindingFill
             PathSvg { path: Theme.moonPath }
+        }
+    }
+
+    Shape {
+        anchors.centerIn: parent
+        width: Theme.iconGrid
+        height: Theme.iconGrid
+        scale: Theme.noteShotGlyph / Theme.iconGrid
+        visible: root.shot
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            strokeWidth: -1
+            fillColor: Theme.fg
+            fillRule: ShapePath.WindingFill
+            PathSvg { path: Theme.shotBodyPath }
+        }
+
+        ShapePath {
+            strokeWidth: -1
+            fillColor: root.color
+            fillRule: ShapePath.WindingFill
+            PathSvg { path: Theme.shotLensPath }
         }
     }
 
