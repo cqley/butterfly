@@ -141,6 +141,7 @@ Item {
         Theme.w,
         clockSlot.width + battery.targetWidth + mic.targetWidth + record.targetWidth + Theme.pad
     )
+
     readonly property real targetW: hold.running ? root.holdW : root.wantW
     readonly property real targetH: hold.running ? root.holdH : root.wantH
 
@@ -150,7 +151,7 @@ Item {
         : Power.open ? Theme.powerW
         : Wallpaper.open ? Theme.wallW
         : Record.open ? Theme.recordW
-        : Screenshot.open ? Theme.screenshotW
+        : Screenshot.open ? shot.width + 2 * Theme.pwPad
         : Net.open ? Theme.netW
         : Brightness.open ? Theme.brightW
         : Audio.open ? Theme.audioW
@@ -165,7 +166,7 @@ Item {
         : Power.open ? power.y + power.height + Theme.pwPad
         : Wallpaper.open ? wall.y + wall.height + Theme.wallPad
         : Record.open ? rec.y + rec.height + Theme.recordPad
-        : Screenshot.open ? shot.y + shot.height + Theme.screenshotPad
+        : Screenshot.open ? shot.y + shot.height + Theme.pwPad
         : Net.open ? net.y + net.height + Theme.netPad
         : Brightness.open ? bright.y + bright.height + Theme.brightPad
         : Audio.open ? audio.y + audio.height + Theme.audioPad
@@ -312,7 +313,7 @@ Item {
         ScreenshotMenu {
             id: shot
             anchors.horizontalCenter: parent.horizontalCenter
-            y: Theme.screenshotPad
+            y: Theme.pwPad
             shown: Screenshot.open
             ready: root.panelReady
             rise: root.panelRise

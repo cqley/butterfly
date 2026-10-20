@@ -9,17 +9,32 @@ Variants {
     PanelWindow {
         id: win
         required property var modelData
-        property point pressPt: Qt.point(-1, -1)
-        property point curPt: Qt.point(-1, -1)
-        property bool dragging: false
+        property bool fadeShown: Screenshot.picking
 
-        readonly property real rx: Math.min(pressPt.x, curPt.x)
-        readonly property real ry: Math.min(pressPt.y, curPt.y)
-        readonly property real rw: Math.abs(curPt.x - pressPt.x)
-        readonly property real rh: Math.abs(curPt.y - pressPt.y)
+        readonly property real offX: modelData.x
+        readonly property real offY: modelData.y
+        readonly property real localX: Screenshot.curG.x - offX
+        readonly property real localY: Screenshot.curG.y - offY
+        readonly property bool hasPointer: localX >= 0 && localX <= win.width && localY >= 0 && localY <= win.height
+
+        readonly property real brLocalX: Math.max(Screenshot.pressG.x, Screenshot.curG.x) - offX
+        readonly property real brLocalY: Math.max(Screenshot.pressG.y, Screenshot.curG.y) - offY
+        readonly property bool hasLabel: Screenshot.dragging
+            && brLocalX >= 0 && brLocalX <= win.width
+            && brLocalY >= 0 && brLocalY <= win.height
+
+        readonly property real selX: Math.min(Screenshot.pressG.x, Screenshot.curG.x) - offX
+        readonly property real selY: Math.min(Screenshot.pressG.y, Screenshot.curG.y) - offY
+        readonly property real selW: Math.abs(Screenshot.curG.x - Screenshot.pressG.x)
+        readonly property real selH: Math.abs(Screenshot.curG.y - Screenshot.pressG.y)
+
+        readonly property real clipX: Math.max(0, Math.min(win.width, selX))
+        readonly property real clipY: Math.max(0, Math.min(win.height, selY))
+        readonly property real clipR: Math.max(0, Math.min(win.width, selX + selW))
+        readonly property real clipB: Math.max(0, Math.min(win.height, selY + selH))
 
         screen: modelData
-        visible: Screenshot.picking
+        visible: fadeShown || surface.opacity > 0
         anchors {
             top: true
             bottom: true
@@ -29,19 +44,31 @@ Variants {
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: win.visible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: win.fadeShown ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         mask: Region { width: win.width; height: win.height }
-
-        onVisibleChanged: if (visible) {
-            dragging = false
-            pressPt = Qt.point(-1, -1)
-            curPt = Qt.point(-1, -1)
-        }
 
         Item {
             id: surface
             anchors.fill: parent
-            focus: win.visible
+            opacity: 0
+            focus: win.fadeShown
+
+            states: State {
+                name: "on"
+                when: win.fadeShown
+                PropertyChanges { surface.opacity: 1 }
+            }
+
+            transitions: [
+                Transition {
+                    to: "on"
+                    NumberAnimation { property: "opacity"; duration: Theme.rise; easing.type: Theme.ease }
+                },
+                Transition {
+                    from: "on"
+                    NumberAnimation { property: "opacity"; duration: Theme.fall; easing.type: Theme.ease }
+                }
+            ]
 
             Keys.onEscapePressed: Screenshot.cancelRegion()
 
@@ -49,55 +76,55 @@ Variants {
                 anchors.fill: parent
                 color: Theme.bg
                 opacity: Theme.regionDim
-                visible: !win.dragging
+                visible: !Screenshot.dragging
             }
 
             Rectangle {
-                visible: win.dragging
+                visible: Screenshot.dragging
                 x: 0
                 y: 0
                 width: win.width
-                height: win.ry
+                height: win.clipY
                 color: Theme.bg
                 opacity: Theme.regionDim
             }
 
             Rectangle {
-                visible: win.dragging
+                visible: Screenshot.dragging
                 x: 0
-                y: win.ry + win.rh
+                y: win.clipB
                 width: win.width
-                height: win.height - (win.ry + win.rh)
+                height: win.height - win.clipB
                 color: Theme.bg
                 opacity: Theme.regionDim
             }
 
             Rectangle {
-                visible: win.dragging
+                visible: Screenshot.dragging
                 x: 0
-                y: win.ry
-                width: win.rx
-                height: win.rh
+                y: win.clipY
+                width: win.clipX
+                height: win.clipB - win.clipY
                 color: Theme.bg
                 opacity: Theme.regionDim
             }
 
             Rectangle {
-                visible: win.dragging
-                x: win.rx + win.rw
-                y: win.ry
-                width: win.width - (win.rx + win.rw)
-                height: win.rh
+                visible: Screenshot.dragging
+                x: win.clipR
+                y: win.clipY
+                width: win.width - win.clipR
+                height: win.clipB - win.clipY
                 color: Theme.bg
                 opacity: Theme.regionDim
             }
 
             Rectangle {
-                visible: win.dragging
-                x: win.rx
-                y: win.ry
-                width: win.rw
-                height: win.rh
+                visible: Screenshot.dragging
+                x: win.selX
+                y: win.selY
+                width: win.selW
+                height: win.selH
                 radius: Theme.regionRadius
                 color: "transparent"
                 border.width: Theme.regionBorderWidth
@@ -106,9 +133,9 @@ Variants {
             }
 
             Rectangle {
-                visible: !win.dragging && win.curPt.y >= 0
+                visible: !Screenshot.dragging && win.hasPointer
                 x: 0
-                y: win.curPt.y
+                y: win.localY - 0.5
                 width: win.width
                 height: 1
                 color: Theme.accent
@@ -116,8 +143,8 @@ Variants {
             }
 
             Rectangle {
-                visible: !win.dragging && win.curPt.x >= 0
-                x: win.curPt.x
+                visible: !Screenshot.dragging && win.hasPointer
+                x: win.localX - 0.5
                 y: 0
                 width: 1
                 height: win.height
@@ -127,10 +154,9 @@ Variants {
 
             Rectangle {
                 id: label
-                readonly property bool below: win.ry < (dimText.implicitHeight + Theme.regionLabelPadY * 2) + Theme.regionLabelGap
-                visible: win.dragging && win.rw > 0 && win.rh > 0
-                x: Math.max(0, Math.min(win.width - width, win.rx))
-                y: below ? win.ry + win.rh + Theme.regionLabelGap : win.ry - height - Theme.regionLabelGap
+                visible: win.hasLabel && win.selW > 0 && win.selH > 0
+                x: Math.max(0, Math.min(win.width - width, win.brLocalX + Theme.regionLabelGap))
+                y: Math.max(0, Math.min(win.height - height, win.brLocalY + Theme.regionLabelGap))
                 width: dimText.implicitWidth + Theme.regionLabelPadX * 2
                 height: dimText.implicitHeight + Theme.regionLabelPadY * 2
                 radius: Theme.regionLabelR
@@ -141,32 +167,28 @@ Variants {
                 Txt {
                     id: dimText
                     anchors.centerIn: parent
-                    text: Math.round(win.rw) + " × " + Math.round(win.rh)
+                    text: Math.round(win.selW) + " × " + Math.round(win.selH)
                     font.pixelSize: Theme.fsS
                 }
+            }
+
+            HoverHandler {
+                cursorShape: Qt.CrossCursor
             }
 
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
-                cursorShape: Qt.CrossCursor
                 preventStealing: true
 
-                onPositionChanged: m => win.curPt = Qt.point(m.x, m.y)
-
+                onPositionChanged: m => Screenshot.updatePointer(win.offX + m.x, win.offY + m.y)
                 onPressed: m => {
-                    win.pressPt = Qt.point(m.x, m.y)
-                    win.curPt = Qt.point(m.x, m.y)
-                    win.dragging = true
+                    Screenshot.updatePointer(win.offX + m.x, win.offY + m.y)
+                    Screenshot.beginDrag()
                 }
-
                 onReleased: m => {
-                    win.curPt = Qt.point(m.x, m.y)
-                    win.dragging = false
-                    if (win.rw >= Theme.regionMinSize && win.rh >= Theme.regionMinSize)
-                        Screenshot.finishRegion(win.modelData, Qt.rect(win.rx, win.ry, win.rw, win.rh))
-                    else
-                        Screenshot.cancelRegion()
+                    Screenshot.updatePointer(win.offX + m.x, win.offY + m.y)
+                    Screenshot.endDrag()
                 }
             }
         }

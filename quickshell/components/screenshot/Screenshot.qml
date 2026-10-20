@@ -15,7 +15,7 @@ Singleton {
     property string lastFile: ""
     property bool needsCopy: false
     property var items: []
-    readonly property bool busy: proc.running || picking
+    readonly property bool busy: proc.running || picking || settle.running || check.running || copy.running
 
     onOpenChanged: if (open) {
         Modal.claim("screenshot")
@@ -54,6 +54,8 @@ Singleton {
             startRegion()
             return
         }
+        if (item.kind !== "window" && item.kind !== "active" && item.kind !== "output")
+            return
         if (bin === "") {
             Notifs.pushSystem("screenshot unavailable", "hyprshot not found", false, "shot", true)
             return
@@ -68,13 +70,16 @@ Singleton {
             args.push("-m", "window")
         else if (item.kind === "active")
             args.push("-m", "window", "-m", "active")
-        else if (item.kind === "output")
-            args.push("-m", "output", "-m", item.value)
         else
-            return
+            args.push("-m", "output", "-m", item.value)
         needsCopy = false
         proc.exec(args)
     }
+
+    readonly property point offscreen: Qt.point(-100000, -100000)
+    property point pressG: Qt.point(0, 0)
+    property point curG: Qt.point(-100000, -100000)
+    property bool dragging: false
 
     function startRegion() {
         if (busy)
@@ -83,22 +88,51 @@ Singleton {
             Notifs.pushSystem("screenshot unavailable", "grim not found", false, "shot", true)
             return
         }
+        dragging = false
+        curG = offscreen
         picking = true
+        cursorPos.running = true
     }
 
     function cancelRegion() {
         picking = false
+        dragging = false
     }
 
-    function finishRegion(screen, rect) {
+    function updatePointer(gx, gy) {
+        curG = Qt.point(gx, gy)
+    }
+
+    function beginDrag() {
+        if (!picking || dragging)
+            return
+        pressG = curG
+        dragging = true
+    }
+
+    function endDrag() {
+        if (!dragging)
+            return
+        dragging = false
+        const rx = Math.min(pressG.x, curG.x)
+        const ry = Math.min(pressG.y, curG.y)
+        const rw = Math.abs(curG.x - pressG.x)
+        const rh = Math.abs(curG.y - pressG.y)
+        if (rw >= Theme.regionMinSize && rh >= Theme.regionMinSize)
+            finishRegion(Qt.rect(rx, ry, rw, rh))
+        else
+            cancelRegion()
+    }
+
+    function finishRegion(rect) {
         picking = false
-        if (busy || !screen)
+        if (busy)
             return
         const stamp = Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss")
         const name = "shot-" + stamp + ".png"
         lastFile = Theme.screenshotDir + "/" + name
-        const x = Math.round(screen.x + rect.x)
-        const y = Math.round(screen.y + rect.y)
+        const x = Math.round(rect.x)
+        const y = Math.round(rect.y)
         const w = Math.round(rect.width)
         const h = Math.round(rect.height)
         const geo = x + "," + y + " " + w + "x" + h
@@ -108,7 +142,7 @@ Singleton {
 
     function notifySaved(clipboardFailed) {
         const body = clipboardFailed ? root.lastFile + " · clipboard unavailable" : root.lastFile + " · copied to clipboard"
-        Notifs.pushSystem("screenshot saved", body, true, "shot")
+        Notifs.pushSystem("screenshot saved", body, false, "shot")
     }
 
     Process {
@@ -129,6 +163,22 @@ Singleton {
                 root.copyBin = map["wl-copy"] || ""
                 if (root.open)
                     root.refresh()
+            }
+        }
+    }
+
+    Process {
+        id: cursorPos
+        command: ["hyprctl", "cursorpos"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = text.trim().split(",")
+                if (parts.length !== 2)
+                    return
+                const x = parseFloat(parts[0])
+                const y = parseFloat(parts[1])
+                if (isFinite(x) && isFinite(y) && root.picking && !root.dragging)
+                    root.curG = Qt.point(x, y)
             }
         }
     }
