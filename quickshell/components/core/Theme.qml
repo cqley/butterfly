@@ -36,19 +36,15 @@ Singleton {
     readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"
     readonly property string screenshotBin: ""
     readonly property int screenshotCheckDelay: 300
-    readonly property int screenshotW: 220
-    readonly property int screenshotPad: 12
-    readonly property int screenshotRowH: 34
-    readonly property int screenshotRows: 6
     readonly property int regionMinSize: 4
-    readonly property real regionDim: 0.45
+    readonly property real regionDim: 0.65
     readonly property int regionBorderWidth: 2
     readonly property int regionRadius: 4
     readonly property int regionLabelGap: 8
     readonly property int regionLabelPadX: 8
     readonly property int regionLabelPadY: 4
     readonly property int regionLabelR: 8
-    readonly property real regionGuideOpacity: 0.25
+    readonly property real regionGuideOpacity: 0.6
     readonly property int netW: 320
     readonly property int netPad: 12
     readonly property int netRowH: 36
@@ -467,6 +463,12 @@ Singleton {
     readonly property string shotBodyPath: "M5 8H10L12 6H16L18 8H19A2 2 0 0 1 21 10V17A2 2 0 0 1 19 19H5A2 2 0 0 1 3 17V10A2 2 0 0 1 5 8Z"
     readonly property string shotLensPath: "M8 13A4 4 0 1 0 16 13A4 4 0 1 0 8 13Z"
     readonly property int noteShotGlyph: 16
+    readonly property string shotRegionPath: "M4 9V5A1 1 0 0 1 5 4H9 M15 4H19A1 1 0 0 1 20 5V9 M20 15V19A1 1 0 0 1 19 20H15 M9 20H5A1 1 0 0 1 4 19V15"
+    readonly property string shotWindowPath: "M4 6A2 2 0 0 1 6 4H18A2 2 0 0 1 20 6V18A2 2 0 0 1 18 20H6A2 2 0 0 1 4 18V6Z M4 9H20"
+    readonly property string shotActiveBadgePath: "M15.5 18A2.5 2.5 0 1 0 20.5 18A2.5 2.5 0 1 0 15.5 18Z"
+    readonly property string shotMonitorPath: "M4 4A1 1 0 0 1 5 3H19A1 1 0 0 1 20 4V15A1 1 0 0 1 19 16H5A1 1 0 0 1 4 15V4Z M9 21H15 M12 16V21"
+    readonly property int shotMonitorNumY: -4
+    readonly property int shotMonitorNumSize: fs(10)
 
     readonly property int launchSearchHandleRot: 45
     readonly property int launchTextRowGap: 1
