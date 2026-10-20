@@ -6,7 +6,7 @@ import Quickshell.Io
 Singleton {
     id: root
     readonly property string screen: "HDMI-A-1"
-    readonly property string font: "sans-serif"
+    readonly property string font: "Inter"
     readonly property real fontScale: 1
     readonly property int fsXXS: fs(9)
     readonly property int fsXS: fs(10)

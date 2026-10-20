@@ -72,9 +72,8 @@ Pick {
                 highlightFollowsCurrentItem: false
 
                 Behavior on contentY {
-                    enabled: !root.snap
                     NumberAnimation {
-                        duration: root.dur
+                        duration: root.snap ? 0 : root.dur
                         easing.type: Theme.ease
                     }
                 }
@@ -96,9 +95,8 @@ Pick {
                     }
 
                     Behavior on y {
-                        enabled: !root.snap
                         NumberAnimation {
-                            duration: root.dur
+                            duration: root.snap ? 0 : root.dur
                             easing.type: Theme.ease
                         }
                     }

@@ -91,16 +91,13 @@ Fade {
                 }
 
                 Behavior on color {
-                    enabled: !root.snap
-                    ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                    ColorAnimation { duration: root.snap ? 0 : Theme.glide; easing.type: Theme.ease }
                 }
                 Behavior on border.color {
-                    enabled: !root.snap
-                    ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                    ColorAnimation { duration: root.snap ? 0 : Theme.glide; easing.type: Theme.ease }
                 }
                 Behavior on ink {
-                    enabled: !root.snap
-                    ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                    ColorAnimation { duration: root.snap ? 0 : Theme.glide; easing.type: Theme.ease }
                 }
 
                 Shape {

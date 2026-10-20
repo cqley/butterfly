@@ -274,7 +274,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.lpad
             shown: Launcher.open
-            ready: root.panelReady
+            ready: root.panelReady && launch.settled
             rise: root.panelRise
         }
 
