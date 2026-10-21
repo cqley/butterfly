@@ -35,6 +35,8 @@ Singleton {
         if (bin !== "") {
             list.push({ kind: "window", label: "window" })
             list.push({ kind: "active", label: "active window" })
+        }
+        if (grimBin !== "") {
             const screens = Quickshell.screens
             for (let i = 0; i < screens.length; i++)
                 list.push({ kind: "output", label: screens[i].name, value: screens[i].name })
@@ -46,7 +48,19 @@ Singleton {
         if (!item)
             return
         open = false
-        shoot(item)
+        if (item.kind === "region") {
+            startRegion()
+            return
+        }
+        settleCapture.item = item
+        settleCapture.restart()
+    }
+
+    Timer {
+        id: settleCapture
+        interval: Theme.screenshotSettleDelay
+        property var item: null
+        onTriggered: root.shoot(item)
     }
 
     function shoot(item) {
@@ -54,7 +68,11 @@ Singleton {
             startRegion()
             return
         }
-        if (item.kind !== "window" && item.kind !== "active" && item.kind !== "output")
+        if (item.kind === "output") {
+            shootOutput(item)
+            return
+        }
+        if (item.kind !== "window" && item.kind !== "active")
             return
         if (bin === "") {
             Notifs.pushSystem("screenshot unavailable", "hyprshot not found", false, "shot", true)
@@ -68,12 +86,24 @@ Singleton {
         const args = [bin, "-s", "-o", Theme.screenshotDir, "-f", name]
         if (item.kind === "window")
             args.push("-m", "window")
-        else if (item.kind === "active")
-            args.push("-m", "window", "-m", "active")
         else
-            args.push("-m", "output", "-m", item.value)
+            args.push("-m", "window", "-m", "active")
         needsCopy = false
         proc.exec(args)
+    }
+
+    function shootOutput(item) {
+        if (grimBin === "") {
+            Notifs.pushSystem("screenshot unavailable", "grim not found", false, "shot", true)
+            return
+        }
+        if (busy)
+            return
+        const stamp = Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss")
+        const name = "shot-" + stamp + ".png"
+        lastFile = Theme.screenshotDir + "/" + name
+        needsCopy = true
+        proc.exec([grimBin, "-o", item.value, lastFile])
     }
 
     readonly property point offscreen: Qt.point(-100000, -100000)

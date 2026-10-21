@@ -36,6 +36,7 @@ Singleton {
     readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"
     readonly property string screenshotBin: ""
     readonly property int screenshotCheckDelay: 300
+    readonly property int screenshotSettleDelay: fall + speed + 40
     readonly property int regionMinSize: 4
     readonly property real regionDim: 0.65
     readonly property int regionBorderWidth: 2
@@ -464,11 +465,11 @@ Singleton {
     readonly property string shotLensPath: "M8 13A4 4 0 1 0 16 13A4 4 0 1 0 8 13Z"
     readonly property int noteShotGlyph: 16
     readonly property string shotRegionPath: "M4 9V5A1 1 0 0 1 5 4H9 M15 4H19A1 1 0 0 1 20 5V9 M20 15V19A1 1 0 0 1 19 20H15 M9 20H5A1 1 0 0 1 4 19V15"
-    readonly property string shotWindowPath: "M4 6A2 2 0 0 1 6 4H18A2 2 0 0 1 20 6V18A2 2 0 0 1 18 20H6A2 2 0 0 1 4 18V6Z M4 9H20"
-    readonly property string shotActiveBadgePath: "M15.5 18A2.5 2.5 0 1 0 20.5 18A2.5 2.5 0 1 0 15.5 18Z"
-    readonly property string shotMonitorPath: "M4 4A1 1 0 0 1 5 3H19A1 1 0 0 1 20 4V15A1 1 0 0 1 19 16H5A1 1 0 0 1 4 15V4Z M9 21H15 M12 16V21"
-    readonly property int shotMonitorNumY: -4
-    readonly property int shotMonitorNumSize: fs(10)
+    readonly property string shotWindowPath: "M4 6A2 2 0 0 1 6 4H18A2 2 0 0 1 20 6V18A2 2 0 0 1 18 20H6A2 2 0 0 1 4 18V6Z M4 8H20"
+    readonly property string shotActiveBadgePath: "M4 6A2 2 0 0 1 6 4H18A2 2 0 0 1 20 6V8H4V6Z"
+    readonly property string shotMonitorPath: "M4 8A2 2 0 0 1 6 6H18A2 2 0 0 1 20 8V16A2 2 0 0 1 18 18H6A2 2 0 0 1 4 16V8Z M12 18V20 M8 20H16"
+    readonly property int shotMonitorNumY: 1
+    readonly property int shotMonitorNumSize: fs(9)
 
     readonly property int launchSearchHandleRot: 45
     readonly property int launchTextRowGap: 1

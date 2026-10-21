@@ -110,6 +110,21 @@ Fade {
                 }
 
                 Shape {
+                    anchors.centerIn: parent
+                    width: Theme.iconGrid
+                    height: Theme.iconGrid
+                    preferredRendererType: Shape.CurveRenderer
+                    visible: tile.isActive
+
+                    ShapePath {
+                        strokeWidth: -1
+                        fillColor: tile.ink
+                        fillRule: ShapePath.WindingFill
+                        PathSvg { path: tile.isActive ? Theme.shotActiveBadgePath : "" }
+                    }
+                }
+
+                Shape {
                     id: glyph
                     anchors.centerIn: parent
                     width: Theme.iconGrid
@@ -128,19 +143,12 @@ Fade {
                                 : Theme.shotWindowPath
                         }
                     }
-
-                    ShapePath {
-                        strokeWidth: -1
-                        fillColor: tile.ink
-                        fillRule: ShapePath.WindingFill
-                        PathSvg { path: tile.isActive ? Theme.shotActiveBadgePath : "" }
-                    }
                 }
 
                 Txt {
                     visible: tile.isMonitor
-                    x: Math.round(glyph.x + (glyph.width - width) / 2)
-                    y: Math.round(glyph.y + (glyph.height - height) / 2) + Theme.shotMonitorNumY
+                    anchors.centerIn: glyph
+                    anchors.verticalCenterOffset: Theme.shotMonitorNumY
                     text: tile.monitorIndex
                     color: tile.ink
                     font.pixelSize: Theme.shotMonitorNumSize

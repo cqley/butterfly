@@ -26,10 +26,10 @@ quickshell ipc call <target> <action>
 
 | for | needs |
 | --- | --- |
-| shell | `quickshell`, `hyprland` |
+| shell | `quickshell`, `hyprland`, `Inter` (font) |
 | network | `nmcli` |
 | brightness | `brightnessctl`, `ddcutil` (external monitors) |
 | recording | `gpu-screen-recorder`, `wf-recorder` or `wl-screenrec` |
-| screenshot | `hyprshot` (window/active/output), `grim` + `wl-copy` (region, custom picker) |
+| screenshot | `hyprshot` (window/active), `grim` + `wl-copy` (region, per-monitor output, custom picker) |
 | colors | `magick`, `gawk`, `awww` |
 | lock | `hyprlock` |
