@@ -38,9 +38,8 @@ Singleton {
     readonly property int screenshotCheckDelay: 300
     readonly property int screenshotSettleDelay: fall + speed + 40
     readonly property int regionMinSize: 4
-    readonly property real regionDim: 0.65
+    readonly property real regionDim: 0.8
     readonly property int regionBorderWidth: 2
-    readonly property int regionRadius: 4
     readonly property int regionLabelGap: 8
     readonly property int regionLabelPadX: 8
     readonly property int regionLabelPadY: 4
