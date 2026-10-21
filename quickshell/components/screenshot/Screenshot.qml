@@ -9,13 +9,16 @@ Singleton {
     id: root
     property bool open: false
     property bool picking: false
-    property string bin: ""
+    property bool targeting: false
+    property string targetKind: ""
+    property var targets: []
+    property int targetIndex: -1
     property string grimBin: ""
     property string copyBin: ""
     property string lastFile: ""
     property bool needsCopy: false
     property var items: []
-    readonly property bool busy: proc.running || picking || settle.running || check.running || copy.running
+    readonly property bool busy: proc.running || picking || targeting || settle.running || check.running || copy.running || clientsQuery.running || activeQuery.running
 
     onOpenChanged: if (open) {
         Modal.claim("screenshot")
@@ -23,23 +26,19 @@ Singleton {
     }
 
     function toggle() {
-        if (picking)
+        if (picking || targeting)
             return
         open = !open
     }
 
     function refresh() {
         const list = []
-        if (grimBin !== "")
+        if (grimBin !== "") {
             list.push({ kind: "region", label: "region" })
-        if (bin !== "") {
             list.push({ kind: "window", label: "window" })
             list.push({ kind: "active", label: "active window" })
-        }
-        if (grimBin !== "") {
-            const screens = Quickshell.screens
-            for (let i = 0; i < screens.length; i++)
-                list.push({ kind: "output", label: screens[i].name, value: screens[i].name })
+            if (Quickshell.screens.length > 0)
+                list.push({ kind: "monitor", label: "monitor" })
         }
         items = list
     }
@@ -50,62 +49,76 @@ Singleton {
         open = false
         if (item.kind === "region") {
             startRegion()
-            return
+        } else if (item.kind === "window") {
+            startWindowPick()
+        } else if (item.kind === "monitor") {
+            startMonitorPick()
+        } else if (item.kind === "active") {
+            settleCapture.restart()
         }
-        settleCapture.item = item
-        settleCapture.restart()
     }
 
     Timer {
         id: settleCapture
         interval: Theme.screenshotSettleDelay
-        property var item: null
-        onTriggered: root.shoot(item)
+        onTriggered: root.captureActive()
     }
 
-    function shoot(item) {
-        if (item.kind === "region") {
-            startRegion()
-            return
-        }
-        if (item.kind === "output") {
-            shootOutput(item)
-            return
-        }
-        if (item.kind !== "window" && item.kind !== "active")
-            return
-        if (bin === "") {
-            Notifs.pushSystem("screenshot unavailable", "hyprshot not found", false, "shot", true)
-            return
-        }
-        if (busy)
-            return
+    function notifySaved(clipboardFailed) {
+        const body = clipboardFailed ? root.lastFile + " · clipboard unavailable" : root.lastFile + " · copied to clipboard"
+        Notifs.pushSystem("screenshot saved", body, false, "shot")
+    }
+
+    function newFile() {
         const stamp = Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss")
-        const name = "shot-" + stamp + ".png"
-        lastFile = Theme.screenshotDir + "/" + name
-        const args = [bin, "-s", "-o", Theme.screenshotDir, "-f", name]
-        if (item.kind === "window")
-            args.push("-m", "window")
-        else
-            args.push("-m", "window", "-m", "active")
-        needsCopy = false
-        proc.exec(args)
+        lastFile = Theme.screenshotDir + "/shot-" + stamp + ".png"
+        return lastFile
     }
 
-    function shootOutput(item) {
+    function captureBox(x, y, w, h) {
+        const file = newFile()
+        const geo = Math.round(x) + "," + Math.round(y) + " " + Math.round(w) + "x" + Math.round(h)
+        needsCopy = true
+        proc.exec([grimBin, "-g", geo, file])
+    }
+
+    function captureMonitor(name) {
+        const file = newFile()
+        needsCopy = true
+        proc.exec([grimBin, "-o", name, file])
+    }
+
+    function captureActive() {
         if (grimBin === "") {
             Notifs.pushSystem("screenshot unavailable", "grim not found", false, "shot", true)
             return
         }
         if (busy)
             return
-        const stamp = Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss")
-        const name = "shot-" + stamp + ".png"
-        lastFile = Theme.screenshotDir + "/" + name
-        needsCopy = true
-        proc.exec([grimBin, "-o", item.value, lastFile])
+        activeQuery.running = true
     }
 
+    Process {
+        id: activeQuery
+        command: ["hyprctl", "-j", "activewindow"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let d = null
+                try {
+                    d = JSON.parse(text)
+                } catch (e) {
+                    d = null
+                }
+                if (!d || !d.at || !d.size) {
+                    Notifs.pushSystem("screenshot failed", "no active window", false, "shot", true)
+                    return
+                }
+                root.captureBox(d.at[0], d.at[1], d.size[0], d.size[1])
+            }
+        }
+    }
+
+    // region (free drag)
     readonly property point offscreen: Qt.point(-100000, -100000)
     property point pressG: Qt.point(0, 0)
     property point curG: Qt.point(-100000, -100000)
@@ -143,58 +156,14 @@ Singleton {
     function endDrag() {
         if (!dragging)
             return
-        dragging = false
         const rx = Math.min(pressG.x, curG.x)
         const ry = Math.min(pressG.y, curG.y)
         const rw = Math.abs(curG.x - pressG.x)
         const rh = Math.abs(curG.y - pressG.y)
-        if (rw >= Theme.regionMinSize && rh >= Theme.regionMinSize)
-            finishRegion(Qt.rect(rx, ry, rw, rh))
-        else
-            cancelRegion()
-    }
-
-    function finishRegion(rect) {
+        if (rw >= Theme.regionMinSize && rh >= Theme.regionMinSize && !proc.running)
+            captureBox(rx, ry, rw, rh)
+        dragging = false
         picking = false
-        if (busy)
-            return
-        const stamp = Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss")
-        const name = "shot-" + stamp + ".png"
-        lastFile = Theme.screenshotDir + "/" + name
-        const x = Math.round(rect.x)
-        const y = Math.round(rect.y)
-        const w = Math.round(rect.width)
-        const h = Math.round(rect.height)
-        const geo = x + "," + y + " " + w + "x" + h
-        needsCopy = true
-        proc.exec([grimBin, "-g", geo, lastFile])
-    }
-
-    function notifySaved(clipboardFailed) {
-        const body = clipboardFailed ? root.lastFile + " · clipboard unavailable" : root.lastFile + " · copied to clipboard"
-        Notifs.pushSystem("screenshot saved", body, false, "shot")
-    }
-
-    Process {
-        id: detect
-        command: ["sh", "-lc", "for b in hyprshot grim wl-copy; do p=$(command -v $b) && echo \"$b $p\"; done; true"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const map = {}
-                for (const line of text.trim().split("\n")) {
-                    if (!line)
-                        continue
-                    const i = line.indexOf(" ")
-                    if (i > 0)
-                        map[line.slice(0, i)] = line.slice(i + 1)
-                }
-                root.bin = Theme.screenshotBin !== "" ? Theme.screenshotBin : (map["hyprshot"] || "")
-                root.grimBin = map["grim"] || ""
-                root.copyBin = map["wl-copy"] || ""
-                if (root.open)
-                    root.refresh()
-            }
-        }
     }
 
     Process {
@@ -209,6 +178,156 @@ Singleton {
                 const y = parseFloat(parts[1])
                 if (isFinite(x) && isFinite(y) && root.picking && !root.dragging)
                     root.curG = Qt.point(x, y)
+            }
+        }
+    }
+
+    // window / monitor targeting (hover or keyboard cycle, then confirm)
+    function startMonitorPick() {
+        if (busy)
+            return
+        if (grimBin === "") {
+            Notifs.pushSystem("screenshot unavailable", "grim not found", false, "shot", true)
+            return
+        }
+        const screens = Quickshell.screens.slice().sort((a, b) => a.x - b.x)
+        if (screens.length === 0)
+            return
+        targets = screens.map(s => ({ x: s.x, y: s.y, w: s.width, h: s.height, name: s.name }))
+        targetKind = "monitor"
+        targetIndex = 0
+        targeting = true
+        targetSeed.running = true
+    }
+
+    function startWindowPick() {
+        if (busy)
+            return
+        if (grimBin === "") {
+            Notifs.pushSystem("screenshot unavailable", "grim not found", false, "shot", true)
+            return
+        }
+        clientsQuery.running = true
+    }
+
+    Process {
+        id: clientsQuery
+        command: ["sh", "-c", "hyprctl -j monitors; echo '@@split@@'; hyprctl -j clients"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = text.split("@@split@@")
+                if (parts.length !== 2)
+                    return
+                let monitors = []
+                let clients = []
+                try {
+                    monitors = JSON.parse(parts[0])
+                    clients = JSON.parse(parts[1])
+                } catch (e) {
+                    return
+                }
+                const visibleWs = new Set()
+                for (const m of monitors) {
+                    if (m.activeWorkspace)
+                        visibleWs.add(m.activeWorkspace.id)
+                    if (m.specialWorkspace && m.specialWorkspace.id !== 0)
+                        visibleWs.add(m.specialWorkspace.id)
+                }
+                const list = []
+                for (const c of clients) {
+                    if (!c.mapped || c.hidden)
+                        continue
+                    if (!c.workspace || !visibleWs.has(c.workspace.id))
+                        continue
+                    list.push({ x: c.at[0], y: c.at[1], w: c.size[0], h: c.size[1] })
+                }
+                if (list.length === 0) {
+                    Notifs.pushSystem("screenshot unavailable", "no window to capture", false, "shot", true)
+                    return
+                }
+                root.targets = list
+                root.targetKind = "window"
+                root.targetIndex = 0
+                root.targeting = true
+                targetSeed.running = true
+            }
+        }
+    }
+
+    Process {
+        id: targetSeed
+        command: ["hyprctl", "cursorpos"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = text.trim().split(",")
+                if (parts.length !== 2)
+                    return
+                const x = parseFloat(parts[0])
+                const y = parseFloat(parts[1])
+                if (isFinite(x) && isFinite(y) && root.targeting)
+                    root.hoverTarget(x, y)
+            }
+        }
+    }
+
+    function hoverTarget(gx, gy) {
+        for (let i = 0; i < targets.length; i++) {
+            const t = targets[i]
+            if (gx >= t.x && gx <= t.x + t.w && gy >= t.y && gy <= t.y + t.h) {
+                targetIndex = i
+                return
+            }
+        }
+    }
+
+    function cycleTarget(delta) {
+        if (targets.length === 0)
+            return
+        targetIndex = (targetIndex + delta + targets.length) % targets.length
+    }
+
+    function confirmTargetPick() {
+        if (targetIndex < 0 || targetIndex >= targets.length || proc.running) {
+            cancelTargetPick()
+            return
+        }
+        const t = targets[targetIndex]
+        if (targetKind === "monitor")
+            captureMonitor(t.name)
+        else
+            captureBox(t.x, t.y, t.w, t.h)
+        targeting = false
+        targetKind = ""
+        targets = []
+        targetIndex = -1
+    }
+
+    function cancelTargetPick() {
+        if (!targeting)
+            return
+        targeting = false
+        targetKind = ""
+        targets = []
+        targetIndex = -1
+    }
+
+    Process {
+        id: detect
+        command: ["sh", "-lc", "for b in grim wl-copy; do p=$(command -v $b) && echo \"$b $p\"; done; true"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const map = {}
+                for (const line of text.trim().split("\n")) {
+                    if (!line)
+                        continue
+                    const i = line.indexOf(" ")
+                    if (i > 0)
+                        map[line.slice(0, i)] = line.slice(i + 1)
+                }
+                root.grimBin = map["grim"] || ""
+                root.copyBin = map["wl-copy"] || ""
+                if (root.open)
+                    root.refresh()
             }
         }
     }
@@ -261,17 +380,21 @@ Singleton {
         target: "screenshot"
         function toggle(): void { root.toggle() }
         function region(): void { root.startRegion() }
-        function window(): void { root.shoot({ kind: "window" }) }
-        function active(): void { root.shoot({ kind: "active" }) }
-        function cancel(): void { root.cancelRegion() }
+        function window(): void { root.startWindowPick() }
+        function monitor(): void { root.startMonitorPick() }
+        function active(): void { root.captureActive() }
+        function cancel(): void {
+            root.cancelRegion()
+            root.cancelTargetPick()
+        }
         function status(): string {
-            if (root.picking)
+            if (root.picking || root.targeting)
                 return "picking"
             if (root.busy)
                 return "capturing"
-            if (root.bin === "" && root.grimBin === "")
+            if (root.grimBin === "")
                 return "no backend"
-            return "idle " + (root.bin || root.grimBin)
+            return "idle " + root.grimBin
         }
     }
 }

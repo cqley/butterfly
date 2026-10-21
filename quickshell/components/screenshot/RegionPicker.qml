@@ -28,11 +28,6 @@ Variants {
         readonly property real selW: Math.abs(Screenshot.curG.x - Screenshot.pressG.x)
         readonly property real selH: Math.abs(Screenshot.curG.y - Screenshot.pressG.y)
 
-        readonly property real clipX: Math.max(0, Math.min(win.width, selX))
-        readonly property real clipY: Math.max(0, Math.min(win.height, selY))
-        readonly property real clipR: Math.max(0, Math.min(win.width, selX + selW))
-        readonly property real clipB: Math.max(0, Math.min(win.height, selY + selH))
-
         screen: modelData
         visible: fadeShown || surface.opacity > 0
         anchors {
@@ -76,64 +71,19 @@ Variants {
                 anchors.fill: parent
                 color: Theme.bg
                 opacity: Theme.regionDim
-                visible: !Screenshot.dragging
+                visible: !Screenshot.dragging && Screenshot.picking
             }
 
-            Rectangle {
+            DimHole {
                 visible: Screenshot.dragging
-                x: 0
-                y: 0
-                width: win.width
-                height: win.clipY
-                color: Theme.bg
-                opacity: Theme.regionDim
+                holeX: win.selX
+                holeY: win.selY
+                holeW: win.selW
+                holeH: win.selH
             }
 
             Rectangle {
-                visible: Screenshot.dragging
-                x: 0
-                y: win.clipB
-                width: win.width
-                height: win.height - win.clipB
-                color: Theme.bg
-                opacity: Theme.regionDim
-            }
-
-            Rectangle {
-                visible: Screenshot.dragging
-                x: 0
-                y: win.clipY
-                width: win.clipX
-                height: win.clipB - win.clipY
-                color: Theme.bg
-                opacity: Theme.regionDim
-            }
-
-            Rectangle {
-                visible: Screenshot.dragging
-                x: win.clipR
-                y: win.clipY
-                width: win.width - win.clipR
-                height: win.clipB - win.clipY
-                color: Theme.bg
-                opacity: Theme.regionDim
-            }
-
-            Rectangle {
-                visible: Screenshot.dragging
-                x: win.selX
-                y: win.selY
-                width: win.selW
-                height: win.selH
-                radius: Theme.regionRadius
-                color: "transparent"
-                border.width: Theme.regionBorderWidth
-                border.color: Theme.accent
-                antialiasing: true
-            }
-
-            Rectangle {
-                visible: !Screenshot.dragging && win.hasPointer
+                visible: !Screenshot.dragging && Screenshot.picking && win.hasPointer
                 x: 0
                 y: win.localY - 0.5
                 width: win.width
@@ -143,7 +93,7 @@ Variants {
             }
 
             Rectangle {
-                visible: !Screenshot.dragging && win.hasPointer
+                visible: !Screenshot.dragging && Screenshot.picking && win.hasPointer
                 x: win.localX - 0.5
                 y: 0
                 width: 1

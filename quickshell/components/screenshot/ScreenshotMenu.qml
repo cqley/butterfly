@@ -75,15 +75,8 @@ Fade {
                 required property var modelData
                 required property int index
                 readonly property bool on: root.sel === index
-                readonly property bool isMonitor: modelData.kind === "output"
+                readonly property bool isMonitor: modelData.kind === "monitor"
                 readonly property bool isActive: modelData.kind === "active"
-                readonly property int monitorIndex: {
-                    let count = 0
-                    for (let i = 0; i < index; i++)
-                        if (root.items[i].kind === "output")
-                            count++
-                    return count + 1
-                }
                 property color ink: on ? Theme.bg : Theme.fg
 
                 width: Theme.pwW
@@ -143,16 +136,6 @@ Fade {
                                 : Theme.shotWindowPath
                         }
                     }
-                }
-
-                Txt {
-                    visible: tile.isMonitor
-                    anchors.centerIn: glyph
-                    anchors.verticalCenterOffset: Theme.shotMonitorNumY
-                    text: tile.monitorIndex
-                    color: tile.ink
-                    font.pixelSize: Theme.shotMonitorNumSize
-                    font.weight: Font.Bold
                 }
 
                 MouseArea {
