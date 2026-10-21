@@ -113,6 +113,7 @@ Singleton {
     readonly property int pillHaloSpread: 1
 
     readonly property int launchW: 340
+    readonly property int launchRadius: 24
     readonly property int lpad: 8
     readonly property int rowH: 38
     readonly property int rows: 5

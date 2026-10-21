@@ -108,6 +108,12 @@ Pick {
             view = results
             return
         }
+        const sameSize = Math.min(results.length, Theme.rows) === Math.min(view.length, Theme.rows)
+        if (sameSize) {
+            root.hold()
+            view = results
+            return
+        }
         churn = true
         swap.restart()
     }
