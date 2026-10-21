@@ -210,7 +210,7 @@ Singleton {
     readonly property int batNubW: 2
     readonly property int batNubH: 5
     readonly property int batNubGap: 1
-    readonly property color batNubColor: fg
+    readonly property color batNubColor: batOutline
     readonly property int batGap: clockGap
     readonly property int batRadius: 4
     readonly property int batFillRadius: 3
@@ -233,6 +233,8 @@ Singleton {
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"
     readonly property color batGreen: green
+    readonly property color batOutline: "#000000"
+    readonly property color batBoltColor: "#ffffff"
     readonly property int clockGap: 4
     readonly property int rowGap: 8
     readonly property int idlePopDuration: speed
@@ -272,9 +274,7 @@ Singleton {
     readonly property real batRedAt: 0.15
     readonly property real batYellowAt: 0.25
 
-    function batTone(pct, plugged) {
-        if (plugged)
-            return batGreen
+    function batTone(pct) {
         return pct <= batRedAt ? batRed : pct <= batYellowAt ? batYellow : batGreen
     }
     readonly property int ease: Easing.OutCubic
@@ -282,6 +282,7 @@ Singleton {
     readonly property int iconGrid: 24
     readonly property real iconStroke: 1.8
     readonly property real btnStroke: 5
+    readonly property color mediaIconColor: "#ffffff"
     readonly property real dimHint: 0.35
     readonly property real dimGhost: 0.4
     readonly property real dimEmpty: 0.45

@@ -59,7 +59,7 @@ ClippingRectangle {
         shown: root.battery
         available: true
         pct: root.level >= 0 ? root.level : 1
-        tone: Theme.batTone(root.level >= 0 ? root.level : 1, root.on)
+        tone: Theme.batTone(root.level >= 0 ? root.level : 1)
         pluggedIn: root.on
         leadingGap: 0
         scale: Theme.noteBatScale

@@ -53,6 +53,7 @@ Item {
             radius: Theme.batRadius
             color: Theme.bg
             antialiasing: true
+            clip: true
 
             Rectangle {
                 id: fill
@@ -75,7 +76,7 @@ Item {
                 anchors.fill: parent
                 color: "transparent"
                 radius: body.radius
-                border.color: Theme.fg
+                border.color: Theme.batOutline
                 border.width: Theme.batBorder
                 antialiasing: true
             }
@@ -92,8 +93,8 @@ Item {
                 preferredRendererType: Shape.CurveRenderer
 
                 ShapePath {
-                    fillColor: Theme.bg
-                    strokeColor: Theme.bg
+                    fillColor: Theme.batOutline
+                    strokeColor: Theme.batOutline
                     strokeWidth: Theme.batGlyphSoften + Theme.batGlyphStroke * 2
                     joinStyle: ShapePath.RoundJoin
                     capStyle: ShapePath.RoundCap
@@ -105,8 +106,8 @@ Item {
                 }
 
                 ShapePath {
-                    fillColor: Theme.fg
-                    strokeColor: Theme.fg
+                    fillColor: Theme.batBoltColor
+                    strokeColor: Theme.batBoltColor
                     strokeWidth: Theme.batGlyphSoften
                     joinStyle: ShapePath.RoundJoin
                     capStyle: ShapePath.RoundCap
