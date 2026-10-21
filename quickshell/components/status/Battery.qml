@@ -24,7 +24,7 @@ Singleton {
         return isFinite(value) ? Math.max(0, Math.min(1, value)) : 0
     }
     readonly property int percent: Math.round(root.pct * 100)
-    readonly property color tone: Theme.batTone(root.pct, root.pluggedIn)
+    readonly property color tone: Theme.batTone(root.pct)
     readonly property string powerConnection: root.connectionForState(root.available ? root.device.state : null)
     readonly property string stablePowerConnection:
         root.powerConnection !== "" ? root.powerConnection : root.lastPowerConnection

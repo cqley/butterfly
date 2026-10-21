@@ -90,8 +90,8 @@ Item {
 
             ShapePath {
                 strokeWidth: Theme.btnStroke
-                strokeColor: Theme.fg
-                fillColor: Theme.fg
+                strokeColor: Theme.mediaIconColor
+                fillColor: Theme.mediaIconColor
                 fillRule: ShapePath.WindingFill
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
@@ -111,8 +111,8 @@ Item {
 
             ShapePath {
                 strokeWidth: Theme.btnStroke
-                strokeColor: Theme.fg
-                fillColor: Theme.fg
+                strokeColor: Theme.mediaIconColor
+                fillColor: Theme.mediaIconColor
                 fillRule: ShapePath.WindingFill
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
