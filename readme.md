@@ -7,7 +7,7 @@
 | `wallpaper` | `toggle` |
 | `polkit` | `status` |
 | `record` | `toggle` `stop` `status` |
-| `screenshot` | `toggle` `region` `window` `active` `cancel` `status` |
+| `screenshot` | `toggle` `region` `window` `monitor` `active` `cancel` `status` |
 | `network` | `toggle` `power` `status` |
 | `bluetooth` | `toggle` `power` `status` |
 | `brightness` | `toggle` `status` |
@@ -30,6 +30,6 @@ quickshell ipc call <target> <action>
 | network | `nmcli` |
 | brightness | `brightnessctl`, `ddcutil` (external monitors) |
 | recording | `gpu-screen-recorder`, `wf-recorder` or `wl-screenrec` |
-| screenshot | `hyprshot` (window/active), `grim` + `wl-copy` (region, per-monitor output, custom picker) |
+| screenshot | `grim` + `wl-copy` (region, window, monitor, active, all via custom pickers) |
 | colors | `magick`, `gawk`, `awww` |
 | lock | `hyprlock` |

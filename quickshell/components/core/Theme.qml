@@ -465,11 +465,9 @@ Singleton {
     readonly property string shotLensPath: "M8 13A4 4 0 1 0 16 13A4 4 0 1 0 8 13Z"
     readonly property int noteShotGlyph: 16
     readonly property string shotRegionPath: "M4 9V5A1 1 0 0 1 5 4H9 M15 4H19A1 1 0 0 1 20 5V9 M20 15V19A1 1 0 0 1 19 20H15 M9 20H5A1 1 0 0 1 4 19V15"
-    readonly property string shotWindowPath: "M4 6A2 2 0 0 1 6 4H18A2 2 0 0 1 20 6V18A2 2 0 0 1 18 20H6A2 2 0 0 1 4 18V6Z M4 8H20"
-    readonly property string shotActiveBadgePath: "M4 6A2 2 0 0 1 6 4H18A2 2 0 0 1 20 6V8H4V6Z"
-    readonly property string shotMonitorPath: "M4 8A2 2 0 0 1 6 6H18A2 2 0 0 1 20 8V16A2 2 0 0 1 18 18H6A2 2 0 0 1 4 16V8Z M12 18V20 M8 20H16"
-    readonly property int shotMonitorNumY: 1
-    readonly property int shotMonitorNumSize: fs(9)
+    readonly property string shotWindowPath: "M4 6.5A2.5 2.5 0 0 1 6.5 4H17.5A2.5 2.5 0 0 1 20 6.5V17.5A2.5 2.5 0 0 1 17.5 20H6.5A2.5 2.5 0 0 1 4 17.5V6.5Z M4 8H20"
+    readonly property string shotActiveBadgePath: "M4 6.5A2.5 2.5 0 0 1 6.5 4H17.5A2.5 2.5 0 0 1 20 6.5V8H4V6.5Z"
+    readonly property string shotMonitorPath: "M3 8.5A2.5 2.5 0 0 1 5.5 6H18.5A2.5 2.5 0 0 1 21 8.5V15.5A2.5 2.5 0 0 1 18.5 18H5.5A2.5 2.5 0 0 1 3 15.5V8.5Z M12 18V20 M8 20H16"
 
     readonly property int launchSearchHandleRot: 45
     readonly property int launchTextRowGap: 1
