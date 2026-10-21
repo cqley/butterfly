@@ -216,7 +216,7 @@ Item {
         y: Theme.gap
         width: root.wAnim
         height: root.hAnim
-        radius: Math.min(Math.min(width, height) / 2, Theme.radius)
+        radius: Math.min(Math.min(width, height) / 2, Launcher.open ? Theme.launchRadius : Theme.radius)
         antialiasing: true
         color: "transparent"
 

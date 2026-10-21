@@ -42,7 +42,7 @@ Item {
     Txt {
         anchors.centerIn: parent
         text: root.fallbackText
-        visible: icon.showPlaceholder
+        visible: icon.showPlaceholder && !icon.loading
         font.pixelSize: Theme.launchFallbackPx
         font.weight: Font.Bold
     }
