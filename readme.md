@@ -1,9 +1,3 @@
-## install
-
-```
-curl -s https://raw.githubusercontent.com/cqley/butterfly/main/install.sh | bash
-```
-
 ## ipc
 
 | target | actions |
@@ -39,3 +33,9 @@ quickshell ipc call <target> <action>
 | screenshot | `grim` + `wl-copy` (region, window, monitor, active, all via custom pickers) |
 | colors | `magick`, `gawk`, `awww` |
 | lock | `hyprlock` |
+
+## install
+
+```
+curl -s https://raw.githubusercontent.com/cqley/butterfly/main/install.sh | bash
+```

@@ -233,7 +233,7 @@ Singleton {
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"
     readonly property color batGreen: green
-    readonly property color batOutline: "#000000"
+    readonly property color batOutline: "#ffffff"
     readonly property color batBoltColor: "#ffffff"
     readonly property int clockGap: 4
     readonly property int rowGap: 8
