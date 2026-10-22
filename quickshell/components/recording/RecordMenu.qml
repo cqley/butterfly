@@ -56,29 +56,30 @@ Pick {
 
         Item {
             width: parent.width
-            height: list.height
+            height: Math.min(root.n, Theme.recordRows) * Theme.recordRowH
+            clip: true
             visible: root.n > 0
 
-            ListView {
+            ScriptModel {
+                id: recordModel
+                values: root.items
+                objectProp: "label"
+            }
+
+            Item {
                 id: list
                 width: parent.width
-                height: Math.min(root.n, Theme.recordRows) * Theme.recordRowH
-                clip: true
-                interactive: false
-                model: root.items
-                cacheBuffer: Theme.recordRowH * Theme.recordRows * 2
-                reuseItems: true
-                contentY: root.start * Theme.recordRowH
-                highlightFollowsCurrentItem: false
+                height: root.n * Theme.recordRowH
+                y: -root.start * Theme.recordRowH
 
-                Behavior on contentY {
+                Behavior on y {
                     NumberAnimation {
                         duration: root.snap ? 0 : root.dur
                         easing.type: Theme.ease
                     }
                 }
 
-                highlight: Rectangle {
+                Rectangle {
                     x: Theme.selInset
                     y: root.sel * Theme.recordRowH + Theme.selGap / 2
                     width: list.width - Theme.selInset * 2
@@ -102,46 +103,51 @@ Pick {
                     }
                 }
 
-                delegate: Item {
-                    id: row
-                    required property var modelData
-                    required property int index
-                    readonly property bool isStop: !!modelData && modelData.kind === "stop"
-                    readonly property bool selected: root.sel === row.index
+                Repeater {
+                    model: recordModel
 
-                    width: list.width
-                    height: Theme.recordRowH
+                    delegate: Item {
+                        id: row
+                        required property var modelData
+                        required property int index
+                        readonly property bool isStop: !!modelData && modelData.kind === "stop"
+                        readonly property bool selected: root.sel === row.index
 
-                    Txt {
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.rowX
-                        anchors.right: parent.right
-                        anchors.rightMargin: Theme.rowR
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: Theme.rowTextY
-                        text: row.modelData ? row.modelData.label : ""
-                        elide: Text.ElideRight
-                        font.pixelSize: Theme.fsL
-                        font.weight: Font.Normal
-                        color: row.isStop ? Theme.red : row.selected ? Theme.accent : Theme.fg
+                        y: row.index * Theme.recordRowH
+                        width: list.width
+                        height: Theme.recordRowH
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Theme.glide
-                                easing.type: Theme.ease
+                        Txt {
+                            anchors.left: parent.left
+                            anchors.leftMargin: Theme.rowX
+                            anchors.right: parent.right
+                            anchors.rightMargin: Theme.rowR
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenterOffset: Theme.rowTextY
+                            text: row.modelData ? row.modelData.label : ""
+                            elide: Text.ElideRight
+                            font.pixelSize: Theme.fsL
+                            font.weight: Font.Normal
+                            color: row.isStop ? Theme.red : row.selected ? Theme.accent : Theme.fg
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: Theme.glide
+                                    easing.type: Theme.ease
+                                }
                             }
                         }
-                    }
 
-                    MouseArea {
-                        id: area
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
-                        onClicked: {
-                            root.sel = row.index
-                            root.run()
+                        MouseArea {
+                            id: area
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
+                            onClicked: {
+                                root.sel = row.index
+                                root.run()
+                            }
                         }
                     }
                 }
