@@ -1,3 +1,9 @@
+## install
+
+```
+curl -s https://raw.githubusercontent.com/cqley/butterfly/main/install.sh | bash
+```
+
 ## ipc
 
 | target | actions |

@@ -233,109 +233,107 @@ Pick {
         Item {
             id: pane
             width: parent.width
-            height: list.height
+            height: Math.min(root.n, Theme.rows) * Theme.rowH
+            clip: true
             visible: root.n > 0
 
-            ListView {
+            ScriptModel {
+                id: appModel
+                values: root.view
+                objectProp: "id"
+            }
+
+            Item {
                 id: list
                 width: parent.width
-                height: Math.min(root.n, Theme.rows) * Theme.rowH
-                clip: true
-                interactive: false
-                ScriptModel {
-                    id: appModel
-                    values: root.view
-                    objectProp: "id"
-                }
+                height: root.n * Theme.rowH
+                y: -root.start * Theme.rowH
 
-                model: appModel
-                cacheBuffer: Theme.rowH * Theme.rows * 2
-                reuseItems: true
-                contentY: root.start * Theme.rowH
-                highlightFollowsCurrentItem: false
-
-                Behavior on contentY {
+                Behavior on y {
                     NumberAnimation { duration: root.snap ? 0 : root.dur; easing.type: Theme.ease }
                 }
 
-                delegate: Item {
-                    id: row
-                    required property var modelData
-                    required property int index
+                Repeater {
+                    model: appModel
 
-                    width: list.width
-                    height: Theme.rowH
+                    delegate: Item {
+                        id: row
+                        required property var modelData
+                        required property int index
 
-                    readonly property bool selected: root.sel === row.index
+                        y: row.index * Theme.rowH
+                        width: list.width
+                        height: Theme.rowH
 
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.leftMargin: Theme.selInset
-                        anchors.rightMargin: Theme.selInset
-                        anchors.verticalCenter: parent.verticalCenter
-                        height: Theme.rowH - Theme.selGap
-                        radius: height / 2
-                        color: Theme.selFill
-                        border.width: Theme.surfaceBorderWidth
-                        border.color: Theme.surfaceBorder
-                        opacity: row.selected ? 1 : 0
-                        antialiasing: true
+                        readonly property bool selected: root.sel === row.index
 
-                        Behavior on opacity { NumberAnimation { duration: Theme.selDuration; easing.type: Theme.ease } }
-                    }
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: Theme.selInset
+                            anchors.rightMargin: Theme.selInset
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: Theme.rowH - Theme.selGap
+                            radius: height / 2
+                            color: Theme.selFill
+                            border.width: Theme.surfaceBorderWidth
+                            border.color: Theme.surfaceBorder
+                            opacity: row.selected ? 1 : 0
+                            antialiasing: true
 
-                    LaunchIcon {
-                        id: icon
-                        x: Theme.launchIconX
-                        anchors.verticalCenter: parent.verticalCenter
-                        source: root.iconFor(row.modelData.iconName)
-                        fallbackText: row.modelData.name.charAt(0).toLowerCase() || "?"
-                        selected: row.selected
-                        hovered: area.containsMouse
-                        pressed: area.pressed
-                    }
-
-
-                    Column {
-                        anchors.left: icon.right
-                        anchors.leftMargin: Theme.launchTextGap
-                        anchors.right: parent.right
-                        anchors.rightMargin: Theme.rowR
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Theme.launchTextRowGap
-
-                        Txt {
-                            width: parent.width
-                            text: row.modelData.name
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                            font.weight: Font.DemiBold
+                            Behavior on opacity { NumberAnimation { duration: Theme.selDuration; easing.type: Theme.ease } }
                         }
 
-                        Txt {
-                            width: parent.width
-                            text: row.modelData.comment || row.modelData.genericName
-                            visible: text !== ""
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                            opacity: Theme.dimSoft
-                            font.pixelSize: Theme.fsXS
+                        LaunchIcon {
+                            id: icon
+                            x: Theme.launchIconX
+                            anchors.verticalCenter: parent.verticalCenter
+                            source: root.iconFor(row.modelData.iconName)
+                            fallbackText: row.modelData.name.charAt(0).toLowerCase() || "?"
+                            selected: row.selected
+                            hovered: area.containsMouse
+                            pressed: area.pressed
+                        }
+
+                        Column {
+                            anchors.left: icon.right
+                            anchors.leftMargin: Theme.launchTextGap
+                            anchors.right: parent.right
+                            anchors.rightMargin: Theme.rowR
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: Theme.launchTextRowGap
+
+                            Txt {
+                                width: parent.width
+                                text: row.modelData.name
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                font.weight: Font.DemiBold
+                            }
+
+                            Txt {
+                                width: parent.width
+                                text: row.modelData.comment || row.modelData.genericName
+                                visible: text !== ""
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                opacity: Theme.dimSoft
+                                font.pixelSize: Theme.fsXS
+                            }
+                        }
+
+                        MouseArea {
+                            id: area
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
+                            onClicked: {
+                                root.sel = row.index
+                                root.run()
+                            }
                         }
                     }
-
-                    MouseArea {
-                        id: area
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
-                        onClicked: {
-                            root.sel = row.index
-                            root.run()
-                        }
-                    }
-
                 }
             }
         }
