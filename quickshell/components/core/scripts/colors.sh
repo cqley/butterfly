@@ -640,6 +640,9 @@ main() {
 
     if ((do_apply)); then
         apply_sequences "$dest"
+        if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]] && command -v hyprctl >/dev/null 2>&1; then
+            hyprctl reload >/dev/null 2>&1 || true
+        fi
     fi
     if ((do_print)); then
         print_swatches
