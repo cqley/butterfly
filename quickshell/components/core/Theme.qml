@@ -187,8 +187,15 @@ Singleton {
     readonly property color batGreen: green
     readonly property color batOutline: "#ffffff"
     readonly property color batBoltColor: "#ffffff"
+    readonly property color batBoltOutline: "#000000"
     readonly property real batRedAt: 0.15
     readonly property real batYellowAt: 0.25
+    readonly property bool batRingEnabled: true
+    readonly property real batRingWidth: 2.0
+    readonly property int batRingGap: 0
+    readonly property color batRingTrack: Qt.rgba(accent.r, accent.g, accent.b, 0.22)
+    readonly property int batRingRise: idleRise
+    readonly property int batRingFall: 0
 
     function batTone(pct) {
         return pct <= batRedAt ? batRed : pct <= batYellowAt ? batYellow : batGreen

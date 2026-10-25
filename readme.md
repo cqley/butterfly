@@ -30,7 +30,7 @@ quickshell ipc call <target> <action>
 | network | `nmcli` |
 | brightness | `brightnessctl`, `ddcutil` (external monitors) |
 | recording | `gpu-screen-recorder`, `wf-recorder` or `wl-screenrec` |
-| screenshot | `grim` + `wl-copy` (region, window, monitor, active, all via custom pickers) |
+| screenshot | `grim` + `wl-copy` |
 | colors | `magick`, `gawk`, `awww` |
 | lock | `hyprlock` |
 | visualizer (real, optional) | `cava` fallback if absent|
