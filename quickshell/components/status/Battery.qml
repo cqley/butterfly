@@ -10,14 +10,21 @@ Singleton {
     id: root
 
     property bool shown: true
+    property bool ringShown: true
     property string lastPowerConnection: ""
     property int lastPercent: -1
     property bool chargingSeen: false
     property bool fullNotified: false
 
+    property bool testMode: false
+    property real testPct: 0.8
+    property bool testCharging: false
+
     readonly property var device: UPower.displayDevice
-    readonly property bool available: !!device && device.ready && device.isLaptopBattery
+    readonly property bool available: root.testMode || (!!device && device.ready && device.isLaptopBattery)
     readonly property real pct: {
+        if (root.testMode)
+            return Math.max(0, Math.min(1, root.testPct))
         if (!root.available)
             return 0
         const value = Number(root.device.percentage)
@@ -25,7 +32,9 @@ Singleton {
     }
     readonly property int percent: Math.round(root.pct * 100)
     readonly property color tone: Theme.batTone(root.pct)
-    readonly property string powerConnection: root.connectionForState(root.available ? root.device.state : null)
+    readonly property string powerConnection: root.testMode
+        ? (root.testCharging ? "external" : "battery")
+        : root.connectionForState(root.available && root.device ? root.device.state : null)
     readonly property string stablePowerConnection:
         root.powerConnection !== "" ? root.powerConnection : root.lastPowerConnection
     readonly property bool pluggedIn: root.stablePowerConnection === "external"
@@ -54,6 +63,8 @@ Singleton {
     }
 
     function syncPowerConnection() {
+        if (root.testMode)
+            return
         if (!root.available)
             return
 
@@ -114,6 +125,10 @@ Singleton {
         root.shown = !root.shown
     }
 
+    function toggleRing() {
+        root.ringShown = !root.ringShown
+    }
+
     Component.onCompleted: root.syncPowerConnection()
     onDeviceChanged: root.resetPowerConnection()
 
@@ -128,6 +143,17 @@ Singleton {
     IpcHandler {
         target: "battery"
         function toggle(): void { root.toggle() }
-        function status(): string { return root.shown ? "on" : "off" }
+        function ringToggle(): void { root.toggleRing() }
+        function status(): string {
+            const base = !root.testMode
+                ? ""
+                : `test · ${root.percent}% · ${root.testCharging ? "charging" : "battery"} · `
+            return `${base}icon ${root.shown ? "on" : "off"} · ring ${root.ringShown ? "on" : "off"}`
+        }
+        function test(): void { root.testMode = !root.testMode }
+        function testPct(value: int): void { root.testPct = Math.max(0, Math.min(100, value)) / 100 }
+        function testUp(): void { root.testPct = Math.min(1, root.testPct + 0.1) }
+        function testDown(): void { root.testPct = Math.max(0, root.testPct - 0.1) }
+        function testCharging(): void { root.testCharging = !root.testCharging }
     }
 }

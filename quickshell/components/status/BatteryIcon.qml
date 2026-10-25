@@ -53,7 +53,6 @@ Item {
             radius: Theme.batRadius
             color: Theme.bg
             antialiasing: true
-            clip: true
 
             Rectangle {
                 id: fill
@@ -81,40 +80,46 @@ Item {
                 antialiasing: true
             }
 
-            Shape {
-                id: glyph
-                width: Theme.batBoltW
-                height: Theme.batBoltH
-                x: (parent.width - width) / 2
-                y: (parent.height - height) / 2 + Theme.batBoltYOffset
-                visible: root.boltEnter > 0
-                opacity: root.boltEnter
-                scale: Theme.batBoltScale + (1 - Theme.batBoltScale) * root.boltEnter
-                preferredRendererType: Shape.CurveRenderer
+            Item {
+                id: glyphClip
+                anchors.fill: parent
+                clip: true
 
-                ShapePath {
-                    fillColor: Theme.batOutline
-                    strokeColor: Theme.batOutline
-                    strokeWidth: Theme.batGlyphSoften + Theme.batGlyphStroke * 2
-                    joinStyle: ShapePath.RoundJoin
-                    capStyle: ShapePath.RoundCap
-                    fillRule: ShapePath.WindingFill
+                Shape {
+                    id: glyph
+                    width: Theme.batBoltW
+                    height: Theme.batBoltH
+                    x: (parent.width - width) / 2
+                    y: (parent.height - height) / 2 + Theme.batBoltYOffset
+                    visible: root.boltEnter > 0
+                    opacity: root.boltEnter
+                    scale: Theme.batBoltScale + (1 - Theme.batBoltScale) * root.boltEnter
+                    preferredRendererType: Shape.CurveRenderer
 
-                    PathSvg {
-                        path: Theme.batBoltPath
+                    ShapePath {
+                        fillColor: Theme.batBoltOutline
+                        strokeColor: Theme.batBoltOutline
+                        strokeWidth: Theme.batGlyphSoften + Theme.batGlyphStroke * 2
+                        joinStyle: ShapePath.RoundJoin
+                        capStyle: ShapePath.RoundCap
+                        fillRule: ShapePath.WindingFill
+
+                        PathSvg {
+                            path: Theme.batBoltPath
+                        }
                     }
-                }
 
-                ShapePath {
-                    fillColor: Theme.batBoltColor
-                    strokeColor: Theme.batBoltColor
-                    strokeWidth: Theme.batGlyphSoften
-                    joinStyle: ShapePath.RoundJoin
-                    capStyle: ShapePath.RoundCap
-                    fillRule: ShapePath.WindingFill
+                    ShapePath {
+                        fillColor: Theme.batBoltColor
+                        strokeColor: Theme.batBoltColor
+                        strokeWidth: Theme.batGlyphSoften
+                        joinStyle: ShapePath.RoundJoin
+                        capStyle: ShapePath.RoundCap
+                        fillRule: ShapePath.WindingFill
 
-                    PathSvg {
-                        path: Theme.batBoltPath
+                        PathSvg {
+                            path: Theme.batBoltPath
+                        }
                     }
                 }
             }

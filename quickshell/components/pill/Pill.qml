@@ -36,6 +36,11 @@ Item {
         interval: Theme.idleWait
     }
 
+    Timer {
+        id: ringSettle
+        interval: Theme.speed
+    }
+
     property bool full: false
     readonly property bool hot: hover.hovered
     readonly property bool modal: Modal.any
@@ -44,6 +49,8 @@ Item {
     readonly property bool mediaHover: root.hot && !root.full && root.calm && root.media
     readonly property bool showVisualizer: Visualizer.on || root.mediaHover
     readonly property bool hideIdleIcons: root.mediaHover || root.full
+    readonly property bool ringGeometryBase: root.calm && !root.hot && !root.hideIdleIcons
+    readonly property bool ringBase: root.ringGeometryBase && Theme.batRingEnabled && Battery.ringShown && Battery.available
     readonly property bool resizing:
         Math.abs(root.wAnim - root.targetW) > Theme.settleEps ||
         Math.abs(root.hAnim - root.targetH) > Theme.settleEps
@@ -68,6 +75,7 @@ Item {
     }
     onPanelReadyChanged: if (Theme.blockSwap && root.panelReady && Modal.any) grow.restart()
     onCalmChanged: if (calm && Theme.idleWait > 0) wake.restart()
+    onRingGeometryBaseChanged: ringSettle.restart()
     onWantWChanged: root.brake()
     onWantHChanged: root.brake()
 
@@ -553,23 +561,44 @@ Item {
 
     Rectangle {
         anchors.fill: body
-        anchors.margins: -Theme.pillHaloSpread
-        radius: body.radius + Theme.pillHaloSpread
-        color: "transparent"
-        border.width: Theme.pillHaloWidth
-        border.color: Qt.rgba(0, 0, 0, Theme.pillHaloOpacity)
-        antialiasing: true
-        z: 3
-    }
-
-    Rectangle {
-        anchors.fill: body
         radius: body.radius
         color: "transparent"
         border.width: Theme.pillBorderWidth
         border.color: Qt.rgba(1, 1, 1, Theme.pillBorderOpacity)
         antialiasing: true
         z: 3
+    }
+
+    Fade {
+        id: ringFade
+        anchors.top: body.top
+        anchors.horizontalCenter: body.horizontalCenter
+        width: body.width
+        height: body.height
+        shown: root.ringBase
+        ready: !ringSettle.running
+        rise: Theme.batRingRise
+        fall: Theme.batRingFall
+        z: 4
+
+        BatteryRing {
+            anchors.centerIn: parent
+            pillW: body.width
+            pillH: body.height
+            pillRadius: body.radius
+            pct: Battery.pct
+        }
+    }
+
+    Rectangle {
+        anchors.fill: body
+        anchors.margins: -Theme.pillHaloSpread
+        radius: body.radius + Theme.pillHaloSpread
+        color: "transparent"
+        border.width: Theme.pillHaloWidth
+        border.color: Qt.rgba(0, 0, 0, Theme.pillHaloOpacity)
+        antialiasing: true
+        z: 5
     }
 }
 
