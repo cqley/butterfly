@@ -69,6 +69,15 @@ need() {
     ((${#miss[@]} == 0)) || die "missing required command: ${miss[*]}"
 }
 
+sync_niri_border_color() {
+    local accent=$1 cfg="$HOME/.config/niri/config.kdl" sock
+    [[ -f $cfg ]] || return 0
+    sed -i -E "s/^([[:space:]]*active-color )\"#[0-9A-Fa-f]{6,8}\"/\1\"${accent}FF\"/" "$cfg"
+    command -v niri >/dev/null 2>&1 || return 0
+    sock=$(find "/run/user/$(id -u)" -maxdepth 1 -name 'niri.wayland-*.sock' 2>/dev/null | head -n1)
+    [[ -n $sock ]] && NIRI_SOCKET="$sock" niri msg action load-config-file >/dev/null 2>&1 || true
+}
+
 hex_channel() {
     local h=${1#\#}
     printf '%d' "$((16#${h:$2:2}))"
@@ -643,6 +652,7 @@ main() {
         if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]] && command -v hyprctl >/dev/null 2>&1; then
             hyprctl reload >/dev/null 2>&1 || true
         fi
+        sync_niri_border_color "$accent"
     fi
     if ((do_print)); then
         print_swatches

@@ -33,6 +33,7 @@ quickshell ipc call <target> <action>
 | screenshot | `grim` + `wl-copy` (region, window, monitor, active, all via custom pickers) |
 | colors | `magick`, `gawk`, `awww` |
 | lock | `hyprlock` |
+| visualizer (real, optional) | `cava` — falls back to an animated placeholder if absent |
 
 ## install
 
