@@ -191,7 +191,7 @@ Fade {
                     preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
-                        strokeWidth: Theme.glyphStroke(Theme.authGlyph)
+                        strokeWidth: Theme.iconStroke
                         strokeColor: Theme.fg
                         fillColor: "transparent"
                         capStyle: ShapePath.RoundCap
@@ -369,7 +369,7 @@ Fade {
                         preferredRendererType: Shape.CurveRenderer
 
                         ShapePath {
-                            strokeWidth: Theme.glyphStroke(Theme.authGlyph)
+                            strokeWidth: Theme.iconStroke
                             strokeColor: cancelArea.containsMouse ? Theme.redSoft : Theme.fg
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
@@ -411,7 +411,7 @@ Fade {
                         preferredRendererType: Shape.CurveRenderer
 
                         ShapePath {
-                            strokeWidth: Theme.glyphStroke(Theme.authGlyph)
+                            strokeWidth: Theme.iconStroke
                             strokeColor: Theme.bg
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
@@ -420,7 +420,7 @@ Fade {
                         }
 
                         ShapePath {
-                            strokeWidth: Theme.glyphStroke(Theme.authGlyph)
+                            strokeWidth: Theme.iconStroke
                             strokeColor: Theme.bg
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap

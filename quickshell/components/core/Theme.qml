@@ -5,6 +5,8 @@ import Quickshell.Io
 
 Singleton {
     id: root
+
+    // core
     readonly property string screen: "HDMI-A-1"
     readonly property string font: "Inter"
     readonly property real fontScale: 1
@@ -21,53 +23,17 @@ Singleton {
     }
 
     readonly property var terminal: ["sh", "-c", 'for t in "$TERMINAL" alacritty kitty foot ghostty wezterm xterm; do command -v "$t" >/dev/null 2>&1 || continue; case $t in kitty) exec kitty "$@";; wezterm) exec wezterm start -- "$@";; *) exec "$t" -e "$@";; esac; done', "sh"]
-    readonly property string wallDir: url(Quickshell.env("HOME") + "/pictures/wallpapers")
-    readonly property var wallCmd: [Quickshell.shellPath("components/core/scripts/colors.sh")]
+    readonly property int imageRetry: 200
     readonly property string stampFormat: "yy-MM-dd_HH-mm-ss"
-    readonly property string recordDir: Quickshell.env("HOME") + "/videos/records"
-    readonly property string recordBin: ""
-    readonly property string recordBackend: ""
-    readonly property int recordFps: 60
-    readonly property int recordDot: 7
-    readonly property int recordBadge: 6
-    readonly property int recordBadgeInset: 7
-    readonly property int recordStopGrace: 3000
-    readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"
-    readonly property int screenshotCheckDelay: 300
-    readonly property int screenshotSettleDelay: fall + speed + 40
-    readonly property int regionMinSize: 4
-    readonly property real regionDim: 0.8
-    readonly property int regionBorderWidth: 2
-    readonly property int regionLabelGap: 8
-    readonly property int regionLabelPadX: 8
-    readonly property int regionLabelPadY: 4
-    readonly property int regionLabelR: 8
-    readonly property real regionGuideOpacity: 0.6
-    readonly property int netW: 320
-    readonly property int netPad: 12
-    readonly property int netRowH: 36
-    readonly property int netRows: 6
-    readonly property int netTimeout: 30000
-    readonly property int netFieldH: 34
-    readonly property int netToggleW: 36
-    readonly property int netToggleH: 20
-    readonly property int netKnob: 14
-    readonly property int btW: 320
-    readonly property int btTimeout: 15000
-    readonly property int selInset: 4
-    readonly property int selGap: 2
-    readonly property color selFill: Qt.rgba(1, 1, 1, 0.06)
-    readonly property int surfaceBorderWidth: 1
-    readonly property color surfaceBorder: Qt.rgba(1, 1, 1, 0.16)
-    readonly property color surfaceBorderHover: Qt.rgba(1, 1, 1, 0.34)
-    readonly property int selDuration: feedbackDuration
-    readonly property int markX: 7
-    readonly property int markW: 3
-    readonly property int markH: 11
-    readonly property real markY: 0.5
-    readonly property int markCapH: 12
-    readonly property int markCapY: -1
-    readonly property int rowTextY: 0
+
+    function url(path) {
+        const value = String(path || "")
+        if (value === "" || /^[a-z][a-z0-9+.-]*:/i.test(value))
+            return value
+        return "file://" + value.split("/").map(encodeURIComponent).join("/")
+    }
+
+    // colors
     property var pal: null
     readonly property color bg: pal && pal.special ? pal.special.background : "#000000"
     readonly property color fg: pal && pal.special ? pal.special.foreground : "#ffffff"
@@ -79,114 +45,102 @@ Singleton {
     readonly property color redSoft: mix(red, white, 0.35)
     readonly property color green: "#34c759"
     readonly property color greenSoft: mix(green, white, 0.35)
-    readonly property string passChar: "∙"
 
+    function mix(a, b, t) {
+        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1)
+    }
+
+    FileView {
+        path: Quickshell.env("HOME") + "/.colors/colors.json"
+        preload: true
+        blockLoading: true
+        watchChanges: true
+        onFileChanged: reload()
+        onLoadFailed: root.pal = null
+        onLoaded: {
+            try {
+                root.pal = JSON.parse(text())
+            } catch (e) {
+                root.pal = null
+            }
+        }
+    }
+
+    // motion
+    readonly property int speed: 300
+    readonly property int fade: 60
+    readonly property int rise: speed
+    readonly property int fall: fade
+    readonly property int swapRise: rise
+    readonly property int idleRise: speed
+    readonly property int idleFall: fade
+    readonly property int idleWait: 0
+    readonly property bool holdPill: false
+    readonly property bool blockSwap: false
+    readonly property int glide: 240
+    readonly property int fast: 60
+    readonly property int feedbackDuration: 120
+    readonly property real feedbackHoverScale: 1.03
+    readonly property real feedbackPressScale: 0.97
+    readonly property real feedbackFocusBorder: 1
+    readonly property int ease: Easing.OutCubic
+    readonly property int pulse: 1400
+    readonly property int blink: 700
+    readonly property real settleEps: 0.5
+
+    // dim & opacity
+    readonly property real dimHint: 0.35
+    readonly property real dimGhost: 0.4
+    readonly property real dimEmpty: 0.45
+    readonly property real dimMid: 0.5
+    readonly property real dimMuted: 0.55
+    readonly property real dimSoft: 0.6
+    readonly property real dotLow: 0.65
+    readonly property int ruleH: 1
+    readonly property real ruleOpacity: 0.1
+
+    // icons
+    readonly property int iconGrid: 24
+    readonly property real iconStroke: 1.8
+
+    function glyphStroke(size, base) {
+        const w = base || iconStroke
+        return size < iconGrid ? w * iconGrid / size : w
+    }
+    readonly property real btnStroke: 5
+    readonly property color mediaIconColor: "#ffffff"
+
+    // lists
+    readonly property int selInset: 4
+    readonly property int selGap: 2
+    readonly property color selFill: Qt.rgba(1, 1, 1, 0.06)
+    readonly property int surfaceBorderWidth: 1
+    readonly property color surfaceBorder: Qt.rgba(1, 1, 1, 0.16)
+    readonly property color surfaceBorderHover: Qt.rgba(1, 1, 1, 0.34)
+    readonly property int selDuration: feedbackDuration
     readonly property int listGap: 6
     readonly property int rowX: 18
     readonly property int rowR: 14
+    readonly property int rowTextY: 0
+    readonly property int rowGap: 8
 
+    // pill
     readonly property int gap: 6
     readonly property int pad: 16
     readonly property int w: 64
     readonly property int h: 28
     readonly property int openW: 252
     readonly property int openH: 80
-    readonly property int noteW: 264
-    readonly property int noteH: 48
-    readonly property int noteOpenW: 300
-    readonly property int noteTop: (noteH - noteIcon) / 2
-    readonly property int noteIcon: 28
-    readonly property int noteIconR: 14
-    readonly property int noteIconX: 10
-    readonly property int noteTextGap: 10
-    readonly property int noteTextRight: 14
-    readonly property int noteBodyLines: 1
-    readonly property int noteOpenBodyLines: 3
     readonly property int radius: 28
     readonly property int pillBorderWidth: 1
     readonly property real pillBorderOpacity: 0.08
     readonly property int pillHaloWidth: 1
     readonly property real pillHaloOpacity: 0.18
     readonly property int pillHaloSpread: 1
+    readonly property int body: h + 2
+    readonly property int zone: gap + h
 
-    readonly property int launchW: 340
-    readonly property int launchRadius: 24
-    readonly property int lpad: 8
-    readonly property int rowH: 38
-    readonly property int rows: 5
-    readonly property int searchH: 32
-    readonly property real launchSearchOpacity: 0.22
-    readonly property real launchSearchFocusOpacity: 0.42
-    readonly property int launchSearchIconX: 12
-    readonly property int launchSearchIconBox: 16
-    readonly property real launchSearchIconOpacity: 0.62
-    readonly property real launchSearchIconBorder: 1.3
-    readonly property int launchSearchLensInset: 1
-    readonly property int launchSearchLensSize: 10
-    readonly property int launchSearchHandleX: 9
-    readonly property int launchSearchHandleY: 9
-    readonly property int launchSearchHandleW: 5
-    readonly property real launchSearchHandleH: 1.3
-    readonly property int launchSearchTextX: 40
-    readonly property int launchSearchTextRight: 12
-    readonly property int launchIconX: 10
-    readonly property int launchIconBox: 24
-    readonly property int launchIconSize: 16
-    readonly property int launchIconSourceSize: 32
-    readonly property int launchIconRadius: 10
-    readonly property int launchIconBorderWidth: surfaceBorderWidth
-    readonly property real launchIconSelectedScale: 1.02
-    readonly property color launchIconFill: Qt.rgba(chip.r, chip.g, chip.b, 0.36)
-    readonly property color launchIconSelectedFill: chip
-    readonly property color launchIconBorder: surfaceBorder
-    readonly property color launchIconHoverBorder: surfaceBorderHover
-    readonly property int launchTextGap: 10
-    readonly property int launchFallbackPx: fs(10)
-
-    readonly property int pwW: 68
-    readonly property int pwH: 66
-    readonly property int pwGap: 8
-    readonly property int pwPad: 10
-    readonly property int pwN: 5
-    readonly property int powerW: pwW * pwN + pwGap * (pwN - 1) + pwPad * 2
-
-    readonly property int wallPad: 16
-    readonly property int thumbW: 132
-    readonly property int thumbH: 75
-    readonly property int thumbGap: 12
-    readonly property int wallFocusGap: 7
-    readonly property int wallN: 5
-    readonly property int wallPreload: 5
-    readonly property int wallTrackH: thumbH + 22
-    readonly property int wallRadius: 9
-    readonly property int wallRing: 1
-    readonly property int wallBleed: 1
-    readonly property color wallIdleBorder: surfaceBorder
-    readonly property int wallVelocity: 600
-    readonly property int wallCatchup: 20
-    readonly property int wallRetries: 2
-    readonly property int wallSourceW: thumbW * 2
-    readonly property int wallSourceH: thumbH * 2
-    readonly property real wallFocusScale: 1.15
-    readonly property int wallW: thumbW * wallN + thumbGap * (wallN - 1) + wallFocusGap * 2 + wallPad * 2
-
-    readonly property int authW: 340
-    readonly property int authPad: 16
-    readonly property int authFieldH: 38
-    readonly property int authFieldR: 12
-    readonly property int authBtnH: 38
-    readonly property int authIcon: 36
-
-    readonly property int mediaPillW: 324
-    readonly property int mediaW: mediaPillW - 2 * pad
-    readonly property int mediaGap: 12
-    readonly property int artS: 88
-    readonly property int ctlS: 30
-    readonly property int playS: 30
-    readonly property int glyphS: 20
-    readonly property int playGlyph: 23
-    readonly property int barH: 5
-    readonly property int micS: 12
+    // idle row
     readonly property int clockPx: fs(14)
     readonly property int idleOffsetX: 0
     readonly property int idleOffsetY: 0
@@ -201,6 +155,12 @@ Singleton {
     readonly property int micOffsetY: 0
     readonly property int recordOffsetX: 0
     readonly property int recordOffsetY: 0
+    readonly property int clockGap: 4
+    readonly property int idlePopDuration: speed
+    readonly property int slotHit: 6
+    readonly property real slotScale: 0.7
+
+    // battery
     readonly property int batRowH: 16
     readonly property int batW: 21
     readonly property int batH: 11
@@ -222,81 +182,154 @@ Singleton {
     readonly property real batPopScale: slotScale
     readonly property real batBoltScale: 0.75
     readonly property int batBoltDuration: 140
-    readonly property real noteSigScale: 0.8
-    readonly property int noteBtGlyph: 16
-    readonly property real noteBatScale: 0.88
-    readonly property int noteBtBadge: 18
-    readonly property real noteBtRingWidth: 1.5
-    readonly property color noteBtTrack: Qt.rgba(green.r, green.g, green.b, 0.22)
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"
     readonly property color batGreen: green
     readonly property color batOutline: "#ffffff"
     readonly property color batBoltColor: "#ffffff"
-    readonly property int clockGap: 4
-    readonly property int rowGap: 8
-    readonly property int idlePopDuration: speed
-    readonly property int pulse: 1400
-    readonly property int blink: 700
-    readonly property int slotHit: 6
-    readonly property real slotScale: 0.7
-    readonly property real dotLow: 0.65
-
-    readonly property int cellW: 30
-    readonly property int cellH: 24
-    readonly property int stripH: 40
-    readonly property int gridW: cellW * 7
-    readonly property int body: h + 2
-    readonly property int zone: gap + h
-
-    readonly property int speed: 300
-    readonly property int fade: 60
-    readonly property int rise: speed
-    readonly property int fall: fade
-    readonly property int swapRise: rise
-    readonly property int idleRise: speed
-    readonly property int idleFall: fade
-    readonly property int idleWait: 0
-    readonly property bool holdPill: false
-    readonly property bool blockSwap: false
-    readonly property int glide: 240
-    readonly property int fast: 60
-    readonly property int feedbackDuration: 120
-    readonly property real feedbackHoverScale: 1.03
-    readonly property real feedbackPressScale: 0.97
-    readonly property real feedbackFocusBorder: 1
-    readonly property int dwell: 5000
-    readonly property int dwellCritical: 10000
-    readonly property int dwellMax: 15000
-    readonly property int notificationQueueMax: 32
     readonly property real batRedAt: 0.15
     readonly property real batYellowAt: 0.25
 
     function batTone(pct) {
         return pct <= batRedAt ? batRed : pct <= batYellowAt ? batYellow : batGreen
     }
-    readonly property int ease: Easing.OutCubic
 
-    readonly property int iconGrid: 24
-    readonly property real iconStroke: 1.8
-
-    function glyphStroke(size, base) {
-        const w = base || iconStroke
-        return size < iconGrid ? w * iconGrid / size : w
-    }
-    readonly property real btnStroke: 5
-    readonly property color mediaIconColor: "#ffffff"
-    readonly property real dimHint: 0.35
-    readonly property real dimGhost: 0.4
-    readonly property real dimEmpty: 0.45
-    readonly property real dimMid: 0.5
-    readonly property real dimMuted: 0.55
-    readonly property real dimSoft: 0.6
-    readonly property int ruleH: 1
-    readonly property real ruleOpacity: 0.1
-    readonly property real settleEps: 0.5
+    // notifications
+    readonly property int noteW: 264
+    readonly property int noteH: 48
+    readonly property int noteOpenW: 300
+    readonly property int noteTop: (noteH - noteIcon) / 2
+    readonly property int noteIcon: 28
+    readonly property int noteIconR: 14
+    readonly property int noteIconX: 10
+    readonly property int noteTextGap: 10
+    readonly property int noteTextRight: 14
+    readonly property int noteBodyLines: 1
+    readonly property int noteOpenBodyLines: 3
     readonly property int noteLineGap: 1
+    readonly property real noteSigScale: 0.8
+    readonly property int noteBtGlyph: 16
+    readonly property real noteBatScale: 0.88
+    readonly property int noteBtBadge: 18
+    readonly property real noteBtRingWidth: 1.5
+    readonly property color noteBtTrack: Qt.rgba(green.r, green.g, green.b, 0.22)
+    readonly property int noteMoonGlyph: 15
+    readonly property int noteShotGlyph: 16
+    readonly property int noteRecGlyph: 18
+    readonly property int dwell: 5000
+    readonly property int dwellCritical: 10000
+    readonly property int dwellMax: 15000
+    readonly property int dwellMin: 500
+    readonly property int dwellNever: 5000
+    readonly property int notificationQueueMax: 32
+    readonly property int notificationHistoryMax: 50
 
+    // notification center
+    readonly property int centerW: 320
+    readonly property int centerPad: 14
+    readonly property int centerHeadH: 28
+    readonly property int centerBtn: 28
+    readonly property int centerBtnGap: 8
+    readonly property int centerGlyph: 15
+    readonly property int centerRowH: 56
+    readonly property int centerRows: 3
+    readonly property int centerAxis: selInset + (centerRowH - selGap) / 2
+    readonly property int centerIconX: centerAxis - noteIcon / 2
+    readonly property int centerHeadInset: centerAxis - centerBtn / 2
+    readonly property int centerDot: 8
+    readonly property int centerDotRight: centerAxis - centerDot / 2
+    readonly property int centerTextGap: 10
+    readonly property int centerDotGap: 10
+    readonly property int centerLineGap: 2
+    readonly property int centerFresh: 180000
+    readonly property int centerTick: 1000
+    readonly property int centerBodyLines: 2
+    readonly property int centerEmptyH: 72
+    readonly property int centerEmptyGlyph: 32
+    readonly property color centerEmptyTone: mix(bg, fg, dimHint)
+    readonly property string bellPath: "M18 8.5A6 6 0 0 0 6 8.5C6 15 3 17 3 17H21S18 15 18 8.5Z"
+    readonly property string bellClapperPath: "M13.7 20.5A2 2 0 0 1 10.3 20.5"
+    readonly property string trashPath: "M3.5 6.5H20.5 M18.5 6.5V19.5A2 2 0 0 1 16.5 21.5H7.5A2 2 0 0 1 5.5 19.5V6.5 M9 6.5V4.5A2 2 0 0 1 11 2.5H13A2 2 0 0 1 15 4.5V6.5"
+    readonly property string moonPath: "M21 12.8A9 9 0 1 1 11.2 3A7 7 0 0 0 21 12.8Z"
+    readonly property color dndTone: "#ff9f0a"
+    readonly property color dndToneHover: mix(dndTone, white, 0.16)
+    readonly property color dndGlyph: white
+
+    // launcher
+    readonly property int launchW: 340
+    readonly property int launchRadius: 24
+    readonly property int lpad: 8
+    readonly property int rowH: 38
+    readonly property int rows: 5
+    readonly property int searchH: 32
+    readonly property real launchSearchOpacity: 0.22
+    readonly property real launchSearchFocusOpacity: 0.42
+    readonly property int launchSearchIconX: 12
+    readonly property int launchSearchIconBox: 16
+    readonly property real launchSearchIconOpacity: 0.62
+    readonly property real launchSearchIconBorder: 1.3
+    readonly property int launchSearchLensInset: 1
+    readonly property int launchSearchLensSize: 10
+    readonly property int launchSearchHandleX: 9
+    readonly property int launchSearchHandleY: 9
+    readonly property int launchSearchHandleW: 5
+    readonly property real launchSearchHandleH: 1.3
+    readonly property int launchSearchHandleRot: 45
+    readonly property int launchSearchTextX: 40
+    readonly property int launchSearchTextRight: 12
+    readonly property int launchIconX: 10
+    readonly property int launchIconBox: 24
+    readonly property int launchIconSize: 16
+    readonly property int launchIconSourceSize: 32
+    readonly property int launchIconRadius: 10
+    readonly property int launchIconBorderWidth: surfaceBorderWidth
+    readonly property real launchIconSelectedScale: 1.02
+    readonly property color launchIconFill: Qt.rgba(chip.r, chip.g, chip.b, 0.36)
+    readonly property color launchIconSelectedFill: chip
+    readonly property color launchIconBorder: surfaceBorder
+    readonly property color launchIconHoverBorder: surfaceBorderHover
+    readonly property int launchTextGap: 10
+    readonly property int launchTextRowGap: 1
+    readonly property int launchFallbackPx: fs(10)
+
+    // tile menus (power, recording, screenshot)
+    readonly property int pwW: 68
+    readonly property int pwH: 66
+    readonly property int pwGap: 8
+    readonly property int pwPad: 10
+    readonly property int pwN: 5
+    readonly property int powerW: pwW * pwN + pwGap * (pwN - 1) + pwPad * 2
+
+    // wallpaper
+    readonly property string wallDir: url(Quickshell.env("HOME") + "/pictures/wallpapers")
+    readonly property var wallCmd: [Quickshell.shellPath("components/core/scripts/colors.sh")]
+    readonly property int wallPad: 16
+    readonly property int thumbW: 132
+    readonly property int thumbH: 75
+    readonly property int thumbGap: 12
+    readonly property int wallFocusGap: 7
+    readonly property int wallN: 5
+    readonly property int wallPreload: 5
+    readonly property int wallTrackH: thumbH + 22
+    readonly property int wallRadius: 9
+    readonly property int wallRing: 1
+    readonly property int wallBleed: 1
+    readonly property color wallIdleBorder: surfaceBorder
+    readonly property int wallVelocity: 600
+    readonly property int wallCatchup: 20
+    readonly property int wallRetries: 2
+    readonly property int wallSourceW: thumbW * 2
+    readonly property int wallSourceH: thumbH * 2
+    readonly property real wallFocusScale: 1.15
+    readonly property int wallW: thumbW * wallN + thumbGap * (wallN - 1) + wallFocusGap * 2 + wallPad * 2
+
+    // auth
+    readonly property int authW: 340
+    readonly property int authPad: 16
+    readonly property int authFieldH: 38
+    readonly property int authFieldR: 12
+    readonly property int authBtnH: 38
+    readonly property int authIcon: 36
     readonly property int authSpacing: 12
     readonly property int authHeadGap: 12
     readonly property int authHeadTextGap: 3
@@ -321,22 +354,18 @@ Singleton {
     readonly property int authShakeStep: 35
     readonly property real authPressed: 0.82
     readonly property real authDisabled: 0.45
+    readonly property string passChar: "∙"
 
-    readonly property int weekCells: 9
-    readonly property int weekCenter: 4
-    readonly property int weekLead: 1
-    readonly property int weekDays: 7
-    readonly property int weekGap: 4
-    readonly property int weekTodayR: 11
-    readonly property real weekFadeMin: 0.12
-    readonly property real weekFadeSpan: 4.7
-    readonly property real todayFill: 0.15
-    readonly property real outMonth: 0.25
-    readonly property int calSlide: 10
-    readonly property int calGap: 6
-    readonly property int calTitleX: 4
-    readonly property int calHeadH: 16
-
+    // media
+    readonly property int mediaPillW: 324
+    readonly property int mediaW: mediaPillW - 2 * pad
+    readonly property int mediaGap: 12
+    readonly property int artS: 88
+    readonly property int ctlS: 30
+    readonly property int playS: 30
+    readonly property int glyphS: 20
+    readonly property int playGlyph: 23
+    readonly property int barH: 5
     readonly property int mediaLenCap: 86400
     readonly property int mediaTextGap: 2
     readonly property int mediaCtlGap: 15
@@ -365,6 +394,16 @@ Singleton {
     readonly property real btnHoverScale: 1.06
     readonly property real btnPressScale: 0.94
 
+    // network
+    readonly property int netW: 320
+    readonly property int netPad: 12
+    readonly property int netRowH: 36
+    readonly property int netRows: 6
+    readonly property int netTimeout: 30000
+    readonly property int netFieldH: 34
+    readonly property int netToggleW: 36
+    readonly property int netToggleH: 20
+    readonly property int netKnob: 14
     readonly property int sigBars: 4
     readonly property int sigGap: 2
     readonly property int sigW: 3
@@ -390,9 +429,20 @@ Singleton {
     readonly property int netRescanWait: 2500
     readonly property int netMonitorRestart: 2000
     readonly property int netProbe: 2000
+    readonly property int markX: 7
+    readonly property int markW: 3
+    readonly property int markH: 11
+    readonly property real markY: 0.5
+    readonly property int markCapH: 12
+    readonly property int markCapY: -1
+
+    // bluetooth
+    readonly property int btW: 320
+    readonly property int btTimeout: 15000
     readonly property int btBatteryWait: 1200
     readonly property int btPowerSettle: 4000
 
+    // brightness
     readonly property int brightW: 208
     readonly property int brightPad: 14
     readonly property int brightTrackH: 24
@@ -406,6 +456,7 @@ Singleton {
     readonly property int brightGlide: 550
     readonly property int brightEasing: 275
 
+    // audio
     readonly property int audioW: 272
     readonly property int audioPad: 14
     readonly property int audioGap: 12
@@ -428,41 +479,22 @@ Singleton {
     readonly property string audioInPath: "M12 3A3.25 3.25 0 0 1 15.25 6.25V9.25A3.25 3.25 0 0 1 8.75 9.25V6.25A3.25 3.25 0 0 1 12 3Z"
     readonly property string audioInCradlePath: "M18 10.5A6 6 0 0 1 6 10.5 M12 16.5V20.5"
     readonly property string audioSlashPath: "M4 4L20 20"
+    readonly property int micS: 12
 
-    readonly property int centerW: 320
-    readonly property int centerPad: 14
-    readonly property int centerHeadH: 28
-    readonly property int centerBtn: 28
-    readonly property int centerBtnGap: 8
-    readonly property int centerGlyph: 15
-    readonly property int centerRowH: 56
-    readonly property int centerRows: 3
-    readonly property int centerAxis: selInset + (centerRowH - selGap) / 2
-    readonly property int centerIconX: centerAxis - noteIcon / 2
-    readonly property int centerHeadInset: centerAxis - centerBtn / 2
-    readonly property int centerDot: 8
-    readonly property int centerDotRight: centerAxis - centerDot / 2
-    readonly property int centerTextGap: 10
-    readonly property int centerDotGap: 10
-    readonly property int centerLineGap: 2
-    readonly property int centerFresh: 180000
-    readonly property int centerTick: 1000
-    readonly property int centerBodyLines: 2
-    readonly property int centerEmptyH: 72
-    readonly property int centerEmptyGlyph: 32
-    readonly property color centerEmptyTone: mix(bg, fg, dimHint)
-    readonly property int notificationHistoryMax: 50
-    readonly property string bellPath: "M18 8.5A6 6 0 0 0 6 8.5C6 15 3 17 3 17H21S18 15 18 8.5Z"
-    readonly property string bellClapperPath: "M13.7 20.5A2 2 0 0 1 10.3 20.5"
-    readonly property string trashPath: "M3.5 6.5H20.5 M18.5 6.5V19.5A2 2 0 0 1 16.5 21.5H7.5A2 2 0 0 1 5.5 19.5V6.5 M9 6.5V4.5A2 2 0 0 1 11 2.5H13A2 2 0 0 1 15 4.5V6.5"
-    readonly property string moonPath: "M21 12.8A9 9 0 1 1 11.2 3A7 7 0 0 0 21 12.8Z"
-    readonly property color dndTone: "#ff9f0a"
-    readonly property color dndToneHover: mix(dndTone, white, 0.16)
-    readonly property color dndGlyph: white
-    readonly property int noteMoonGlyph: 15
+    // screenshot
+    readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"
+    readonly property int screenshotCheckDelay: 300
+    readonly property int screenshotSettleDelay: fall + speed + 40
+    readonly property int regionMinSize: 4
+    readonly property real regionDim: 0.8
+    readonly property int regionBorderWidth: 2
+    readonly property int regionLabelGap: 8
+    readonly property int regionLabelPadX: 8
+    readonly property int regionLabelPadY: 4
+    readonly property int regionLabelR: 8
+    readonly property real regionGuideOpacity: 0.6
     readonly property string shotBodyPath: "M5 8H10L12 6H16L18 8H19A2 2 0 0 1 21 10V17A2 2 0 0 1 19 19H5A2 2 0 0 1 3 17V10A2 2 0 0 1 5 8Z"
     readonly property string shotLensPath: "M8 13A4 4 0 1 0 16 13A4 4 0 1 0 8 13Z"
-    readonly property int noteShotGlyph: 16
     readonly property string shotRegionPath: "M4 9V5A1 1 0 0 1 5 4H9 M15 4H19A1 1 0 0 1 20 5V9 M20 15V19A1 1 0 0 1 19 20H15 M9 20H5A1 1 0 0 1 4 19V15"
     readonly property string shotWindowPath: "M4 6.5A2.5 2.5 0 0 1 6.5 4H17.5A2.5 2.5 0 0 1 20 6.5V17.5A2.5 2.5 0 0 1 17.5 20H6.5A2.5 2.5 0 0 1 4 17.5V6.5Z M4 8H20"
     readonly property string shotActiveBadgePath: "M4 6.5A2.5 2.5 0 0 1 6.5 4H17.5A2.5 2.5 0 0 1 20 6.5V8H4V6.5Z"
@@ -470,19 +502,42 @@ Singleton {
     readonly property int monitorNumPx: fs(10)
     readonly property int monitorNumY: 0
     readonly property real monitorNumAxis: 12
+
+    // recording
+    readonly property string recordDir: Quickshell.env("HOME") + "/videos/records"
+    readonly property string recordBin: ""
+    readonly property string recordBackend: ""
+    readonly property int recordFps: 60
+    readonly property int recordDot: 7
+    readonly property int recordBadge: 6
+    readonly property int recordBadgeInset: 7
+    readonly property int recordStopGrace: 3000
+    readonly property int recordTick: 1000
     readonly property string recStopPath: "M8 6H16A2 2 0 0 1 18 8V16A2 2 0 0 1 16 18H8A2 2 0 0 1 6 16V8A2 2 0 0 1 8 6Z"
     readonly property string recPortalPath: "M6 16H5A2 2 0 0 1 3 14V6A2 2 0 0 1 5 4H19A2 2 0 0 1 21 6V14A2 2 0 0 1 19 16H18 M12 14L17 20H7L12 14Z"
     readonly property string recDotPath: "M12 4A8 8 0 1 0 12 20A8 8 0 1 0 12 4Z"
-    readonly property int noteRecGlyph: 18
 
-    readonly property int launchSearchHandleRot: 45
-    readonly property int launchTextRowGap: 1
-    readonly property int recordTick: 1000
-    readonly property int imageRetry: 200
+    // calendar
+    readonly property int weekCells: 9
+    readonly property int weekCenter: 4
+    readonly property int weekLead: 1
+    readonly property int weekDays: 7
+    readonly property int weekGap: 4
+    readonly property int weekTodayR: 11
+    readonly property real weekFadeMin: 0.12
+    readonly property real weekFadeSpan: 4.7
+    readonly property real todayFill: 0.15
+    readonly property real outMonth: 0.25
+    readonly property int calSlide: 10
+    readonly property int calGap: 6
+    readonly property int calTitleX: 4
+    readonly property int calHeadH: 16
+    readonly property int cellW: 30
+    readonly property int cellH: 24
+    readonly property int stripH: 40
+    readonly property int gridW: cellW * 7
 
-    readonly property int dwellMin: 500
-    readonly property int dwellNever: 5000
-
+    // visualizer
     readonly property int visBars: 6
     readonly property int visBarW: 3
     readonly property int visGap: 3
@@ -499,32 +554,4 @@ Singleton {
     readonly property int visFps: 60
     readonly property int visNoiseReduction: 77
     readonly property real visLerp: 0.3
-
-    function url(path) {
-        const value = String(path || "")
-        if (value === "" || /^[a-z][a-z0-9+.-]*:/i.test(value))
-            return value
-        return "file://" + value.split("/").map(encodeURIComponent).join("/")
-    }
-
-    function mix(a, b, t) {
-        return Qt.rgba(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1)
-    }
-
-    FileView {
-        path: Quickshell.env("HOME") + "/.colors/colors.json"
-        preload: true
-        blockLoading: true
-        watchChanges: true
-        onFileChanged: reload()
-        onLoadFailed: root.pal = null
-        onLoaded: {
-            try {
-                root.pal = JSON.parse(text())
-            } catch (e) {
-                root.pal = null
-            }
-        }
-    }
 }
-
