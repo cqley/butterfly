@@ -19,7 +19,8 @@ ClippingRectangle {
     readonly property bool bluetooth: root.kind === "bluetooth"
     readonly property bool dnd: root.kind === "dnd"
     readonly property bool shot: root.kind === "shot"
-    readonly property bool own: root.battery || root.net || root.bluetooth || root.dnd || root.shot
+    readonly property bool rec: root.kind === "rec"
+    readonly property bool own: root.battery || root.net || root.bluetooth || root.dnd || root.shot || root.rec
     property string source: ""
 
     function refresh() {
@@ -81,7 +82,7 @@ ClippingRectangle {
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
-            strokeWidth: Theme.iconStroke
+            strokeWidth: Theme.glyphStroke(Theme.noteBtGlyph)
             strokeColor: Theme.fg
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
@@ -126,6 +127,22 @@ ClippingRectangle {
             fillColor: root.color
             fillRule: ShapePath.WindingFill
             PathSvg { path: Theme.shotLensPath }
+        }
+    }
+
+    Shape {
+        anchors.centerIn: parent
+        width: Theme.iconGrid
+        height: Theme.iconGrid
+        scale: Theme.noteRecGlyph / Theme.iconGrid
+        visible: root.rec
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            strokeWidth: -1
+            fillColor: root.critical ? Theme.white : Theme.red
+            fillRule: ShapePath.WindingFill
+            PathSvg { path: Theme.recDotPath }
         }
     }
 

@@ -131,7 +131,7 @@ Fade {
                         capStyle: ShapePath.RoundCap
                         joinStyle: ShapePath.RoundJoin
                         PathSvg {
-                            path: tile.isMonitor ? Theme.shotMonitorPath
+                            path: tile.isMonitor ? Theme.monitorPath
                                 : tile.modelData.kind === "region" ? Theme.shotRegionPath
                                 : Theme.shotWindowPath
                         }

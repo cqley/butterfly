@@ -176,7 +176,7 @@ Pick {
                     }
 
                     ShapePath {
-                        strokeWidth: Theme.iconStroke
+                        strokeWidth: Theme.glyphStroke(Theme.centerGlyph)
                         strokeColor: Theme.fg
                         fillColor: "transparent"
                         capStyle: ShapePath.RoundCap
@@ -251,7 +251,7 @@ Pick {
                     preferredRendererType: Shape.CurveRenderer
 
                     ShapePath {
-                        strokeWidth: Theme.iconStroke
+                        strokeWidth: Theme.glyphStroke(Theme.centerGlyph)
                         strokeColor: clearArea.containsMouse ? Theme.redSoft : Theme.fg
                         fillColor: "transparent"
                         capStyle: ShapePath.RoundCap
@@ -460,7 +460,7 @@ Pick {
                     }
 
                     ShapePath {
-                        strokeWidth: Theme.iconStroke
+                        strokeWidth: Theme.glyphStroke(Theme.centerEmptyGlyph)
                         strokeColor: Theme.centerEmptyTone
                         fillColor: "transparent"
                         capStyle: ShapePath.RoundCap

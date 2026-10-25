@@ -1,5 +1,6 @@
 pragma Singleton
 import "../core"
+import "../notifications"
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -7,12 +8,13 @@ import Quickshell.Io
 Singleton {
     id: root
     property bool open: false
-    readonly property bool active: proc.running
+    readonly property bool active: proc.running || pending !== null
     property string backend: ""
     property string bin: ""
     property string lastFile: ""
     property string lastError: ""
     property string targetLabel: ""
+    property string checkFile: ""
     property double startedAt: 0
     property int elapsedSec: 0
     property var items: []
@@ -26,8 +28,7 @@ Singleton {
 
     onOpenChanged: if (open) {
         Modal.claim("record")
-        if (open)
-            refresh()
+        refresh()
     }
 
     onActiveChanged: if (open)
@@ -37,24 +38,31 @@ Singleton {
         open = !open
     }
 
+    function notify(title, body, bad) {
+        Notifs.pushSystem(title, body, false, "rec", bad)
+    }
+
+    function fail(title, msg) {
+        lastError = msg
+        notify(title, msg, true)
+    }
+
     function stop() {
+        pending = null
         if (!proc.running)
             return
         intentional = true
-        pending = null
         proc.signal(2)
         settle.restart()
     }
 
     function refresh() {
         const list = []
-        if (proc.running)
+        if (active)
             list.push({ kind: "stop", label: "stop recording", value: "" })
         const screens = Quickshell.screens
-        for (let i = 0; i < screens.length; i++) {
-            const s = screens[i]
-            list.push({ kind: "monitor", label: s.name, value: s.name })
-        }
+        for (let i = 0; i < screens.length; i++)
+            list.push({ kind: "monitor", label: screens[i].name, value: screens[i].name })
         if (backend === "gsr")
             list.push({ kind: "portal", label: "portal", value: "portal" })
         items = list
@@ -63,9 +71,9 @@ Singleton {
     function pick(item) {
         if (!item)
             return
+        open = false
         if (item.kind === "stop") {
             stop()
-            open = false
             return
         }
         if (proc.running) {
@@ -73,55 +81,56 @@ Singleton {
             intentional = true
             proc.signal(2)
             settle.restart()
-            open = false
             return
         }
         start(item)
-        open = false
     }
 
     function start(item) {
-        if (Theme.recordBin !== "") {
-            bin = Theme.recordBin
-            backend = Theme.recordBackend
-        }
+        if (!item)
+            return
         if (bin === "") {
-            lastError = "no recorder found"
+            fail("recording unavailable", "no recorder found")
             return
         }
         if (backend !== "gsr" && backend !== "wf" && backend !== "wl") {
-            lastError = "recordBackend required"
+            fail("recording unavailable", "recordBackend required")
             return
         }
         if (item.kind === "portal" && backend !== "gsr") {
-            lastError = "portal requires gsr"
+            fail("recording unavailable", "portal requires gsr")
             return
         }
         lastError = ""
         intentional = false
-        const stamp = Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss")
-        const out = Theme.recordDir + "/rec-" + stamp + ".mp4"
+        const stamp = Qt.formatDateTime(new Date(), Theme.stampFormat)
+        const out = Theme.recordDir + "/" + stamp + ".mp4"
+        const mon = item.kind === "monitor" ? item.value : Theme.screen
         lastFile = out
         targetLabel = item.label
         startedAt = Date.now()
         elapsedSec = 0
-        if (backend === "gsr") {
-            let src = Theme.screen
-            if (item.kind === "monitor")
-                src = item.value
-            else if (item.kind === "portal")
-                src = "portal"
-            if (src === "portal")
-                proc.exec([bin, "-w", "portal", "-f", String(Theme.recordFps), "-a", "default_output", "-restore-portal-session", "yes", "-o", out])
-            else
-                proc.exec([bin, "-w", src, "-f", String(Theme.recordFps), "-a", "default_output", "-o", out])
-        } else if (backend === "wl") {
-            const mon = item.kind === "monitor" ? item.value : Theme.screen
+        if (backend === "gsr" && item.kind === "portal")
+            proc.exec([bin, "-w", "portal", "-f", String(Theme.recordFps), "-a", "default_output", "-restore-portal-session", "yes", "-o", out])
+        else if (backend === "gsr")
+            proc.exec([bin, "-w", mon, "-f", String(Theme.recordFps), "-a", "default_output", "-o", out])
+        else if (backend === "wl")
             proc.exec([bin, "-o", mon, "-f", out])
-        } else {
-            const mon = item.kind === "monitor" ? item.value : Theme.screen
+        else
             proc.exec([bin, "-a", "-y", "-f", out, "-o", mon])
-        }
+    }
+
+    function resume() {
+        const item = pending
+        pending = null
+        start(item)
+    }
+
+    function verify(file) {
+        if (file === "" || check.running)
+            return
+        checkFile = file
+        check.running = true
     }
 
     Process {
@@ -144,18 +153,29 @@ Singleton {
 
     Process {
         id: proc
-        onExited: (code, status) => {
+        onExited: code => {
             settle.stop()
-            if (root.pending) {
-                const item = root.pending
-                root.pending = null
-                root.intentional = false
-                Qt.callLater(() => root.start(item))
+            const file = root.lastFile
+            const wanted = root.intentional
+            root.intentional = false
+            if (root.pending)
+                Qt.callLater(root.resume)
+            if (code !== 0 && !wanted) {
+                root.fail("recording failed", "exited " + code)
                 return
             }
-            if (code !== 0 && !root.intentional && root.lastError === "")
-                root.lastError = "exited " + code
-            root.intentional = false
+            root.verify(file)
+        }
+    }
+
+    Process {
+        id: check
+        command: ["sh", "-c", "test -s \"$1\"", "sh", root.checkFile]
+        onExited: code => {
+            if (code === 0)
+                root.notify("recording saved", root.checkFile, false)
+            else
+                root.fail("recording failed", "no output file")
         }
     }
 
@@ -176,6 +196,14 @@ Singleton {
         }
     }
 
+    Connections {
+        target: Quickshell
+        function onScreensChanged() {
+            if (root.open)
+                root.refresh()
+        }
+    }
+
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", Theme.recordDir])
         if (Theme.recordBin !== "") {
@@ -193,14 +221,13 @@ Singleton {
         function toggle(): void { root.toggle() }
         function stop(): void { root.stop() }
         function status(): string {
-            if (root.active)
-                return "recording " + root.backend + " " + root.clock + " " + root.targetLabel + " " + root.lastFile
             if (root.pending)
                 return "switching"
+            if (root.active)
+                return "recording " + root.backend + " " + root.clock + " " + root.targetLabel + " " + root.lastFile
             if (root.lastError !== "")
                 return "idle " + root.backend + " " + root.bin + " err:" + root.lastError
             return "idle " + (root.bin !== "" ? root.backend + " " + root.bin : "no-backend")
         }
     }
 }
-
