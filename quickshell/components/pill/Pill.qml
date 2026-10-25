@@ -450,7 +450,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: vbars.width
                     height: parent.height
-                    shown: root.showVisualizer
+                    shown: root.showVisualizer && !root.full
                     ready: root.panelReady
                     rise: root.panelRise
                     scale: active ? 1 : Theme.slotScale
