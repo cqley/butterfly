@@ -1,28 +1,25 @@
 import "../core"
 import QtQuick
+import QtQuick.Shapes
 
-Item {
+Shape {
     width: Theme.lockW
     height: Theme.lockH
+    preferredRendererType: Shape.CurveRenderer
 
-    Rectangle {
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: Theme.lockArcW
-        height: Theme.lockArcH
-        radius: Theme.lockArcR
-        color: "transparent"
-        border.width: Theme.lockBorder
-        border.color: Theme.fg
-        antialiasing: true
+    ShapePath {
+        strokeWidth: Theme.lockBorder
+        strokeColor: Theme.fg
+        fillColor: "transparent"
+        capStyle: ShapePath.FlatCap
+        joinStyle: ShapePath.RoundJoin
+        PathSvg { path: Theme.lockShacklePath }
     }
 
-    Rectangle {
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: Theme.lockBodyY
-        width: Theme.lockBodyW
-        height: Theme.lockBodyH
-        radius: Theme.lockBodyR
-        color: Theme.fg
-        antialiasing: true
+    ShapePath {
+        strokeWidth: -1
+        fillColor: Theme.fg
+        fillRule: ShapePath.WindingFill
+        PathSvg { path: Theme.lockBodyPath }
     }
 }

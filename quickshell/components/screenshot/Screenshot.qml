@@ -70,8 +70,8 @@ Singleton {
     }
 
     function newFile() {
-        const stamp = Qt.formatDateTime(new Date(), "yyyyMMdd-HHmmss")
-        lastFile = Theme.screenshotDir + "/shot-" + stamp + ".png"
+        const stamp = Qt.formatDateTime(new Date(), Theme.stampFormat)
+        lastFile = Theme.screenshotDir + "/" + stamp + ".png"
         return lastFile
     }
 

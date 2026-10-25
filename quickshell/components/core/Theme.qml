@@ -23,18 +23,16 @@ Singleton {
     readonly property var terminal: ["sh", "-c", 'for t in "$TERMINAL" alacritty kitty foot ghostty wezterm xterm; do command -v "$t" >/dev/null 2>&1 || continue; case $t in kitty) exec kitty "$@";; wezterm) exec wezterm start -- "$@";; *) exec "$t" -e "$@";; esac; done', "sh"]
     readonly property string wallDir: url(Quickshell.env("HOME") + "/pictures/wallpapers")
     readonly property var wallCmd: [Quickshell.shellPath("components/core/scripts/colors.sh")]
+    readonly property string stampFormat: "yy-MM-dd_HH-mm-ss"
     readonly property string recordDir: Quickshell.env("HOME") + "/videos/records"
     readonly property string recordBin: ""
     readonly property string recordBackend: ""
     readonly property int recordFps: 60
     readonly property int recordDot: 7
-    readonly property int recordW: 300
-    readonly property int recordPad: 12
-    readonly property int recordRowH: 34
-    readonly property int recordRows: 6
+    readonly property int recordBadge: 6
+    readonly property int recordBadgeInset: 7
     readonly property int recordStopGrace: 3000
     readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"
-    readonly property string screenshotBin: ""
     readonly property int screenshotCheckDelay: 300
     readonly property int screenshotSettleDelay: fall + speed + 40
     readonly property int regionMinSize: 4
@@ -281,6 +279,11 @@ Singleton {
 
     readonly property int iconGrid: 24
     readonly property real iconStroke: 1.8
+
+    function glyphStroke(size, base) {
+        const w = base || iconStroke
+        return size < iconGrid ? w * iconGrid / size : w
+    }
     readonly property real btnStroke: 5
     readonly property color mediaIconColor: "#ffffff"
     readonly property real dimHint: 0.35
@@ -372,14 +375,9 @@ Singleton {
     readonly property real sigOff: 0.2
     readonly property int lockW: 14
     readonly property int lockH: 12
-    readonly property int lockArcW: 8
-    readonly property int lockArcH: 6
-    readonly property int lockArcR: 4
     readonly property real lockBorder: 1.4
-    readonly property int lockBodyY: 4
-    readonly property int lockBodyW: 10
-    readonly property int lockBodyH: 8
-    readonly property int lockBodyR: 2
+    readonly property string lockShacklePath: "M3.7 5.5V3.7A3.3 3.3 0 0 1 10.3 3.7V5.5"
+    readonly property string lockBodyPath: "M4 4H10A2 2 0 0 1 12 6V10A2 2 0 0 1 10 12H4A2 2 0 0 1 2 10V6A2 2 0 0 1 4 4Z"
     readonly property int netTitleX: 4
     readonly property int netToggleInset: 2
     readonly property int netMetaR: 12
@@ -424,8 +422,8 @@ Singleton {
     readonly property int audioMeterDecay: 90
     readonly property real audioMeterGamma: 0.4
     readonly property color audioFill: Qt.rgba(accent.r, accent.g, accent.b, 0.45)
-    readonly property real audioIconStroke: iconStroke * iconGrid / audioIcon
-    readonly property real audioSlashStroke: 2.2 * iconGrid / audioIcon
+    readonly property real audioIconStroke: glyphStroke(audioIcon)
+    readonly property real audioSlashStroke: glyphStroke(audioIcon, 2.2)
     readonly property string audioOutPath: "M4 8H9.8V16H4Z M9.8 8L19 2.8V21.2L9.8 16Z"
     readonly property string audioInPath: "M12 3A3.25 3.25 0 0 1 15.25 6.25V9.25A3.25 3.25 0 0 1 8.75 9.25V6.25A3.25 3.25 0 0 1 12 3Z"
     readonly property string audioInCradlePath: "M18 10.5A6 6 0 0 1 6 10.5 M12 16.5V20.5"
@@ -468,7 +466,14 @@ Singleton {
     readonly property string shotRegionPath: "M4 9V5A1 1 0 0 1 5 4H9 M15 4H19A1 1 0 0 1 20 5V9 M20 15V19A1 1 0 0 1 19 20H15 M9 20H5A1 1 0 0 1 4 19V15"
     readonly property string shotWindowPath: "M4 6.5A2.5 2.5 0 0 1 6.5 4H17.5A2.5 2.5 0 0 1 20 6.5V17.5A2.5 2.5 0 0 1 17.5 20H6.5A2.5 2.5 0 0 1 4 17.5V6.5Z M4 8H20"
     readonly property string shotActiveBadgePath: "M4 6.5A2.5 2.5 0 0 1 6.5 4H17.5A2.5 2.5 0 0 1 20 6.5V8H4V6.5Z"
-    readonly property string shotMonitorPath: "M3 8.5A2.5 2.5 0 0 1 5.5 6H18.5A2.5 2.5 0 0 1 21 8.5V15.5A2.5 2.5 0 0 1 18.5 18H5.5A2.5 2.5 0 0 1 3 15.5V8.5Z M12 18V20 M8 20H16"
+    readonly property string monitorPath: "M3 8.5A2.5 2.5 0 0 1 5.5 6H18.5A2.5 2.5 0 0 1 21 8.5V15.5A2.5 2.5 0 0 1 18.5 18H5.5A2.5 2.5 0 0 1 3 15.5V8.5Z M12 18V20 M8 20H16"
+    readonly property int monitorNumPx: fs(10)
+    readonly property int monitorNumY: 0
+    readonly property real monitorNumAxis: 12
+    readonly property string recStopPath: "M8 6H16A2 2 0 0 1 18 8V16A2 2 0 0 1 16 18H8A2 2 0 0 1 6 16V8A2 2 0 0 1 8 6Z"
+    readonly property string recPortalPath: "M6 16H5A2 2 0 0 1 3 14V6A2 2 0 0 1 5 4H19A2 2 0 0 1 21 6V14A2 2 0 0 1 19 16H18 M12 14L17 20H7L12 14Z"
+    readonly property string recDotPath: "M12 4A8 8 0 1 0 12 20A8 8 0 1 0 12 4Z"
+    readonly property int noteRecGlyph: 18
 
     readonly property int launchSearchHandleRot: 45
     readonly property int launchTextRowGap: 1

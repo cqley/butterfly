@@ -75,7 +75,7 @@ Item {
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
-                strokeWidth: Theme.iconStroke * Theme.iconGrid / Theme.brightIcon
+                strokeWidth: Theme.glyphStroke(Theme.brightIcon)
                 strokeColor: Theme.bg
                 fillColor: "transparent"
                 capStyle: ShapePath.RoundCap

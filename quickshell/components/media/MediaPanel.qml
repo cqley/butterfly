@@ -128,7 +128,7 @@ Fade {
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
-                strokeWidth: Theme.iconStroke
+                strokeWidth: Theme.glyphStroke(Theme.artGlyph)
                 strokeColor: Theme.fg
                 fillColor: "transparent"
                 capStyle: ShapePath.RoundCap

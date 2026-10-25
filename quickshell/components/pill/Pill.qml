@@ -150,7 +150,7 @@ Item {
         : Launcher.open ? Theme.launchW
         : Power.open ? Theme.powerW
         : Wallpaper.open ? Theme.wallW
-        : Record.open ? Theme.recordW
+        : Record.open ? rec.width + 2 * Theme.pwPad
         : Screenshot.open ? shot.width + 2 * Theme.pwPad
         : Net.open ? Theme.netW
         : Brightness.open ? Theme.brightW
@@ -165,7 +165,7 @@ Item {
         : Launcher.open ? launch.y + launch.height + Theme.lpad
         : Power.open ? power.y + power.height + Theme.pwPad
         : Wallpaper.open ? wall.y + wall.height + Theme.wallPad
-        : Record.open ? rec.y + rec.height + Theme.recordPad
+        : Record.open ? rec.y + rec.height + Theme.pwPad
         : Screenshot.open ? shot.y + shot.height + Theme.pwPad
         : Net.open ? net.y + net.height + Theme.netPad
         : Brightness.open ? bright.y + bright.height + Theme.brightPad
@@ -304,7 +304,7 @@ Item {
         RecordMenu {
             id: rec
             anchors.horizontalCenter: parent.horizontalCenter
-            y: Theme.recordPad
+            y: Theme.pwPad
             shown: Record.open
             ready: root.panelReady
             rise: root.panelRise
