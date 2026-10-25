@@ -82,7 +82,7 @@ ClippingRectangle {
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
-            strokeWidth: Theme.glyphStroke(Theme.noteBtGlyph)
+            strokeWidth: Theme.iconStroke
             strokeColor: Theme.fg
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
