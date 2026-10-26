@@ -15,10 +15,7 @@ Fade {
     readonly property bool busy: shown && !!flow && !flow.isResponseRequired && !flow.isCompleted
     readonly property bool canSubmit: asking && input.text !== ""
     readonly property bool armed: canSubmit || busy
-    readonly property string lockPath: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11ZM7 11V7A5 5 0 0 1 17 7V11"
-    readonly property string bodyPath: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11Z"
     readonly property string shacklePath: "M7 11V7A5 5 0 0 1 17 7V" + leg.toFixed(2)
-    readonly property string crossPath: "M6.5 6.5L17.5 17.5M17.5 6.5L6.5 17.5"
     property bool unlocked: false
     property bool working: false
     property real leg: root.unlocked ? Theme.authLockOpen : Theme.authLockShut
@@ -196,7 +193,7 @@ Fade {
                         fillColor: "transparent"
                         capStyle: ShapePath.RoundCap
                         joinStyle: ShapePath.RoundJoin
-                        PathSvg { path: root.lockPath }
+                        PathSvg { path: Theme.lockGlyphPath }
                     }
                 }
             }
@@ -374,7 +371,7 @@ Fade {
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
                             joinStyle: ShapePath.RoundJoin
-                            PathSvg { path: root.crossPath }
+                            PathSvg { path: Theme.authCrossPath }
 
                             Behavior on strokeColor { ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
                         }
@@ -416,7 +413,7 @@ Fade {
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
                             joinStyle: ShapePath.RoundJoin
-                            PathSvg { path: root.bodyPath }
+                            PathSvg { path: Theme.authBodyPath }
                         }
 
                         ShapePath {

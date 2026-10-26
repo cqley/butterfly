@@ -135,6 +135,13 @@ Fade {
         e.accepted = true
     }
 
+    Txt {
+        anchors.centerIn: parent
+        text: "no wallpapers"
+        visible: root.n === 0
+        opacity: Theme.dimEmpty
+    }
+
     Item {
         width: parent.width
         height: Theme.wallTrackH

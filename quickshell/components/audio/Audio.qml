@@ -8,11 +8,13 @@ import Quickshell.Services.Pipewire
 Singleton {
     id: root
     property bool open: false
+    property bool watch: false
 
+    readonly property bool active: open || watch
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
-    readonly property var sinks: open ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSink && !n.isStream) : []
-    readonly property var sources: open ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSource && !n.isStream) : []
+    readonly property var sinks: active ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSink && !n.isStream) : []
+    readonly property var sources: active ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSource && !n.isStream) : []
     readonly property bool hasIn: !!source
     readonly property int count: hasIn ? 2 : 1
     readonly property bool outReady: node(0) !== null
@@ -102,14 +104,14 @@ Singleton {
 
     PwNodePeakMonitor {
         id: outMeter
-        node: root.open ? Pipewire.defaultAudioSink : null
-        enabled: root.open
+        node: root.active ? Pipewire.defaultAudioSink : null
+        enabled: root.active
     }
 
     PwNodePeakMonitor {
         id: inMeter
-        node: root.open ? Pipewire.defaultAudioSource : null
-        enabled: root.open
+        node: root.active ? Pipewire.defaultAudioSource : null
+        enabled: root.active
     }
 
     IpcHandler {

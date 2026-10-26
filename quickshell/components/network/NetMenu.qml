@@ -391,7 +391,7 @@ Pick {
 
         Item {
             width: parent.width
-            height: empty.implicitHeight + Theme.netEmptyPad
+            height: empty.implicitHeight + Theme.emptyPad
             visible: Net.available && Net.enabled && root.n === 0
 
             Txt {

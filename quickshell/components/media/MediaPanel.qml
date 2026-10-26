@@ -23,12 +23,12 @@ Fade {
     property bool scrubbing: false
     property real scrub: 0
 
-    onLenChanged: hold()
-    onSrcOnChanged: hold()
-    onSrcTitleChanged: hold()
-    onSrcArtistChanged: hold()
-    onSrcArtChanged: hold()
-    onSrcFracChanged: hold()
+    onLenChanged: if (p) dur = len
+    onSrcOnChanged: if (p) on = srcOn
+    onSrcTitleChanged: if (p) title = srcTitle
+    onSrcArtistChanged: if (p) artist = srcArtist
+    onSrcArtChanged: if (p) artUrl = srcArt
+    onSrcFracChanged: if (p) frac = srcFrac
 
     onPChanged: {
         scrubbing = false
@@ -133,7 +133,7 @@ Fade {
                 fillColor: "transparent"
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
-                PathSvg { path: "M9 18V5L21 3V16M9 18A3 3 0 0 1 3 18A3 3 0 0 1 9 18ZM21 16A3 3 0 0 1 15 16A3 3 0 0 1 21 16Z" }
+                PathSvg { path: Theme.artNotePath }
             }
         }
     }
@@ -158,6 +158,7 @@ Fade {
         height: art.height
         enabled: root.p !== null && root.p.canRaise
         hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
         onClicked: root.p.raise()
     }
 

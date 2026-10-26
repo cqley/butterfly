@@ -1,6 +1,6 @@
 import "../core"
 import "../network"
-import "../status"
+import "../battery"
 import QtQuick
 import QtQuick.Shapes
 import Quickshell.Widgets
@@ -87,7 +87,7 @@ ClippingRectangle {
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
             joinStyle: ShapePath.RoundJoin
-            PathSvg { path: "M7 7L17 17L12 22L12 2L17 7L7 17" }
+            PathSvg { path: Theme.btGlyphPath }
         }
     }
 

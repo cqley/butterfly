@@ -8,13 +8,14 @@ import "../calendar"
 import "../core"
 import "../launcher"
 import "../media"
+import "../mixer"
 import "../network"
 import "../notifications"
 import "../polkit"
 import "../power"
 import "../recording"
 import "../screenshot"
-import "../status"
+import "../battery"
 import "../wallpaper"
 
 Item {
@@ -97,6 +98,7 @@ Item {
         Modal.register("record", Record)
         Modal.register("screenshot", Screenshot)
         Modal.register("net", Net)
+        Modal.register("mixer", Mixer)
         Modal.register("brightness", Brightness)
         Modal.register("audio", Audio)
         Modal.register("bluetooth", Bt)
@@ -161,6 +163,7 @@ Item {
         : Record.open ? rec.width + 2 * Theme.pwPad
         : Screenshot.open ? shot.width + 2 * Theme.pwPad
         : Net.open ? Theme.netW
+        : Mixer.open ? mixer.width + 2 * Theme.mixerPad
         : Brightness.open ? Theme.brightW
         : Audio.open ? Theme.audioW
         : Bt.open ? Theme.btW
@@ -176,9 +179,10 @@ Item {
         : Record.open ? rec.y + rec.height + Theme.pwPad
         : Screenshot.open ? shot.y + shot.height + Theme.pwPad
         : Net.open ? net.y + net.height + Theme.netPad
+        : Mixer.open ? mixer.y + mixer.height + Theme.mixerPad
         : Brightness.open ? bright.y + bright.height + Theme.brightPad
         : Audio.open ? audio.y + audio.height + Theme.audioPad
-        : Bt.open ? bt.y + bt.height + Theme.netPad
+        : Bt.open ? bt.y + bt.height + Theme.btPad
         : Notifs.open ? center.y + center.height + Theme.centerPad
         : root.full ? cal.y + cal.height + Theme.pad
         : root.hot ? (root.media ? tune.y + tune.height + Theme.pad : Theme.openH)
@@ -282,7 +286,7 @@ Item {
             rise: root.panelRise
         }
 
-        Launch {
+        LauncherMenu {
             id: launch
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.lpad
@@ -300,7 +304,7 @@ Item {
             rise: root.panelRise
         }
 
-        Wall {
+        WallpaperMenu {
             id: wall
             anchors.horizontalCenter: parent.horizontalCenter
             y: Theme.wallPad
@@ -336,6 +340,15 @@ Item {
             rise: root.panelRise
         }
 
+        MixerMenu {
+            id: mixer
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Theme.mixerPad
+            shown: Mixer.open
+            ready: root.panelReady
+            rise: root.panelRise
+        }
+
         BrightnessMenu {
             id: bright
             anchors.horizontalCenter: parent.horizontalCenter
@@ -357,7 +370,7 @@ Item {
         BtMenu {
             id: bt
             anchors.horizontalCenter: parent.horizontalCenter
-            y: Theme.netPad
+            y: Theme.btPad
             shown: Bt.open
             ready: root.panelReady
             rise: root.panelRise

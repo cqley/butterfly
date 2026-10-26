@@ -16,7 +16,6 @@ Singleton {
     readonly property int fsM: fs(12)
     readonly property int fsL: fs(13)
     readonly property int fsXL: fs(14)
-    readonly property int fsXXL: fs(15)
 
     function fs(px) {
         return Math.max(1, Math.round(px * fontScale))
@@ -109,6 +108,7 @@ Singleton {
     }
     readonly property real btnStroke: 5
     readonly property color mediaIconColor: "#ffffff"
+    readonly property string lockGlyphPath: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11ZM7 11V7A5 5 0 0 1 17 7V11"
 
     // lists
     readonly property int selInset: 4
@@ -123,6 +123,7 @@ Singleton {
     readonly property int rowR: 14
     readonly property int rowTextY: 0
     readonly property int rowGap: 8
+    readonly property int emptyPad: 8
 
     // pill
     readonly property int gap: 6
@@ -306,6 +307,10 @@ Singleton {
     readonly property int pwPad: 10
     readonly property int pwN: 5
     readonly property int powerW: pwW * pwN + pwGap * (pwN - 1) + pwPad * 2
+    readonly property string pwSuspendPath: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+    readonly property string pwLogoutPath: "M9 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H9M16 17L21 12L16 7M21 12L9 12"
+    readonly property string pwRebootPath: "M23 4L23 10L17 10M20.49 15a9 9 0 1 1-2.12-9.36L23 10"
+    readonly property string pwOffPath: "M18.36 6.64a9 9 0 1 1-12.73 0M12 2L12 12"
 
     // wallpaper
     readonly property string wallDir: url(Quickshell.env("HOME") + "/pictures/wallpapers")
@@ -357,6 +362,8 @@ Singleton {
     readonly property int authDotGap: 4
     readonly property int authDotStep: 260
     readonly property int authDotStagger: 130
+    readonly property string authBodyPath: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11Z"
+    readonly property string authCrossPath: "M6.5 6.5L17.5 17.5M17.5 6.5L6.5 17.5"
     readonly property int authShake: 6
     readonly property int authShakeStep: 35
     readonly property real authPressed: 0.82
@@ -384,6 +391,7 @@ Singleton {
     readonly property string mediaRemainChar: "−"
     readonly property int artR: 18
     readonly property int artGlyph: 32
+    readonly property string artNotePath: "M9 18V5L21 3V16M9 18A3 3 0 0 1 3 18A3 3 0 0 1 9 18ZM21 16A3 3 0 0 1 15 16A3 3 0 0 1 21 16Z"
     readonly property bool mediaTimes: false
     readonly property bool mediaScroll: false
     readonly property int mediaScrollSpeed: 24
@@ -397,7 +405,6 @@ Singleton {
     readonly property int playNudge: 0
     readonly property int barHit: 7
     readonly property color mediaTrack: tile
-    readonly property real btnDisabled: 0.3
     readonly property real btnHoverScale: 1.06
     readonly property real btnPressScale: 0.94
 
@@ -427,7 +434,6 @@ Singleton {
     readonly property int netTitleX: 4
     readonly property int netToggleInset: 2
     readonly property int netMetaR: 12
-    readonly property int netEmptyPad: 8
     readonly property int netSettle: 600
     readonly property int netKill: 3000
     readonly property int netVerify: 600
@@ -436,6 +442,7 @@ Singleton {
     readonly property int netRescanWait: 2500
     readonly property int netMonitorRestart: 2000
     readonly property int netProbe: 2000
+    readonly property int netCoalesce: 250
     readonly property int markX: 7
     readonly property int markW: 3
     readonly property int markH: 11
@@ -445,6 +452,16 @@ Singleton {
 
     // bluetooth
     readonly property int btW: 320
+    readonly property int btPad: netPad
+    readonly property int btRowH: netRowH
+    readonly property int btRows: netRows
+    readonly property int btTitleX: netTitleX
+    readonly property int btMetaR: netMetaR
+    readonly property int btToggleW: netToggleW
+    readonly property int btToggleH: netToggleH
+    readonly property int btToggleInset: netToggleInset
+    readonly property int btKnob: netKnob
+    readonly property string btGlyphPath: "M7 7L17 17L12 22L12 2L17 7L7 17"
     readonly property int btTimeout: 15000
     readonly property int btBatteryWait: 1200
     readonly property int btPowerSettle: 4000
@@ -462,6 +479,7 @@ Singleton {
     readonly property int brightSlop: 4
     readonly property int brightGlide: 550
     readonly property int brightEasing: 275
+    readonly property string brightSunPath: "M12 7A5 5 0 1 1 12 17A5 5 0 1 1 12 7ZM12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22"
 
     // audio
     readonly property int audioW: 272
@@ -486,7 +504,34 @@ Singleton {
     readonly property string audioInPath: "M12 3A3.25 3.25 0 0 1 15.25 6.25V9.25A3.25 3.25 0 0 1 8.75 9.25V6.25A3.25 3.25 0 0 1 12 3Z"
     readonly property string audioInCradlePath: "M18 10.5A6 6 0 0 1 6 10.5 M12 16.5V20.5"
     readonly property string audioSlashPath: "M4 4L20 20"
+    readonly property string audioSpeakerPath: "M3 9H8L16 3V21L8 15H3Z"
+    readonly property string audioWave1Path: "M20.3 10.4A2.3 2.3 0 0 1 20.3 13.6"
+    readonly property string audioWave2Path: "M23.5 8.2A4.5 4.5 0 0 1 23.5 15.8"
+    readonly property string audioWave3Path: "M28 6A7 7 0 0 1 28 18"
+    readonly property real audioWaveLowAt: 0.25
+    readonly property real audioWaveHighAt: 0.5
     readonly property int micS: 12
+
+    // mixer
+    readonly property int mixerPad: 16
+    readonly property int mixerColW: 54
+    readonly property int mixerColGap: 16
+    readonly property int mixerTrackH: 96
+    readonly property int mixerTrackW: 3
+    readonly property real mixerKnobDim: 0.85
+    readonly property int mixerHandleW: 12
+    readonly property int mixerHandleH: 3
+    readonly property int mixerIconBox: 24
+    readonly property int mixerIcon: 16
+    readonly property int mixerGap: 10
+    readonly property int mixerPctH: fsS + 2
+    readonly property int mixerLabelH: fsXXS + 2
+    readonly property bool mixerPct: false
+    readonly property int mixerStep: 5
+    readonly property int mixerFineStep: 1
+    readonly property int mixerBigStep: 10
+    readonly property int mixerGlide: 550
+    readonly property int mixerEasing: 275
 
     // screenshot
     readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"

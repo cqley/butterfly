@@ -56,6 +56,7 @@ Singleton {
 
     function stopWatching() {
         poll.stop()
+        coalesce.stop()
         monitor.running = false
     }
 
@@ -63,8 +64,6 @@ Singleton {
 
     onOpenChanged: if (open) {
         Modal.claim("net")
-        if (!open)
-            return
         probe()
         asking = ""
         error = ""
@@ -201,6 +200,10 @@ Singleton {
         watch = false
         error = ""
         if (item.active) {
+            if (!item.connection) {
+                refresh()
+                return
+            }
             busy = true
             pending = item.ssid
             phase = "disconnecting"
@@ -452,9 +455,15 @@ Singleton {
         running: false
         command: ["nmcli", "monitor"]
         stdout: SplitParser {
-            onRead: root.refresh()
+            onRead: coalesce.restart()
         }
         onExited: if (root.open || root.watch) monitorRestart.restart()
+    }
+
+    Timer {
+        id: coalesce
+        interval: Theme.netCoalesce
+        onTriggered: root.refresh()
     }
 
     Timer {
@@ -531,9 +540,12 @@ Singleton {
     Process {
         id: down
         onExited: code => {
+            const name = root.pending
             root.busy = false
             root.phase = ""
             root.pending = ""
+            if (code !== 0)
+                Notifs.pushSystem("couldn't disconnect", name, false, "net", true)
             root.refresh()
         }
     }

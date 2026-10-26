@@ -7,8 +7,8 @@ Pick {
     readonly property var items: Bt.items
 
     n: items.length
-    rows: Theme.netRows
-    width: Theme.btW - 2 * Theme.netPad
+    rows: Theme.btRows
+    width: Theme.btW - 2 * Theme.btPad
     height: col.height
     focus: shown
 
@@ -91,11 +91,11 @@ Pick {
 
         Item {
             width: parent.width
-            height: Theme.netRowH
+            height: Theme.btRowH
 
             Txt {
                 anchors.left: parent.left
-                anchors.leftMargin: Theme.netTitleX
+                anchors.leftMargin: Theme.btTitleX
                 anchors.verticalCenter: parent.verticalCenter
                 text: Bt.title
                 font.weight: Font.DemiBold
@@ -141,12 +141,12 @@ Pick {
 
             Rectangle {
                 id: toggle
-                readonly property real gap: (height - Theme.netKnob) / 2
+                readonly property real gap: (height - Theme.btKnob) / 2
                 anchors.right: parent.right
-                anchors.rightMargin: Theme.netToggleInset
+                anchors.rightMargin: Theme.btToggleInset
                 anchors.verticalCenter: parent.verticalCenter
-                width: Theme.netToggleW
-                height: Theme.netToggleH
+                width: Theme.btToggleW
+                height: Theme.btToggleH
                 radius: height / 2
                 color: Bt.enabled ? Theme.accent : Theme.tile
                 opacity: !Bt.available || Bt.blocked || Bt.busy || Bt.powering ? Theme.dimMid : 1
@@ -171,8 +171,8 @@ Pick {
                 Rectangle {
                     x: Bt.enabled ? toggle.width - width - toggle.gap : toggle.gap
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.netKnob
-                    height: Theme.netKnob
+                    width: Theme.btKnob
+                    height: Theme.btKnob
                     radius: width / 2
                     color: Theme.fg
                     antialiasing: true
@@ -198,7 +198,7 @@ Pick {
 
         Item {
             width: parent.width
-            height: Math.min(root.n, Theme.netRows) * Theme.netRowH
+            height: Math.min(root.n, Theme.btRows) * Theme.btRowH
             clip: true
             visible: Bt.enabled && root.n > 0
 
@@ -211,8 +211,8 @@ Pick {
             Item {
                 id: list
                 width: parent.width
-                height: root.n * Theme.netRowH
-                y: -root.start * Theme.netRowH
+                height: root.n * Theme.btRowH
+                y: -root.start * Theme.btRowH
 
                 Behavior on y {
                     NumberAnimation {
@@ -223,9 +223,9 @@ Pick {
 
                 Rectangle {
                     x: Theme.selInset
-                    y: root.sel * Theme.netRowH + Theme.selGap / 2
+                    y: root.sel * Theme.btRowH + Theme.selGap / 2
                     width: list.width - Theme.selInset * 2
-                    height: Theme.netRowH - Theme.selGap
+                    height: Theme.btRowH - Theme.selGap
                     radius: height / 2
                     color: Theme.selFill
                     border.width: Theme.surfaceBorderWidth
@@ -256,9 +256,9 @@ Pick {
                         readonly property bool busy: status !== ""
                         readonly property bool selected: root.sel === row.index
 
-                        y: row.index * Theme.netRowH
+                        y: row.index * Theme.btRowH
                         width: list.width
-                        height: Theme.netRowH
+                        height: Theme.btRowH
 
                         Txt {
                             anchors.left: parent.left
@@ -284,7 +284,7 @@ Pick {
                         Row {
                             id: meta
                             anchors.right: parent.right
-                            anchors.rightMargin: Theme.netMetaR
+                            anchors.rightMargin: Theme.btMetaR
                             anchors.verticalCenter: parent.verticalCenter
                             spacing: Theme.rowGap
 
@@ -338,7 +338,7 @@ Pick {
 
         Item {
             width: parent.width
-            height: empty.implicitHeight + Theme.netEmptyPad
+            height: empty.implicitHeight + Theme.emptyPad
             visible: Bt.enabled && root.n === 0
 
             Txt {

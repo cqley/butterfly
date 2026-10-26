@@ -339,11 +339,11 @@ Singleton {
 
     Process {
         id: check
-        command: ["sh", "-c", "test -f \"$1\"", "sh", root.lastFile]
+        command: ["sh", "-c", "test -s \"$1\"", "sh", root.lastFile]
         onExited: code => {
             if (code !== 0) {
                 if (root.needsCopy)
-                    Notifs.pushSystem("screenshot failed", "grim exited nonzero", false, "shot", true)
+                    Notifs.pushSystem("screenshot failed", "no output file", false, "shot", true)
                 root.needsCopy = false
                 return
             }
