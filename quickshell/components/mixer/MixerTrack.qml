@@ -31,6 +31,7 @@ Item {
 
     readonly property bool live: ready && !muted
     property real dim: live ? 1 : Theme.dimEmpty
+    readonly property color ink: Theme.mix(Theme.bg, Theme.fg, root.dim)
 
     width: Theme.mixerColW
     height: col.height
@@ -155,7 +156,6 @@ Item {
             id: iconBox
             width: parent.width
             height: Theme.mixerIconBox
-            opacity: root.dim
 
             Shape {
                 x: Math.round((iconBox.width - Theme.mixerIcon) / 2)
@@ -168,8 +168,8 @@ Item {
 
                 ShapePath {
                     strokeWidth: root.filled ? -1 : Theme.glyphStroke(Theme.mixerIcon)
-                    strokeColor: Theme.fg
-                    fillColor: root.filled ? Theme.fg : "transparent"
+                    strokeColor: root.ink
+                    fillColor: root.filled ? root.ink : "transparent"
                     fillRule: ShapePath.WindingFill
                     capStyle: ShapePath.RoundCap
                     joinStyle: ShapePath.RoundJoin
@@ -179,7 +179,7 @@ Item {
 
                 ShapePath {
                     strokeWidth: root.path2 !== "" ? Theme.audioIconStroke : -1
-                    strokeColor: Theme.fg
+                    strokeColor: root.ink
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
                     joinStyle: ShapePath.RoundJoin
@@ -189,7 +189,7 @@ Item {
 
                 ShapePath {
                     strokeWidth: root.waveTier >= 1 ? Theme.audioIconStroke : -1
-                    strokeColor: Theme.fg
+                    strokeColor: root.ink
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
 
@@ -198,7 +198,7 @@ Item {
 
                 ShapePath {
                     strokeWidth: root.waveTier >= 2 ? Theme.audioIconStroke : -1
-                    strokeColor: Theme.fg
+                    strokeColor: root.ink
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
 
@@ -207,7 +207,7 @@ Item {
 
                 ShapePath {
                     strokeWidth: root.waveTier >= 3 ? Theme.audioIconStroke : -1
-                    strokeColor: Theme.fg
+                    strokeColor: root.ink
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
 
@@ -216,7 +216,7 @@ Item {
 
                 ShapePath {
                     strokeWidth: root.muted ? Theme.audioSlashStroke : -1
-                    strokeColor: root.filled ? Theme.bg : Theme.fg
+                    strokeColor: root.filled ? Theme.bg : root.ink
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
 

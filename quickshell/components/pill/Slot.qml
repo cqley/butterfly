@@ -27,9 +27,9 @@ Item {
     Item {
         id: holder
         x: Math.round(root.leadingGap)
+        y: Math.round((root.height - root.size) / 2)
         width: root.size
         height: root.size
-        anchors.verticalCenter: parent.verticalCenter
         transformOrigin: Item.Center
         scale: (Theme.slotScale + (1 - Theme.slotScale) * root.enter) * (area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1)
         opacity: root.enter

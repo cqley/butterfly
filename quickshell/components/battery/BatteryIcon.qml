@@ -47,9 +47,9 @@ Item {
         Rectangle {
             id: body
             x: Math.round(root.leadingGap)
+            y: Math.round((parent.height - height) / 2)
             width: Theme.batW
             height: Theme.batH
-            anchors.verticalCenter: parent.verticalCenter
             radius: Theme.batRadius
             color: Theme.bg
             antialiasing: true

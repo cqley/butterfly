@@ -11,6 +11,7 @@
 | `network` | `toggle` `power` `status` |
 | `bluetooth` | `toggle` `power` `status` |
 | `brightness` | `toggle` `status` |
+| `mixer` | `toggle` `status` |
 | `audio` | `toggle` `status` |
 | `mic` | `toggle` `status` |
 | `battery` | `toggle` `status` |
