@@ -65,10 +65,10 @@ Variants {
                 if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter || e.key === Qt.Key_Space) {
                     Screenshot.confirmTargetPick()
                     e.accepted = true
-                } else if (Screenshot.targetKind === "monitor" && e.key === Qt.Key_Left) {
+                } else if (e.key === Qt.Key_Left || e.key === Qt.Key_Backtab) {
                     Screenshot.cycleTarget(-1)
                     e.accepted = true
-                } else if (Screenshot.targetKind === "monitor" && e.key === Qt.Key_Right) {
+                } else if (e.key === Qt.Key_Right || e.key === Qt.Key_Tab) {
                     Screenshot.cycleTarget(1)
                     e.accepted = true
                 }

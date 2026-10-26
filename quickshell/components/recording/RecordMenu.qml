@@ -2,16 +2,12 @@ import "../core"
 import QtQuick
 import QtQuick.Shapes
 
-Fade {
+Tiles {
     id: root
-    property int sel: 0
-    property bool snap: false
-    property real px: -1
-    property real py: -1
     property string anchor: ""
     readonly property var items: Record.items
-    readonly property int n: items.length
 
+    n: items.length
     width: Math.max(0, n * Theme.pwW + Math.max(0, n - 1) * Theme.pwGap)
     height: Theme.pwH
 
@@ -34,38 +30,35 @@ Fade {
         Record.pick(items[i])
     }
 
-    function go(i) {
-        sel = i
-        anchor = key(i)
+    function remember() {
+        anchor = key(sel)
     }
 
-    function reset() {
-        snap = true
-        go(0)
-        px = -1
-        py = -1
-        snap = false
+    function fresh() {
+        reset()
+        remember()
     }
 
     function resync() {
         for (let i = 0; i < n; i++) {
             if (key(i) === anchor) {
                 snap = true
-                go(i)
+                sel = i
                 snap = false
                 return
             }
         }
         snap = true
-        go(Math.min(sel, Math.max(0, n - 1)))
+        sel = Math.min(sel, Math.max(0, n - 1))
         snap = false
+        remember()
     }
 
     onVisibleChanged: {
         if (visible)
             forceActiveFocus()
         else
-            reset()
+            fresh()
     }
 
     Connections {
@@ -73,7 +66,7 @@ Fade {
         function onOpenChanged() {
             if (!Record.open)
                 return
-            root.reset()
+            root.fresh()
             root.forceActiveFocus()
         }
         function onItemsChanged() {
@@ -81,19 +74,16 @@ Fade {
         }
     }
 
+    Connections {
+        target: root
+        function onSelChanged() { root.remember() }
+    }
+
     Keys.onPressed: e => {
         const k = e.key
-        const s = e.modifiers & Qt.ShiftModifier
-        const n = root.n
-        if (n === 0)
-            return
         if (k === Qt.Key_Escape) Record.open = false
         else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) root.run(root.sel)
-        else if (k === Qt.Key_Right || k === Qt.Key_L || k === Qt.Key_J || k === Qt.Key_Tab) root.go((root.sel + 1) % n)
-        else if (k === Qt.Key_Left || k === Qt.Key_H || k === Qt.Key_K || k === Qt.Key_Backtab) root.go((root.sel + n - 1) % n)
-        else if (k === Qt.Key_End || k === Qt.Key_G && s) root.go(n - 1)
-        else if (k === Qt.Key_Home || k === Qt.Key_G) root.go(0)
-        else return
+        else if (!root.nav(e)) return
         e.accepted = true
     }
 
@@ -184,14 +174,7 @@ Fade {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: m => {
-                        const p = mapToItem(null, m.x, m.y)
-                        if (p.x === root.px && p.y === root.py)
-                            return
-                        root.px = p.x
-                        root.py = p.y
-                        root.go(tile.index)
-                    }
+                    onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), tile.index)
                     onClicked: root.run(tile.index)
                 }
             }

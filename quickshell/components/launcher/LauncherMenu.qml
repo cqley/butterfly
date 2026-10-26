@@ -51,7 +51,7 @@ Pick {
             const k = i === 0 ? 0 : n.includes(" " + s) ? 1 : i > 0 ? 2 : haystack.includes(s) ? 3 : fuzzy(n, s) ? 4 : -1
             if (k >= 0) hits.push({ a, k })
         }
-        return hits.sort((x, y) => x.k - y.k || c(y.a) - c(x.a) || x.a.name.length - y.a.name.length || byName(x.a, y.a)).slice(0, Theme.rows).map(h => h.a)
+        return hits.sort((x, y) => x.k - y.k || c(y.a) - c(x.a) || x.a.name.length - y.a.name.length || byName(x.a, y.a)).map(h => h.a)
     }
 
     readonly property var icons: Object.create(null)
@@ -284,7 +284,7 @@ Pick {
                             Behavior on opacity { NumberAnimation { duration: Theme.selDuration; easing.type: Theme.ease } }
                         }
 
-                        LaunchIcon {
+                        LauncherIcon {
                             id: icon
                             x: Theme.launchIconX
                             anchors.verticalCenter: parent.verticalCenter
@@ -335,6 +335,19 @@ Pick {
                         }
                     }
                 }
+            }
+        }
+
+        Item {
+            width: parent.width
+            height: empty.implicitHeight + Theme.emptyPad
+            visible: root.n === 0
+
+            Txt {
+                id: empty
+                anchors.centerIn: parent
+                text: "no results"
+                opacity: Theme.dimEmpty
             }
         }
     }

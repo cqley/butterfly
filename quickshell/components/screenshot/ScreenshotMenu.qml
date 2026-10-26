@@ -3,30 +3,18 @@ import QtQuick
 import QtQuick.Shapes
 import Quickshell
 
-Fade {
+Tiles {
     id: root
-    property int sel: 0
-    property bool snap: false
-    property real px: -1
-    property real py: -1
     readonly property var items: Screenshot.items
-    readonly property int n: items.length
 
-    width: Math.max(0, n * Theme.pwW + Math.max(0, n - 1) * Theme.pwGap)
+    n: items.length
+    width: n > 0 ? n * Theme.pwW + (n - 1) * Theme.pwGap : empty.implicitWidth
     height: Theme.pwH
 
     function run(i) {
         if (i < 0 || i >= n)
             return
         Screenshot.pick(items[i])
-    }
-
-    function reset() {
-        snap = true
-        sel = 0
-        px = -1
-        py = -1
-        snap = false
     }
 
     onVisibleChanged: {
@@ -42,26 +30,22 @@ Fade {
             root.reset()
             root.forceActiveFocus()
         }
-        function onItemsChanged() {
-            if (root.sel >= root.n)
-                root.sel = Math.max(0, root.n - 1)
-        }
     }
 
     Keys.onPressed: e => {
         const k = e.key
-        const s = e.modifiers & Qt.ShiftModifier
-        const n = root.n
-        if (n === 0)
-            return
         if (k === Qt.Key_Escape) Screenshot.open = false
         else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) root.run(root.sel)
-        else if (k === Qt.Key_Right || k === Qt.Key_L || k === Qt.Key_J || k === Qt.Key_Tab) root.sel = (root.sel + 1) % n
-        else if (k === Qt.Key_Left || k === Qt.Key_H || k === Qt.Key_K || k === Qt.Key_Backtab) root.sel = (root.sel + n - 1) % n
-        else if (k === Qt.Key_End || k === Qt.Key_G && s) root.sel = n - 1
-        else if (k === Qt.Key_Home || k === Qt.Key_G) root.sel = 0
-        else return
+        else if (!root.nav(e)) return
         e.accepted = true
+    }
+
+    Txt {
+        id: empty
+        anchors.centerIn: parent
+        text: "no backend"
+        visible: root.n === 0
+        opacity: Theme.dimEmpty
     }
 
     Row {
@@ -113,7 +97,7 @@ Fade {
                         strokeWidth: -1
                         fillColor: tile.ink
                         fillRule: ShapePath.WindingFill
-                        PathSvg { path: tile.isActive ? Theme.shotActiveBadgePath : "" }
+                        PathSvg { path: Theme.shotActiveBadgePath }
                     }
                 }
 
@@ -143,13 +127,7 @@ Fade {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: m => {
-                        const p = mapToItem(null, m.x, m.y)
-                        if (p.x === root.px && p.y === root.py) return
-                        root.px = p.x
-                        root.py = p.y
-                        root.sel = tile.index
-                    }
+                    onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), tile.index)
                     onClicked: root.run(tile.index)
                 }
             }

@@ -28,7 +28,7 @@ Singleton {
         let found = null
         if (recent && v.indexOf(recent) >= 0 && recent.isPlaying)
             found = recent
-        for (let i = 0; !found && i < v.length; i++) {
+        for (let i = 0; i < v.length && !found; i++) {
             if (v[i].isPlaying) {
                 found = v[i]
                 break

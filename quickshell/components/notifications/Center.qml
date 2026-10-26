@@ -280,16 +280,6 @@ Pick {
             width: parent.width
             height: root.n > 0 ? Math.min(root.n, Theme.centerRows) * Theme.centerRowH : Theme.centerEmptyH
 
-            WheelHandler {
-                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: e => {
-                    const max = Math.max(0, root.n - root.rows)
-                    if (max <= 0)
-                        return
-                    root.start = Math.max(0, Math.min(max, root.start + (e.angleDelta.y > 0 ? -1 : 1)))
-                }
-            }
-
             Item {
                 anchors.fill: parent
                 visible: root.n > 0
@@ -488,6 +478,16 @@ Pick {
                         fillRule: ShapePath.WindingFill
                         PathSvg { path: Theme.moonPath }
                     }
+                }
+            }
+
+            Wheel {
+                anchors.fill: parent
+                onStep: n => {
+                    const max = Math.max(0, root.n - root.rows)
+                    if (max <= 0)
+                        return
+                    root.start = Math.max(0, Math.min(max, root.start + n))
                 }
             }
         }

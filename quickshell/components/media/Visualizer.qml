@@ -14,6 +14,7 @@ Singleton {
 
     function toggle() {
         root.on = !root.on
+        root.sync()
     }
 
     function sync() {

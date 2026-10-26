@@ -18,14 +18,16 @@ Singleton {
 
     readonly property int count: devs.count
 
+    Component.onCompleted: refresh()
     onOpenChanged: {
-        if (!open) {
-            settle.stop()
-            return
-        }
-        Modal.claim("brightness")
         if (open)
-            refresh()
+            Modal.claim("brightness")
+        refresh()
+    }
+
+    Connections {
+        target: Quickshell
+        function onScreensChanged() { root.refresh() }
     }
 
     ListModel { id: devs }

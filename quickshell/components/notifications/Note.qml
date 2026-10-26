@@ -15,10 +15,7 @@ Fade {
     property string picture: ""
     property string mark: ""
     property bool critical: false
-    readonly property bool battery: root.kind === "battery"
-    readonly property bool net: root.kind === "net"
     readonly property bool bluetooth: root.kind === "bluetooth"
-    readonly property bool dnd: root.kind === "dnd"
     property bool charging: false
     property bool netOn: false
     property bool btConnected: false
