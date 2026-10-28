@@ -71,7 +71,7 @@ Fade {
         cursor = i
         const x = centerFor(i)
         const dist = Math.abs(x - trackX)
-        vel = Math.max(Theme.wallVelocity, (dist - 3 * step) * Theme.wallCatchup)
+        vel = Math.max(Theme.wallVelocity, (dist - Theme.wallCatchupSteps * step) * Theme.wallCatchup)
         trackDur = dist > 0 ? Math.round(dist / vel * 1000) : Theme.fast
         trackX = x
         snap = false

@@ -183,7 +183,7 @@ Singleton {
         id: tick
         interval: Theme.recordTick
         repeat: true
-        running: root.active
+        running: proc.running
         onTriggered: root.elapsedSec = Math.floor((Date.now() - root.startedAt) / 1000)
     }
 

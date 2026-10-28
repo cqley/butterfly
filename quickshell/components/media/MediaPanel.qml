@@ -113,6 +113,7 @@ Fade {
             id: img
             anchors.fill: parent
             source: root.artUrl
+            retries: 2
             fillMode: Image.PreserveAspectCrop
             sourceSize: Qt.size(Theme.artS * 2, Theme.artS * 2)
         }
@@ -253,7 +254,7 @@ Fade {
                 path: "M22 5L11.25 12L22 19Z M12.75 5L2 12L12.75 19Z"
                 player: root.p
                 can: root.p !== null && root.p.canGoPrevious
-                onClicked: if (root.p.canGoPrevious) root.p.previous()
+                onClicked: if (root.p !== null && root.p.canGoPrevious) root.p.previous()
             }
 
             Btn {
@@ -262,7 +263,7 @@ Fade {
                 path: root.on ? "M6 5.5H8.5V18.5H6Z M15.5 5.5H18V18.5H15.5Z" : "M7.5 5L20.5 12L7.5 19Z"
                 player: root.p
                 can: root.p !== null && root.p.canTogglePlaying
-                onClicked: if (root.p.canTogglePlaying) root.p.togglePlaying()
+                onClicked: if (root.p !== null && root.p.canTogglePlaying) root.p.togglePlaying()
             }
 
             Btn {
@@ -270,7 +271,7 @@ Fade {
                 path: "M2 5L12.75 12L2 19Z M11.25 5L22 12L11.25 19Z"
                 player: root.p
                 can: root.p !== null && root.p.canGoNext
-                onClicked: if (root.p.canGoNext) root.p.next()
+                onClicked: if (root.p !== null && root.p.canGoNext) root.p.next()
             }
         }
 

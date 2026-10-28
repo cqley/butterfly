@@ -25,6 +25,28 @@ Singleton {
     readonly property int imageRetry: 200
     readonly property string stampFormat: "yy-MM-dd_HH-mm-ss"
 
+    function pctOrUnavailable(ready, pct, suffix) {
+        return ready ? Math.round(pct * 100) + "%" + (suffix || "") : "unavailable"
+    }
+
+    function stableReorder(items, prevOrder, keyFn, cmp) {
+        const pos = Object.create(null)
+        for (let i = 0; i < prevOrder.length; i++)
+            pos[prevOrder[i]] = i
+        const kept = []
+        const fresh = []
+        for (const it of items) {
+            if (pos[keyFn(it)] === undefined)
+                fresh.push(it)
+            else
+                kept.push(it)
+        }
+        kept.sort((a, b) => pos[keyFn(a)] - pos[keyFn(b)])
+        fresh.sort(cmp)
+        const out = kept.concat(fresh)
+        return { order: out.map(keyFn), items: out }
+    }
+
     function url(path) {
         const value = String(path || "")
         if (value === "" || /^[a-z][a-z0-9+.-]*:/i.test(value))
@@ -329,6 +351,7 @@ Singleton {
     readonly property color wallIdleBorder: surfaceBorder
     readonly property int wallVelocity: 600
     readonly property int wallCatchup: 20
+    readonly property int wallCatchupSteps: 3
     readonly property int wallRetries: 2
     readonly property int wallSourceW: thumbW * 2
     readonly property int wallSourceH: thumbH * 2
@@ -352,6 +375,7 @@ Singleton {
     readonly property int authStatusX: 6
     readonly property real authLockShut: 11
     readonly property real authLockOpen: 6
+    readonly property string authShackleHead: "M7 11V7A5 5 0 0 1 17 7V"
     readonly property int authLockGlide: 260
     readonly property int authBtnGap: 8
     readonly property int authGlyph: 18
@@ -530,8 +554,8 @@ Singleton {
     readonly property int mixerStep: 5
     readonly property int mixerFineStep: 1
     readonly property int mixerBigStep: 10
-    readonly property int mixerGlide: 550
-    readonly property int mixerEasing: 275
+    readonly property int mixerGlide: brightGlide
+    readonly property int mixerEasing: brightEasing
 
     // screenshot
     readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"
@@ -545,6 +569,7 @@ Singleton {
     readonly property int regionLabelPadY: 4
     readonly property int regionLabelR: 8
     readonly property real regionGuideOpacity: 0.6
+    readonly property int regionGuideWidth: 1
     readonly property string shotBodyPath: "M5 8H10L12 6H16L18 8H19A2 2 0 0 1 21 10V17A2 2 0 0 1 19 19H5A2 2 0 0 1 3 17V10A2 2 0 0 1 5 8Z"
     readonly property string shotLensPath: "M8 13A4 4 0 1 0 16 13A4 4 0 1 0 8 13Z"
     readonly property string shotRegionPath: "M4 9V5A1 1 0 0 1 5 4H9 M15 4H19A1 1 0 0 1 20 5V9 M20 15V19A1 1 0 0 1 19 20H15 M9 20H5A1 1 0 0 1 4 19V15"
@@ -576,6 +601,7 @@ Singleton {
     readonly property int weekDays: 7
     readonly property int weekGap: 4
     readonly property int weekTodayR: 11
+    readonly property int weekTodayPx: fs(16)
     readonly property real weekFadeMin: 0.12
     readonly property real weekFadeSpan: 4.7
     readonly property real todayFill: 0.15
@@ -584,10 +610,38 @@ Singleton {
     readonly property int calGap: 6
     readonly property int calTitleX: 4
     readonly property int calHeadH: 16
+    readonly property int calNavDia: 22
+    readonly property real calNavFill: 0.05
+    readonly property real calNavHoverFill: 0.1
+    readonly property int calNavGlyph: 11
+    readonly property real calTodayScale: 0.86
     readonly property int cellW: 30
     readonly property int cellH: 24
     readonly property int stripH: 40
     readonly property int gridW: cellW * 7
+
+    // island
+    readonly property string islandMode: "classic"
+    readonly property int islandDuration: speed
+    readonly property int islandEase: ease
+    readonly property int islandPopW: 16
+    readonly property int islandPopH: 5
+    readonly property int islandPopDrop: 8
+    readonly property int islandWeekCells: weekCells
+    readonly property int islandWeekLead: 0
+    readonly property real islandWeekFadeSpan: 3.1
+    readonly property real islandWeekFadeMin: 0
+    readonly property int islandWeekW: cellW * islandWeekCells
+    readonly property int islandWeekStripY: 58
+    readonly property int islandWeekClockY: 12
+    readonly property int islandWeekH: islandWeekStripY + stripH + 25
+    readonly property int islandWeekRadius: 22
+    readonly property real islandWeekClockScale: 1.44
+    readonly property int islandCalCellW: 38
+    readonly property int islandCalCellH: 28
+    readonly property int islandCalPad: 16
+    readonly property int islandCalRadius: 22
+    readonly property int islandCalW: islandCalCellW * weekDays + 2 * islandCalPad
 
     // visualizer
     readonly property int visBars: 6

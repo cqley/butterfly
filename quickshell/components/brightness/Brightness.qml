@@ -249,7 +249,7 @@ Singleton {
             const out = []
             for (let i = 0; i < root.count; i++) {
                 const d = root.devices.get(i)
-                out.push(d.label + " " + (d.ready ? Math.round(d.value * 100) + "%" : "unavailable"))
+                out.push(d.label + " " + Theme.pctOrUnavailable(d.ready, d.value))
             }
             return out.join(", ")
         }

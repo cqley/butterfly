@@ -72,7 +72,7 @@ Item {
 
     Item {
         anchors.fill: parent
-        layer.enabled: true
+        layer.enabled: morphAnim.running || bumpAnim.running
         layer.smooth: true
         layer.textureSize: Qt.size(root.width * 2, root.height * 2)
 

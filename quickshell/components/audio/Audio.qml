@@ -121,9 +121,8 @@ Singleton {
             const out = []
             for (let i = 0; i < root.count; i++) {
                 const name = i === 0 ? "output" : "input"
-                out.push(root.node(i)
-                    ? name + " " + root.label(i) + " " + Math.round(root.level(i) * 100) + "%" + (root.muted(i) ? " muted" : "")
-                    : name + " unavailable")
+                const prefix = root.node(i) ? name + " " + root.label(i) : name
+                out.push(prefix + " " + Theme.pctOrUnavailable(root.node(i) !== null, root.level(i), root.muted(i) ? " muted" : ""))
             }
             return out.join(", ")
         }

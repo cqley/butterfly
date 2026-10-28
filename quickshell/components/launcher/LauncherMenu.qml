@@ -16,9 +16,7 @@ Pick {
     }))
     readonly property var raw: find(input.text)
     property var results: raw
-    property var view: results
-    property bool churn: false
-    readonly property bool settled: !root.churn
+    view: results
 
     n: view.length
     rows: Theme.rows

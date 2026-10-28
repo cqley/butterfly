@@ -48,9 +48,56 @@ Out of scope, noted for the idea list: frames 466-526 show a separate control-ce
 popup (Wi-Fi/Bluetooth/Focus/Game Mode/Sound/Display/Notifications) anchored to the
 right-hand status icon, not an island expansion.
 
-**Status: stopped here awaiting confirmation before writing any Part B code.**
-Nothing in `components/` was changed this session. Part A remains uncommitted in the
-working tree, untouched, as the user previously asked.
+## 2026-10-28 — Step 2 done: Part B rebuilt from the spec
+
+User decisions taken before coding (do not re-litigate):
+
+1. **Calendar sizing: split the difference** — popout uses 38x28 cells, between
+   butterfly's 30x24 and the reference's measured 44x32.
+2. **Adopt the hover drop** — the island moves down `islandPopDrop` (8) on hover and
+   stays down for every expanded state.
+3. **Timing: use `Theme.speed`** — the island reuses the shell's existing 300ms
+   OutCubic rather than the measured 200ms OutQuad, for one motion language. The
+   tokens `islandDuration`/`islandEase` alias `speed`/`ease` (same convention as
+   `mixerGlide: brightGlide`) so the island can still be retimed on its own.
+
+What changed:
+
+- **`Theme.qml`** — `// island` section rewritten against the spec. Deleted the
+  guessed `islandEnterEase`, `islandEnterOvershoot`, `islandExitEase`,
+  `islandPopScale`, `islandPopOffsetY`, `islandStepDuration`,
+  `islandCollapseDuration`, `islandWeekPillW`, `islandWeekPillH`. New `// calendar`
+  tokens for the redesign (`calNavDia`, `calNavFill`, `calNavHoverFill`,
+  `calNavGlyph`, `calTodayScale`, `weekTodayPx`).
+- **`Week.qml`** — the `fade: bool` flag is gone; replaced by `lead`, `fadeSpan`,
+  `fadeMin`, so popout fades too (the video shows it does). The fade now centres on
+  `width / 2` instead of a hardcoded `Theme.gridW / 2` — identical for classic
+  (width *is* gridW), correct for popout's wider panel. Today's cell now shows the
+  full weekday abbreviation and a larger number, per the video.
+- **`Calendar.qml`** — redesigned for both modes: circular ghost nav buttons with
+  hover/press feedback flanking a centred title, and today as a **solid accent disc
+  with bg-coloured text** (was a tinted circle with accent text). New `cw`/`ch`/`px`
+  properties so popout can scale it up; defaults are classic's old values.
+- **`Pill.qml`** — the hover pop is now a real size change through the existing
+  `panelSizes` table plus a `body.y` drop, **not** a scale/translate transform. The
+  whole `states`/`transitions`/`Translate` block is gone, and with it
+  `islandGrowing` and the imperative direction-setting in the handlers — enter and
+  exit are symmetric now, so the ordering race the previous handoff worried about no
+  longer exists. Added `calOpen` (= `calendarShown` in popout, `full` in classic) so
+  the clock/visualizer/idle-icons hide correctly in both modes. Media-on-hover is
+  disabled in popout (hover is a pure pop, no content change).
+
+Verified live, zero QML errors/warnings in both modes. Hover and clicks still cannot
+be synthesised in this environment, so each state was verified by **temporarily
+pinning `IslandPop.depth`** and correlating a `console.log` of the live depth with a
+`grim` capture — that technique works well, reuse it. Confirmed renders: classic idle,
+classic calendar (forced via temporary `hot`/`full` overrides), popout depth 0
+(64x28), depth 1 (80x33, visibly dropped), depth 2 (270x123, week strip with correct
+fade falloff), depth 3 (calendar). All temporary overrides reverted.
+
+**Still unverified: the actual transitions.** Nobody has watched a real
+hover -> click -> click -> click -> leave run. Timing, easing and any
+hover/click fighting under spam need the user's hands.
 
 ## 2026-10-28 session update
 

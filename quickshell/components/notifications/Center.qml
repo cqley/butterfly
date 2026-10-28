@@ -6,10 +6,7 @@ import Quickshell
 Pick {
     id: root
     readonly property var items: Notifs.history
-    readonly property bool settled: !root.churn
-    property var view: []
     property string selKey: ""
-    property bool churn: false
     property double now: Date.now()
 
     n: view.length
@@ -381,7 +378,7 @@ Pick {
                                     opacity: Theme.dotLow + (1 - Theme.dotLow) * pulse
 
                                     SequentialAnimation on pulse {
-                                        running: row.fresh
+                                        running: row.fresh && root.shown
                                         loops: Animation.Infinite
 
                                         NumberAnimation {

@@ -67,27 +67,40 @@ Singleton {
         return a && b && a.system && b.system && a.kind === b.kind && a.summary === b.summary && a.body === b.body
     }
 
+    function coalesceHead(h, e) {
+        if (!echoes(h[0], e))
+            return null
+        e.key = h[0].key
+        const next = h.slice()
+        next[0] = e
+        return next
+    }
+
+    function replaceById(h, e) {
+        if (e.system)
+            return null
+        const i = h.findIndex(x => !x.system && x.nid === e.nid)
+        if (i < 0)
+            return null
+        e.key = h[i].key
+        e.time = h[i].time
+        const next = h.slice()
+        next[i] = e
+        return next
+    }
+
+    function insertNew(h, e) {
+        e.key = "h" + (++seq)
+        return [e, ...h]
+    }
+
     function remember(n) {
         if (!n)
             return
         const e = snap(n)
         const h = history.slice()
-        if (echoes(h[0], e)) {
-            e.key = h[0].key
-            h[0] = e
-            history = h
-            return
-        }
-        const i = e.system ? -1 : h.findIndex(x => !x.system && x.nid === e.nid)
-        if (i >= 0) {
-            e.key = h[i].key
-            e.time = h[i].time
-            h[i] = e
-        } else {
-            e.key = "h" + (++seq)
-            h.unshift(e)
-        }
-        history = h.slice(0, Theme.notificationHistoryMax)
+        const merged = coalesceHead(h, e) || replaceById(h, e) || insertNew(h, e)
+        history = merged.slice(0, Theme.notificationHistoryMax)
     }
 
     function forget(key) {
@@ -109,12 +122,13 @@ Singleton {
         if (!hit)
             return
         queue = queue.filter(x => x !== hit)
-        hit.dismiss()
+        if (hit.tracked)
+            hit.dismiss()
     }
 
     function flush(expire) {
         for (const x of queue) {
-            if (!x || x.system)
+            if (!x || x.system || !x.tracked)
                 continue
             if (expire)
                 x.expire()
@@ -196,6 +210,12 @@ Singleton {
         return a && b && !a.system && !b.system && a.id === b.id
     }
 
+    function enqueue(item) {
+        queue = trim([...queue, item])
+        if (current === null && !gap.running)
+            pump()
+    }
+
     function push(n) {
         if (!n)
             return
@@ -222,9 +242,7 @@ Singleton {
             return
         }
 
-        queue = trim([...queue, n])
-        if (current === null && !gap.running)
-            pump()
+        enqueue(n)
     }
 
     function pushSystem(summary, body, charging, kind = "battery", failed = false, level = -1) {
@@ -252,9 +270,7 @@ Singleton {
         if (same(current) || queue.some(same))
             return
 
-        queue = trim([...queue, item])
-        if (current === null && !gap.running)
-            pump()
+        enqueue(item)
     }
 
     function alive(n) {
@@ -286,7 +302,7 @@ Singleton {
         if (!n)
             return
         next()
-        if (!n.system)
+        if (!n.system && n.tracked)
             n.dismiss()
     }
 
@@ -295,7 +311,7 @@ Singleton {
         if (!n)
             return
         next()
-        if (!n.system)
+        if (!n.system && n.tracked)
             n.expire()
     }
 

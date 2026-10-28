@@ -2,21 +2,14 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Services.Pipewire
 
 Singleton {
     id: root
-    readonly property var node: Pipewire.defaultAudioSource
-    readonly property bool muted: node && node.audio ? node.audio.muted : false
+    readonly property var node: Audio.source
+    readonly property bool muted: Audio.inMuted
 
     function toggle() {
-        if (!node || !node.audio)
-            return
-        node.audio.muted = !node.audio.muted
-    }
-
-    PwObjectTracker {
-        objects: [Pipewire.defaultAudioSource]
+        Audio.toggleMute(1)
     }
 
     IpcHandler {
