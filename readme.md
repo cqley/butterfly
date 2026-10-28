@@ -10,9 +10,9 @@
 | `screenshot` | `toggle` `region` `window` `monitor` `active` `cancel` `status` |
 | `network` | `toggle` `power` `status` |
 | `bluetooth` | `toggle` `power` `status` |
-| `brightness` | `toggle` `status` |
 | `mixer` | `toggle` `status` |
-| `audio` | `toggle` `status` |
+| `brightness` | `toggle` `status` (`toggle` opens the mixer) |
+| `audio` | `toggle` `status` (`toggle` opens the mixer) |
 | `mic` | `toggle` `status` |
 | `battery` | `toggle` `status` |
 | `visualizer` | `toggle` `status` |
