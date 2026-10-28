@@ -8,7 +8,7 @@ Item {
     property real leadingGap: Theme.rowGap
     property int settledGap: Math.round(leadingGap)
     readonly property int targetWidth: shown ? settledGap + size : 0
-    property real enter: shown ? 1 : 0
+    readonly property real enter: enterMotion.value
     default property alias content: holder.data
     signal clicked
 
@@ -17,11 +17,15 @@ Item {
     visible: enter > 0
     clip: true
 
-    Behavior on enter {
-        NumberAnimation {
-            duration: Theme.idlePopDuration
-            easing.type: Theme.ease
-        }
+    Spring {
+        id: enterMotion
+        target: root.shown ? 1 : 0
+        response: Theme.idlePopResponse
+        damping: Theme.idlePopDamping
+        duration: Theme.idlePopDuration
+        easing: Theme.ease
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
     }
 
     Item {

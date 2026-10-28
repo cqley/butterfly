@@ -477,19 +477,23 @@ Item {
         ready: !wake.running
         rise: Theme.idleRise
         fall: Theme.idleFall
-        scale: active ? 1 : Theme.slotScale
+        scale: Theme.slotScale + (1 - Theme.slotScale) * idleScale.value
         z: 2
+
+        Spring {
+            id: idleScale
+            target: idle.active ? 1 : 0
+            response: Theme.idlePopResponse
+            damping: Theme.idlePopDamping
+            duration: Theme.idlePopDuration
+            easing: Theme.ease
+            epsilon: Theme.springUnitEps
+            rest: Theme.springUnitStop
+        }
 
         transform: Translate {
             x: Theme.idleOffsetX
             y: Theme.idleOffsetY
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: Theme.idlePopDuration
-                easing.type: Theme.ease
-            }
         }
 
         Row {
@@ -512,13 +516,17 @@ Item {
                     width: clockText.implicitWidth
                     height: parent.height
                     shown: !root.showVisualizer && !root.panelOpen
-                    scale: active ? 1 : Theme.slotScale
+                    scale: Theme.slotScale + (1 - Theme.slotScale) * clockScale.value
 
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: Theme.idlePopDuration
-                            easing.type: Theme.ease
-                        }
+                    Spring {
+                        id: clockScale
+                        target: clockFade.active ? 1 : 0
+                        response: Theme.idlePopResponse
+                        damping: Theme.idlePopDamping
+                        duration: Theme.idlePopDuration
+                        easing: Theme.ease
+                        epsilon: Theme.springUnitEps
+                        rest: Theme.springUnitStop
                     }
 
                     Txt {
@@ -545,13 +553,17 @@ Item {
                     shown: root.showVisualizer && !root.panelOpen
                     ready: root.panelReveal
                     rise: root.panelRise
-                    scale: active ? 1 : Theme.slotScale
+                    scale: Theme.slotScale + (1 - Theme.slotScale) * visScale.value
 
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: Theme.idlePopDuration
-                            easing.type: Theme.ease
-                        }
+                    Spring {
+                        id: visScale
+                        target: visFade.active ? 1 : 0
+                        response: Theme.idlePopResponse
+                        damping: Theme.idlePopDamping
+                        duration: Theme.idlePopDuration
+                        easing: Theme.ease
+                        epsilon: Theme.springUnitEps
+                        rest: Theme.springUnitStop
                     }
 
                     VisualizerBars {

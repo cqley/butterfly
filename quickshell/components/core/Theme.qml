@@ -110,10 +110,12 @@ Singleton {
     readonly property string motionStyle: "spring"
     readonly property bool motionReduce: false
     readonly property int motionReduceDuration: fast
-    readonly property real springResponse: 0.32
+    readonly property real springResponse: 0.26
     readonly property real springDamping: 1
     readonly property real springEps: 0.1
     readonly property real springStop: 3
+    readonly property real springUnitEps: 0.002
+    readonly property real springUnitStop: 0.05
     readonly property real springMaxFrame: 1 / 30
     readonly property int pulse: 1400
     readonly property int blink: 700
@@ -190,6 +192,8 @@ Singleton {
     readonly property int recordOffsetY: 0
     readonly property int clockGap: 4
     readonly property int idlePopDuration: speed
+    readonly property real idlePopResponse: springResponse
+    readonly property real idlePopDamping: springDamping
     readonly property int slotHit: 6
     readonly property real slotScale: 0.7
 
@@ -215,6 +219,8 @@ Singleton {
     readonly property real batPopScale: slotScale
     readonly property real batBoltScale: 0.75
     readonly property int batBoltDuration: 140
+    readonly property real batBoltResponse: springResponse
+    readonly property real batBoltDamping: springDamping
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"
     readonly property color batGreen: green
@@ -615,7 +621,7 @@ Singleton {
     readonly property real islandDamping: springDamping
     readonly property real islandDropResponse: islandResponse
     readonly property real islandDropDamping: islandDamping
-    readonly property real islandContentResponse: islandResponse * 1.3
+    readonly property real islandContentResponse: islandResponse
     readonly property real islandContentDamping: springDamping
     readonly property int islandPopW: 12
     readonly property int islandPopH: 6
