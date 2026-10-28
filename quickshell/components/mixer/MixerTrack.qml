@@ -6,7 +6,7 @@ Item {
     id: root
     required property real value
     required property bool ready
-    required property string label
+    required property string name
     property bool muted: false
     property bool focused: false
     property bool filled: true
@@ -263,10 +263,10 @@ Item {
         Txt {
             width: parent.width
             height: Theme.mixerLabelH
-            visible: root.label !== ""
+            visible: root.name !== ""
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
-            text: root.label
+            text: root.name
             color: Theme.fg
             opacity: Theme.dimMuted * root.dim
             font.pixelSize: Theme.fsXXS

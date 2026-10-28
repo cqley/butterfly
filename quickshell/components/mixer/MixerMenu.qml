@@ -123,8 +123,9 @@ Fade {
 
             MixerTrack {
                 required property int index
+                required property string label
 
-                label: ""
+                name: Theme.mixerLabels ? label : ""
                 path: Theme.brightSunPath
                 filled: false
                 focused: root.sel === index
@@ -151,7 +152,7 @@ Fade {
                 visible: index < root.an
                 value: Audio.level(index)
                 ready: Audio.ready(index)
-                label: ""
+                name: ""
                 muted: Audio.muted(index)
                 path: modelData.path
                 path2: modelData.path2
@@ -178,7 +179,7 @@ Fade {
 
                 value: Audio.streamLevel(index)
                 ready: Audio.streamReady(index)
-                label: Audio.streamLabel(index)
+                name: Audio.streamLabel(index)
                 muted: Audio.streamMuted(index)
                 icon: Audio.streamIcon(index)
                 path: Theme.audioSpeakerPath
