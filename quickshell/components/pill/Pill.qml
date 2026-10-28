@@ -250,6 +250,7 @@ Item {
         damping: Theme.islandDamping
         duration: root.islandResizeDuration
         easing: root.islandResizeEase
+        epsilon: Theme.settleEps
     }
 
     Spring {
@@ -259,6 +260,7 @@ Item {
         damping: Theme.islandDamping
         duration: root.islandResizeDuration
         easing: root.islandResizeEase
+        epsilon: Theme.settleEps
     }
 
     Spring {
@@ -268,6 +270,7 @@ Item {
         damping: Theme.islandDropDamping
         duration: root.islandResizeDuration
         easing: root.islandResizeEase
+        epsilon: Theme.settleEps
     }
 
     Spring {
@@ -277,10 +280,19 @@ Item {
         damping: Theme.islandDamping
         duration: root.islandResizeDuration
         easing: root.islandResizeEase
+        epsilon: Theme.settleEps
+    }
+
+    Item {
+        id: skin
+        x: (root.width - width) / 2
+        y: yMotion.value
+        width: root.wAnim
+        height: root.hAnim
     }
 
     Rectangle {
-        anchors.fill: body
+        anchors.fill: skin
         radius: body.radius
         color: Theme.bg
         antialiasing: true
@@ -288,11 +300,10 @@ Item {
 
     ClippingRectangle {
         id: body
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.alignWhenCentered: false
-        y: yMotion.value
-        width: root.wAnim
-        height: root.hAnim
+        x: Math.round((root.width - width) / 2)
+        y: Math.round(yMotion.value)
+        width: Math.round(root.wAnim)
+        height: Math.round(root.hAnim)
         radius: Math.min(Math.min(width, height) / 2, Launcher.open ? Theme.launchRadius : Theme.radius)
         antialiasing: true
         color: "transparent"
@@ -657,7 +668,7 @@ Item {
     }
 
     Rectangle {
-        anchors.fill: body
+        anchors.fill: skin
         radius: body.radius
         color: "transparent"
         border.width: Theme.pillBorderWidth
@@ -685,7 +696,7 @@ Item {
     }
 
     Rectangle {
-        anchors.fill: body
+        anchors.fill: skin
         anchors.margins: -Theme.pillHaloSpread
         radius: body.radius + Theme.pillHaloSpread
         color: "transparent"
