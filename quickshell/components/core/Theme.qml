@@ -129,8 +129,6 @@ Singleton {
     readonly property real dimMuted: 0.55
     readonly property real dimSoft: 0.6
     readonly property real dotLow: 0.65
-    readonly property int ruleH: 1
-    readonly property real ruleOpacity: 0.1
 
     // icons
     readonly property int iconGrid: 24
@@ -593,7 +591,6 @@ Singleton {
 
     // calendar
     readonly property int weekCells: 9
-    readonly property int weekCenter: 4
     readonly property int weekLead: 1
     readonly property int weekDays: 7
     readonly property int weekGap: 4
