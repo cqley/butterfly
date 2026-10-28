@@ -24,6 +24,7 @@ Fade {
     readonly property bool hasLevel: bluetooth && level >= 0
     readonly property real wanted: Math.max(Theme.noteH, more.y + more.height + Theme.noteTop)
     readonly property int sideReserve: hasLevel ? Theme.noteBtBadge + Theme.noteTextGap : 0
+    readonly property real shift: more.y - brief.y + (label.visible ? label.height + more.spacing : 0)
 
     width: root.expanded ? Theme.noteOpenW : Theme.noteW
     height: root.expanded ? root.wanted : Theme.noteH
@@ -133,12 +134,21 @@ Fade {
     Fade {
         anchors.fill: parent
         shown: !root.expanded
+        rise: Theme.speed
+        fall: Theme.speed
 
         Column {
+            id: brief
             x: chip.x + chip.width + Theme.noteTextGap
             y: Theme.noteTop + (Theme.noteIcon - height) / 2
             width: Theme.noteW - x - Theme.noteTextRight - root.sideReserve
             spacing: Theme.noteLineGap
+
+            transform: Translate {
+                y: root.expanded ? root.shift : 0
+
+                Behavior on y { NumberAnimation { duration: Theme.speed; easing.type: Theme.ease } }
+            }
 
             Txt {
                 width: parent.width
@@ -172,7 +182,14 @@ Fade {
             width: Theme.noteOpenW - x - Theme.noteTextRight - root.sideReserve
             spacing: Theme.noteLineGap
 
+            transform: Translate {
+                y: root.expanded ? 0 : -root.shift
+
+                Behavior on y { NumberAnimation { duration: Theme.speed; easing.type: Theme.ease } }
+            }
+
             Txt {
+                id: label
                 width: parent.width
                 text: root.appLabel
                 visible: text !== ""

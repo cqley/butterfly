@@ -5,34 +5,31 @@ QtObject {
     id: root
     property bool enabled: false
     property bool hovered: false
-    property int depth: 0
+    property bool armed: true
+    property bool media: false
+    property bool mediaLatch: false
+    property int level: 0
     property bool open: false
 
+    readonly property int depth: level > 0 ? level + 1 : (enabled && hovered && armed ? 1 : 0)
     readonly property bool popped: depth >= 1
-    readonly property bool weekShown: depth >= 2
+    readonly property bool mediaShown: depth === 2 && mediaLatch
+    readonly property bool weekShown: depth === 2 && !mediaLatch
     readonly property bool calendarShown: depth >= 3
 
     function click() {
-        if (!enabled || !hovered)
-            return
-        depth = depth === 3 ? 2 : Math.min(3, depth + 1)
-    }
-
-    onHoveredChanged: {
         if (!enabled)
             return
-        if (hovered) {
-            if (depth === 0)
-                depth = 1
-        } else if (depth > 0) {
-            depth = depth - 1
-        }
+        armed = true
+        level = level === 2 ? 1 : level + 1
     }
 
-    onEnabledChanged: if (!enabled) depth = 0
+    onHoveredChanged: if (!hovered) armed = true
 
-    onCalendarShownChanged: {
-        if (calendarShown) {
+    onLevelChanged: {
+        if (level === 1)
+            mediaLatch = media
+        if (level > 0) {
             open = true
             Modal.claim("island")
         } else {
@@ -40,5 +37,17 @@ QtObject {
         }
     }
 
-    onOpenChanged: if (!open && depth === 3) depth = 0
+    onOpenChanged: {
+        if (!open && level > 0) {
+            level = 0
+            armed = !hovered
+        }
+    }
+
+    onEnabledChanged: {
+        if (enabled)
+            return
+        level = 0
+        armed = true
+    }
 }

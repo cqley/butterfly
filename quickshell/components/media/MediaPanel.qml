@@ -9,26 +9,35 @@ Fade {
     readonly property real len: p && p.lengthSupported && p.length > 0 && p.length <= Theme.mediaLenCap ? p.length : 0
     readonly property real pos: p && p.positionSupported ? p.position : 0
     readonly property bool seekable: p !== null && p.canSeek && p.positionSupported && len > 0
+    readonly property bool raisable: p !== null && p.canRaise
     readonly property bool srcOn: p !== null && p.isPlaying
     readonly property string srcTitle: Media.title
     readonly property string srcArtist: p ? p.trackArtist || "" : ""
     readonly property string srcArt: Media.artUrl
+    readonly property string srcKey: Media.trackKey
     readonly property real srcFrac: len > 0 && !settle.running ? Math.max(0, Math.min(1, (scrubbing ? scrub : pos) / len)) : 0
     property bool on: false
     property string title: ""
     property string artist: ""
     property string artUrl: ""
+    property string artKey: ""
     property real frac: 0
     property real dur: 0
     property bool scrubbing: false
     property real scrub: 0
+    property int slide: 0
+    readonly property int elapsed: Math.floor(frac * dur)
+    readonly property int remain: Math.max(0, Math.round(dur - frac * dur))
+    readonly property string artSource: artUrl === "" ? ""
+        : artUrl.indexOf("file:") === 0 ? artUrl + "#" + Qt.md5(artKey) : artUrl
 
-    onLenChanged: if (p) dur = len
-    onSrcOnChanged: if (p) on = srcOn
-    onSrcTitleChanged: if (p) title = srcTitle
-    onSrcArtistChanged: if (p) artist = srcArtist
-    onSrcArtChanged: if (p) artUrl = srcArt
-    onSrcFracChanged: if (p) frac = srcFrac
+    onLenChanged: if (Media.player) dur = len
+    onSrcOnChanged: if (Media.player) on = srcOn
+    onSrcTitleChanged: if (Media.player) title = srcTitle
+    onSrcArtistChanged: if (Media.player) artist = srcArtist
+    onSrcArtChanged: if (Media.player) artUrl = srcArt
+    onSrcKeyChanged: if (Media.player) artKey = srcKey
+    onSrcFracChanged: if (Media.player) frac = srcFrac
 
     onPChanged: {
         scrubbing = false
@@ -46,6 +55,19 @@ Fade {
     width: Theme.mediaW
     height: Theme.artS
 
+    transform: Translate {
+        y: slideMotion.value
+    }
+
+    Spring {
+        id: slideMotion
+        target: root.active ? 0 : root.slide
+        response: Theme.islandContentResponse
+        damping: Theme.islandContentDamping
+        duration: root.rise
+        easing: Theme.ease
+    }
+
     function hold() {
         if (!p)
             return
@@ -53,6 +75,7 @@ Fade {
         title = srcTitle
         artist = srcArtist
         artUrl = srcArt
+        artKey = srcKey
         frac = srcFrac
         dur = len
     }
@@ -112,8 +135,9 @@ Fade {
         StableImage {
             id: img
             anchors.fill: parent
-            source: root.artUrl
+            source: root.artSource
             retries: 2
+            fade: Theme.artFade
             fillMode: Image.PreserveAspectCrop
             sourceSize: Qt.size(Theme.artS * 2, Theme.artS * 2)
         }
@@ -157,9 +181,9 @@ Fade {
         id: artArea
         width: art.width
         height: art.height
-        enabled: root.p !== null && root.p.canRaise
         hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        acceptedButtons: root.raisable ? Qt.LeftButton : Qt.NoButton
+        cursorShape: root.raisable ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: root.p.raise()
     }
 
@@ -322,7 +346,7 @@ Fade {
             visible: Theme.mediaTimes
             font.pixelSize: Theme.fsXS
             opacity: root.dur > 0 ? Theme.dimMuted : 0
-            text: root.clock(root.frac * root.dur)
+            text: root.clock(root.elapsed)
         }
 
         Txt {
@@ -334,7 +358,7 @@ Fade {
             visible: Theme.mediaTimes
             font.pixelSize: Theme.fsXS
             opacity: root.dur > 0 ? Theme.dimHint : 0
-            text: Theme.mediaRemainChar + root.clock(root.dur - root.frac * root.dur)
+            text: Theme.mediaRemainChar + root.clock(root.remain)
         }
     }
 }
