@@ -502,40 +502,15 @@ Singleton {
     readonly property int btPowerSettle: 4000
 
     // brightness
-    readonly property int brightW: 208
-    readonly property int brightPad: 14
-    readonly property int brightTrackH: 24
-    readonly property int brightStep: 5
-    readonly property int brightFineStep: 1
-    readonly property int brightBigStep: 10
     readonly property int brightMin: 1
-    readonly property int brightGap: 8
-    readonly property int brightIcon: 14
-    readonly property int brightSlop: 4
-    readonly property int brightGlide: 550
-    readonly property int brightEasing: 275
     readonly property string brightSunPath: "M12 7A5 5 0 1 1 12 17A5 5 0 1 1 12 7ZM12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22"
 
     // audio
-    readonly property int audioW: 272
-    readonly property int audioPad: 14
-    readonly property int audioGap: 12
-    readonly property int audioBtn: 28
-    readonly property int audioBtnGap: 12
-    readonly property int audioIcon: 16
-    readonly property int audioRailH: 6
-    readonly property int audioSlop: 4
-    readonly property int audioStep: 5
-    readonly property int audioFineStep: 1
-    readonly property int audioBigStep: 10
-    readonly property int audioGlide: glide
-    readonly property int audioEasing: 120
     readonly property int audioMeterDecay: 90
     readonly property real audioMeterGamma: 0.4
     readonly property color audioFill: Qt.rgba(accent.r, accent.g, accent.b, 0.45)
-    readonly property real audioIconStroke: glyphStroke(audioIcon)
-    readonly property real audioSlashStroke: glyphStroke(audioIcon, 2.2)
-    readonly property string audioOutPath: "M4 8H9.8V16H4Z M9.8 8L19 2.8V21.2L9.8 16Z"
+    readonly property real audioIconStroke: glyphStroke(mixerIcon)
+    readonly property real audioSlashStroke: glyphStroke(mixerIcon, 2.2)
     readonly property string audioInPath: "M12 3A3.25 3.25 0 0 1 15.25 6.25V9.25A3.25 3.25 0 0 1 8.75 9.25V6.25A3.25 3.25 0 0 1 12 3Z"
     readonly property string audioInCradlePath: "M18 10.5A6 6 0 0 1 6 10.5 M12 16.5V20.5"
     readonly property string audioSlashPath: "M4 4L20 20"
@@ -565,8 +540,8 @@ Singleton {
     readonly property int mixerStep: 5
     readonly property int mixerFineStep: 1
     readonly property int mixerBigStep: 10
-    readonly property int mixerGlide: brightGlide
-    readonly property int mixerEasing: brightEasing
+    readonly property int mixerGlide: 550
+    readonly property int mixerEasing: 275
 
     // screenshot
     readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"
