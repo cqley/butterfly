@@ -99,6 +99,66 @@ fade falloff), depth 3 (calendar). All temporary overrides reverted.
 hover -> click -> click -> click -> leave run. Timing, easing and any
 hover/click fighting under spam need the user's hands.
 
+## 2026-10-28 — Step 3: live testing, bugs found. NOT fixed yet.
+
+`Theme.islandMode` is currently set to **`"popout"`** at
+`components/core/Theme.qml:624` so the user can test. **This is a testing state, not
+the intended default** — classic is the default and must be restored before this is
+considered done (or deliberately kept, if the user decides popout should ship as
+default; they have not said that).
+
+Part B as committed in `c71e2cd` loads cleanly in both modes and every *static*
+state renders correctly (verified by pinning `IslandPop.depth`, see above). But the
+first real hands-on test surfaced bugs across most of the feature. The user reported
+problems in these areas:
+
+1. **Hover pop-out** — the depth 0 -> 1 pop.
+2. **Clock centering** — in the popout states.
+3. **Jitter.**
+4. **Stuck pop state** — the island not returning to idle.
+5. **Week strip design.**
+6. **Calendar design.**
+7. **Click-away / Escape behaviour.**
+
+**These are recorded as reported areas, not as diagnosed causes.** I have only the
+category names above — the user had not yet described the specific symptom for each
+when this was written, and nothing here has been reproduced or root-caused. Do not
+guess at fixes from the labels alone; get the concrete symptom for each first.
+
+Two of these are almost certainly my own known-weak points, worth checking first:
+
+- **Clock centering / week strip layout**: `islandWeekStripY` (58) and
+  `islandWeekClockY` (12) were derived from the reference video's proportions and
+  never tuned in motion. `islandWeekClockY` is applied as
+  `anchors.topMargin` on the `idle` Fade in `Pill.qml`, which moves the *whole* idle
+  row (clock + battery + mic + record), not just the clock — if any status module is
+  active the row is no longer centred on the clock. That is a likely cause of a
+  centering complaint and the fix is probably to offset the clock alone.
+- **Stuck pop state**: `IslandPop.onHoveredChanged` steps `depth` down by exactly
+  one per leave event. If a leave event is ever missed (pointer leaving the surface
+  while the body is mid-resize under the cursor, or the hover handler losing track
+  during the `body.y` drop), the island can be left parked at depth 1 or 2 with no
+  hover to step it back. That matches "stuck pop state" and is the first thing to
+  instrument.
+
+Jitter is most likely the `body.y` drop Behavior fighting the `wAnim`/`hAnim`
+Behaviors, or the hover region changing shape underneath the pointer as the pill
+grows/drops — i.e. hover-loss-on-resize feeding back into `depth`. Check whether the
+pop drop makes the pointer fall outside `body` at the moment it moves.
+
+The week strip and calendar *designs* were only ever judged against static captures
+and the reference video; treat the user's reaction as authoritative over my
+measurements there.
+
+Click-away/Escape: depth 3 claims `Modal` via `onCalendarShownChanged`, so it should
+dismiss like any other menu, and `Calendar` carries `focus: shown` +
+`Keys.onEscapePressed: Modal.dismiss()` set from `Pill.qml`. Depths 1 and 2 claim
+nothing, so click-away does not reach them at all — that asymmetry may itself be the
+reported bug.
+
+**Next session: get the specific symptom for each of the 7 items before changing any
+code.**
+
 ## 2026-10-28 session update
 
 New session picked this up fresh. Found that **Part A was never actually
