@@ -89,8 +89,7 @@ Fade {
 
     function apply() {
         if (!n) return
-        Quickshell.execDetached(Theme.wallCmd.concat([files[sel].path]))
-        Wallpaper.open = false
+        Wallpaper.set(files[sel].path)
     }
 
     function reset() {

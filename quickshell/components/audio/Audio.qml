@@ -10,11 +10,10 @@ Singleton {
     id: root
     property bool watch: false
 
-    readonly property bool active: watch
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
-    readonly property var sinks: active ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSink && !n.isStream) : []
-    readonly property var sources: active ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSource && !n.isStream) : []
+    readonly property var sinks: watch ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSink && !n.isStream) : []
+    readonly property var sources: watch ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSource && !n.isStream) : []
     readonly property bool hasIn: !!source
     readonly property int count: hasIn ? 2 : 1
     readonly property bool outReady: node(0) !== null
@@ -24,7 +23,7 @@ Singleton {
     readonly property bool outMuted: outReady && sink.audio.muted
     readonly property bool inMuted: inReady && source.audio.muted
 
-    readonly property var streams: active ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioOutStream).sort((a, b) => a.id - b.id) : []
+    readonly property var streams: watch ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioOutStream).sort((a, b) => a.id - b.id) : []
     readonly property int streamCount: streams.length
 
     function streamNode(i) {
