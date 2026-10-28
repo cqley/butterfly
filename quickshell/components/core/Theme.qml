@@ -536,12 +536,27 @@ Singleton {
     readonly property int mixerGap: 10
     readonly property int mixerPctH: fsS + 2
     readonly property int mixerLabelH: fsXXS + 2
-    readonly property bool mixerPct: false
+    readonly property bool mixerPct: true
     readonly property int mixerStep: 5
     readonly property int mixerFineStep: 1
     readonly property int mixerBigStep: 10
-    readonly property int mixerGlide: 550
-    readonly property int mixerEasing: 275
+    readonly property real mixerResponse: springResponse
+    readonly property real mixerDamping: springDamping
+    readonly property real mixerSizeResponse: islandResponse
+    readonly property real mixerSizeDamping: islandDamping
+    readonly property int mixerAppIcon: 18
+    readonly property int mixerPickMinW: 232
+    readonly property int mixerPickH: 26
+    readonly property int mixerPickGap: 6
+    readonly property int mixerPickPad: 8
+    readonly property int mixerPickR: 8
+    readonly property int mixerPickCaret: 10
+    readonly property int mixerPickTitleW: 42
+    readonly property int mixerSectionGap: 14
+    readonly property color mixerMutedFill: mix(bg, fg, 0.22)
+    readonly property real mixerZeroDim: 0.3
+    readonly property string mixerCaretPath: "M8 10L12 14L16 10"
+    readonly property string mixerDotPath: "M12 8A4 4 0 1 1 12 16A4 4 0 1 1 12 8Z"
 
     // screenshot
     readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"

@@ -24,6 +24,97 @@ Singleton {
     readonly property bool outMuted: outReady && sink.audio.muted
     readonly property bool inMuted: inReady && source.audio.muted
 
+    readonly property var streams: active ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioOutStream).sort((a, b) => a.id - b.id) : []
+    readonly property int streamCount: streams.length
+
+    function streamNode(i) {
+        const n = streams[i]
+        return n && n.ready && n.audio ? n : null
+    }
+
+    function streamReady(i) {
+        return streamNode(i) !== null
+    }
+
+    function streamLevel(i) {
+        const n = streamNode(i)
+        return n ? clamp(n.audio.volume) : 0
+    }
+
+    function streamMuted(i) {
+        const n = streamNode(i)
+        return n !== null && n.audio.muted
+    }
+
+    function streamSet(i, v) {
+        const n = streamNode(i)
+        if (!n)
+            return
+        const next = clamp(v)
+        if (next !== n.audio.volume)
+            n.audio.volume = next
+    }
+
+    function streamNudge(i, d) {
+        if (streamNode(i))
+            streamSet(i, (Math.round(streamLevel(i) * 100) + d) / 100)
+    }
+
+    function streamToggleMute(i) {
+        const n = streamNode(i)
+        if (n)
+            n.audio.muted = !n.audio.muted
+    }
+
+    function streamLabel(i) {
+        const n = streams[i]
+        if (!n)
+            return ""
+        const p = n.properties || {}
+        const t = p["application.name"] || n.description || p["media.name"] || n.name || ""
+        return String(t).toLowerCase()
+    }
+
+    function streamIcon(i) {
+        const n = streams[i]
+        if (!n)
+            return ""
+        const p = n.properties || {}
+        const names = [p["application.icon-name"], p["application.process.binary"], p["application.name"]]
+        for (const raw of names) {
+            const v = String(raw || "").trim()
+            if (v === "")
+                continue
+            const hit = Quickshell.iconPath(v, true) || Quickshell.iconPath(v.toLowerCase(), true)
+            if (hit)
+                return Theme.url(hit)
+        }
+        return ""
+    }
+
+    function deviceName(n) {
+        const t = n ? (n.nickname || n.description || n.name) : ""
+        return String(t).toLowerCase()
+    }
+
+    function current(i) {
+        return i === 0 ? sink : source
+    }
+
+    function isDefault(i, n) {
+        const cur = current(i)
+        return !!n && !!cur && n.id === cur.id
+    }
+
+    function choose(i, n) {
+        if (!n)
+            return
+        if (i === 0)
+            Pipewire.preferredDefaultAudioSink = n
+        else
+            Pipewire.preferredDefaultAudioSource = n
+    }
+
     function clamp(v) {
         return Math.max(0, Math.min(1, v))
     }
@@ -51,9 +142,8 @@ Singleton {
     }
 
     function label(i) {
-        const n = i === 0 ? sink : source
-        const t = n ? (n.nickname || n.description || n.name) : ""
-        return t === "" ? (i === 0 ? "no output" : "no input") : t.toLowerCase()
+        const t = deviceName(current(i))
+        return t === "" ? (i === 0 ? "no output" : "no input") : t
     }
 
     function list(i) {
@@ -84,20 +174,19 @@ Singleton {
         const all = list(i)
         if (all.length < 2)
             return
-        const cur = i === 0 ? sink : source
         let at = -1
         for (let k = 0; k < all.length; k++)
-            if (cur && all[k].id === cur.id)
+            if (isDefault(i, all[k]))
                 at = k
-        const next = all[(at + 1) % all.length]
-        if (i === 0)
-            Pipewire.preferredDefaultAudioSink = next
-        else
-            Pipewire.preferredDefaultAudioSource = next
+        choose(i, all[(at + 1) % all.length])
     }
 
     PwObjectTracker {
         objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
+    }
+
+    PwObjectTracker {
+        objects: root.streams
     }
 
     PwNodePeakMonitor {

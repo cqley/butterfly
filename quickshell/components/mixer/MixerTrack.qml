@@ -16,6 +16,7 @@ Item {
     property real peak: 0
     property string path: ""
     property string path2: ""
+    property string icon: ""
     property bool dragging: false
     readonly property real travel: Theme.mixerTrackH - Theme.mixerHandleH
     readonly property real base: Theme.mixerHandleH / 2
@@ -30,8 +31,10 @@ Item {
     signal toggled
 
     readonly property bool live: ready && !muted
+    readonly property bool silent: ready && (muted || value <= 0)
     property real dim: live ? 1 : Theme.dimEmpty
     readonly property color ink: Theme.mix(Theme.bg, Theme.fg, root.dim)
+    readonly property real shown: pos.value
 
     width: Theme.mixerColW
     height: col.height
@@ -42,8 +45,17 @@ Item {
         return Math.max(0, Math.min(1, (Theme.mixerTrackH - root.base - y) / root.travel))
     }
 
+    onValueChanged: if (root.dragging) pos.land(root.value)
+
     Behavior on dim {
         NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+    }
+
+    Spring {
+        id: pos
+        target: root.value
+        response: Theme.mixerResponse
+        damping: Theme.mixerDamping
     }
 
     Column {
@@ -71,15 +83,14 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 width: Theme.mixerTrackW
-                height: root.value > 0 ? root.base + root.value * root.travel : 0
+                height: root.shown > 0 ? root.base + root.shown * root.travel : 0
                 radius: width / 2
-                color: Theme.audioFill
+                color: root.muted ? Theme.mixerMutedFill : Theme.audioFill
                 opacity: root.dim
                 antialiasing: true
 
-                Behavior on height {
-                    enabled: !root.dragging
-                    SmoothedAnimation { duration: Theme.mixerGlide; maximumEasingTime: Theme.mixerEasing }
+                Behavior on color {
+                    ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
                 }
             }
 
@@ -101,36 +112,34 @@ Item {
             Rectangle {
                 id: handle
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: (1 - root.value) * root.travel
+                y: (1 - root.shown) * root.travel
                 width: Theme.mixerHandleW
                 height: Theme.mixerHandleH
                 radius: height / 2
                 color: Theme.fg
-                opacity: root.live ? 1 : Theme.mixerKnobDim
+                opacity: root.silent ? Theme.mixerZeroDim : root.live ? 1 : Theme.mixerKnobDim
                 antialiasing: true
 
                 Behavior on opacity {
                     NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
                 }
-
-                Behavior on y {
-                    enabled: !root.dragging
-                    SmoothedAnimation { duration: Theme.mixerGlide; maximumEasingTime: Theme.mixerEasing }
-                }
             }
 
             MouseArea {
                 anchors.fill: parent
-                enabled: root.live
+                enabled: root.ready
                 cursorShape: Qt.PointingHandCursor
                 onPressed: m => {
                     root.picked()
                     root.dragging = true
+                    pos.land(root.valueAt(m.y))
                     root.moved(root.valueAt(m.y))
                 }
                 onPositionChanged: m => {
-                    if (pressed)
-                        root.moved(root.valueAt(m.y))
+                    if (!pressed)
+                        return
+                    pos.land(root.valueAt(m.y))
+                    root.moved(root.valueAt(m.y))
                 }
                 onReleased: root.dragging = false
                 onCanceled: root.dragging = false
@@ -142,13 +151,18 @@ Item {
             height: Theme.mixerPctH
             visible: Theme.mixerPct
             horizontalAlignment: Text.AlignHCenter
-            text: root.ready ? Math.round(root.value * 100) + "%" : "--"
+            text: !root.ready ? "--" : root.muted ? "off" : Math.round(root.value * 100) + "%"
             color: root.focused ? Theme.accent : Theme.fg
-            opacity: root.dim
+            opacity: root.silent ? Theme.dimMuted : root.dim
             font.pixelSize: Theme.fsS
+            font.features: Theme.tabular
 
             Behavior on color {
                 ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
+            }
+
+            Behavior on opacity {
+                NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
             }
         }
 
@@ -157,12 +171,23 @@ Item {
             width: parent.width
             height: Theme.mixerIconBox
 
+            StableImage {
+                anchors.centerIn: parent
+                width: Theme.mixerAppIcon
+                height: Theme.mixerAppIcon
+                visible: root.icon !== ""
+                source: root.icon
+                opacity: root.dim
+                sourceSize: Qt.size(Theme.mixerAppIcon * 2, Theme.mixerAppIcon * 2)
+            }
+
             Shape {
                 x: Math.round((iconBox.width - Theme.mixerIcon) / 2)
                 y: Math.round((iconBox.height - Theme.mixerIcon) / 2)
                 width: Theme.iconGrid
                 height: Theme.iconGrid
                 scale: Theme.mixerIcon / Theme.iconGrid
+                visible: root.icon === ""
                 transformOrigin: Item.TopLeft
                 preferredRendererType: Shape.CurveRenderer
 
@@ -224,6 +249,24 @@ Item {
                 }
             }
 
+            Shape {
+                anchors.centerIn: parent
+                width: Theme.iconGrid
+                height: Theme.iconGrid
+                scale: Theme.mixerIcon / Theme.iconGrid
+                visible: root.icon !== "" && root.muted
+                preferredRendererType: Shape.CurveRenderer
+
+                ShapePath {
+                    strokeWidth: Theme.audioSlashStroke
+                    strokeColor: Theme.fg
+                    fillColor: "transparent"
+                    capStyle: ShapePath.RoundCap
+
+                    PathSvg { path: Theme.audioSlashPath }
+                }
+            }
+
             MouseArea {
                 anchors.fill: parent
                 enabled: root.ready && root.toggles
@@ -249,7 +292,7 @@ Item {
 
     Wheel {
         anchors.fill: parent
-        enabled: root.live
+        enabled: root.ready
         onStep: n => root.stepped(-n * Theme.mixerStep)
     }
 }
