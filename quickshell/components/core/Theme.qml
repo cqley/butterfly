@@ -536,6 +536,7 @@ Singleton {
     readonly property int mixerLabelH: fsXXS + 2
     readonly property bool mixerPct: false
     readonly property bool mixerApps: false
+    readonly property bool mixerLabels: Quickshell.screens.length > 1
     readonly property int mixerStep: 5
     readonly property int mixerFineStep: 1
     readonly property int mixerBigStep: 10
