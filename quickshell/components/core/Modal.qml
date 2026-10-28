@@ -57,7 +57,9 @@ Singleton {
     function flush() {
         const name = root.pending
         root.pending = ""
-        if (name && registry[name] && root.any)
-            registry[name].open = true
+        if (!name || !registry[name] || !root.any)
+            return
+        close(name)
+        registry[name].open = true
     }
 }

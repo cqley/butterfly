@@ -38,7 +38,9 @@ QtObject {
     }
 
     onOpenChanged: {
-        if (!open && level > 0) {
+        if (open && level === 0)
+            level = 1
+        else if (!open && level > 0) {
             level = 0
             armed = !hovered
         }
