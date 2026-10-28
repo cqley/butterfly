@@ -8,12 +8,18 @@ Fade {
     property real px: -1
     property real py: -1
 
+    Timer {
+        id: release
+        interval: 0
+        onTriggered: root.snap = false
+    }
+
     function reset() {
         snap = true
+        release.restart()
         sel = 0
         px = -1
         py = -1
-        snap = false
     }
 
     function aim(p, i) {

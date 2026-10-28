@@ -65,22 +65,9 @@ Singleton {
             return
         }
         const devs = [...adapter.devices.values].filter(d => d.paired || d.connected || named(d))
-        const pos = Object.create(null)
-        for (let i = 0; i < order.length; i++)
-            pos[order[i]] = i
-        const kept = []
-        const fresh = []
-        for (const d of devs) {
-            if (pos[d.address] === undefined)
-                fresh.push(d)
-            else
-                kept.push(d)
-        }
-        kept.sort((a, b) => pos[a.address] - pos[b.address])
-        fresh.sort(cmp)
-        const out = kept.concat(fresh)
-        order = out.map(d => d.address)
-        items = out
+        const result = Theme.stableReorder(devs, order, d => d.address, cmp)
+        order = result.order
+        items = result.items
     }
 
     Component.onCompleted: rebuild()

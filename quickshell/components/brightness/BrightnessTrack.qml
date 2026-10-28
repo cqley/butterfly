@@ -26,8 +26,8 @@ Item {
         anchors.fill: parent
         radius: height / 2
         color: Theme.chip
-        border.width: Theme.launchIconBorderWidth
-        border.color: Theme.launchIconBorder
+        border.width: Theme.surfaceBorderWidth
+        border.color: Theme.surfaceBorder
         antialiasing: true
     }
 

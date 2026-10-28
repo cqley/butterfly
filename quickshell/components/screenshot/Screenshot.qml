@@ -25,6 +25,14 @@ Singleton {
         refresh()
     }
 
+    Connections {
+        target: Quickshell
+        function onScreensChanged() {
+            if (root.open)
+                root.refresh()
+        }
+    }
+
     function toggle() {
         if (picking || targeting)
             return
@@ -35,8 +43,10 @@ Singleton {
         const list = []
         if (grimBin !== "") {
             list.push({ kind: "region", label: "region" })
-            list.push({ kind: "window", label: "window" })
-            list.push({ kind: "active", label: "active window" })
+            if (Compositor.supportsWindowTargets) {
+                list.push({ kind: "window", label: "window" })
+                list.push({ kind: "active", label: "active window" })
+            }
             if (Quickshell.screens.length > 0)
                 list.push({ kind: "monitor", label: "monitor" })
         }
@@ -93,6 +103,10 @@ Singleton {
             Notifs.pushSystem("screenshot unavailable", "grim not found", false, "shot", true)
             return
         }
+        if (!Compositor.supportsWindowTargets) {
+            Notifs.pushSystem("screenshot unavailable", "active window capture needs " + Compositor.backend, false, "shot", true)
+            return
+        }
         if (busy)
             return
         activeQuery.running = true
@@ -100,25 +114,20 @@ Singleton {
 
     Process {
         id: activeQuery
-        command: ["hyprctl", "-j", "activewindow"]
+        command: Compositor.activeWindowCmd
         stdout: StdioCollector {
             onStreamFinished: {
-                let d = null
-                try {
-                    d = JSON.parse(text)
-                } catch (e) {
-                    d = null
-                }
-                if (!d || !d.at || !d.size) {
+                const d = Compositor.parseActiveWindow(text)
+                if (!d) {
                     Notifs.pushSystem("screenshot failed", "no active window", false, "shot", true)
                     return
                 }
-                root.captureBox(d.at[0], d.at[1], d.size[0], d.size[1])
+                root.captureBox(d.x, d.y, d.w, d.h)
             }
         }
     }
 
-    // region (free drag)
+    // region
     readonly property point offscreen: Qt.point(-100000, -100000)
     property point pressG: Qt.point(0, 0)
     property point curG: Qt.point(-100000, -100000)
@@ -134,7 +143,10 @@ Singleton {
         dragging = false
         curG = offscreen
         picking = true
-        cursorPos.running = true
+        if (Compositor.supportsCursorSeed) {
+            cursorPos.running = false
+            cursorPos.running = true
+        }
     }
 
     function cancelRegion() {
@@ -168,21 +180,17 @@ Singleton {
 
     Process {
         id: cursorPos
-        command: ["hyprctl", "cursorpos"]
+        command: Compositor.cursorPosCmd
         stdout: StdioCollector {
             onStreamFinished: {
-                const parts = text.trim().split(",")
-                if (parts.length !== 2)
-                    return
-                const x = parseFloat(parts[0])
-                const y = parseFloat(parts[1])
-                if (isFinite(x) && isFinite(y) && root.picking && !root.dragging)
-                    root.curG = Qt.point(x, y)
+                const p = Compositor.parseCursorPos(text)
+                if (p && root.picking && !root.dragging)
+                    root.curG = Qt.point(p.x, p.y)
             }
         }
     }
 
-    // window / monitor targeting (hover or keyboard cycle, then confirm)
+    // targeting
     function startMonitorPick() {
         if (busy)
             return
@@ -197,7 +205,10 @@ Singleton {
         targetKind = "monitor"
         targetIndex = 0
         targeting = true
-        targetSeed.running = true
+        if (Compositor.supportsCursorSeed) {
+            targetSeed.running = false
+            targetSeed.running = true
+        }
     }
 
     function startWindowPick() {
@@ -207,40 +218,19 @@ Singleton {
             Notifs.pushSystem("screenshot unavailable", "grim not found", false, "shot", true)
             return
         }
+        if (!Compositor.supportsWindowTargets) {
+            Notifs.pushSystem("screenshot unavailable", "window capture needs " + Compositor.backend, false, "shot", true)
+            return
+        }
         clientsQuery.running = true
     }
 
     Process {
         id: clientsQuery
-        command: ["sh", "-c", "hyprctl -j monitors; echo '@@split@@'; hyprctl -j clients"]
+        command: Compositor.windowListCmd
         stdout: StdioCollector {
             onStreamFinished: {
-                const parts = text.split("@@split@@")
-                if (parts.length !== 2)
-                    return
-                let monitors = []
-                let clients = []
-                try {
-                    monitors = JSON.parse(parts[0])
-                    clients = JSON.parse(parts[1])
-                } catch (e) {
-                    return
-                }
-                const visibleWs = new Set()
-                for (const m of monitors) {
-                    if (m.activeWorkspace)
-                        visibleWs.add(m.activeWorkspace.id)
-                    if (m.specialWorkspace && m.specialWorkspace.id !== 0)
-                        visibleWs.add(m.specialWorkspace.id)
-                }
-                const list = []
-                for (const c of clients) {
-                    if (!c.mapped || c.hidden)
-                        continue
-                    if (!c.workspace || !visibleWs.has(c.workspace.id))
-                        continue
-                    list.push({ x: c.at[0], y: c.at[1], w: c.size[0], h: c.size[1] })
-                }
+                const list = Compositor.parseWindowList(text)
                 if (list.length === 0) {
                     Notifs.pushSystem("screenshot unavailable", "no window to capture", false, "shot", true)
                     return
@@ -249,23 +239,22 @@ Singleton {
                 root.targetKind = "window"
                 root.targetIndex = 0
                 root.targeting = true
-                targetSeed.running = true
+                if (Compositor.supportsCursorSeed) {
+                    targetSeed.running = false
+                    targetSeed.running = true
+                }
             }
         }
     }
 
     Process {
         id: targetSeed
-        command: ["hyprctl", "cursorpos"]
+        command: Compositor.cursorPosCmd
         stdout: StdioCollector {
             onStreamFinished: {
-                const parts = text.trim().split(",")
-                if (parts.length !== 2)
-                    return
-                const x = parseFloat(parts[0])
-                const y = parseFloat(parts[1])
-                if (isFinite(x) && isFinite(y) && root.targeting)
-                    root.hoverTarget(x, y)
+                const p = Compositor.parseCursorPos(text)
+                if (p && root.targeting)
+                    root.hoverTarget(p.x, p.y)
             }
         }
     }

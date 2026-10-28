@@ -9,6 +9,9 @@ Fade {
     property bool snap: false
     property real px: -1
     property real py: -1
+    property var view: []
+    property bool churn: false
+    readonly property bool settled: !root.churn
     readonly property int dur: Theme.glide
 
     Timer {

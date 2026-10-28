@@ -4,11 +4,21 @@ import QtQuick
 Row {
     id: root
     property bool playing: false
+    property bool shown: true
     property string artUrl: ""
     property real phase: 0
     property var smoothed: []
     height: Theme.h
     spacing: Theme.visGap
+
+    onPlayingChanged: if (!playing) {
+        for (let i = 0; i < bars.count; i++)
+            bars.itemAt(i).fallback = bars.itemAt(i).live
+        Qt.callLater(() => {
+            for (let i = 0; i < bars.count; i++)
+                bars.itemAt(i).fallback = Theme.visIdleH
+        })
+    }
 
     function target(index) {
         return Visualizer.real
@@ -22,7 +32,7 @@ Row {
     }
 
     FrameAnimation {
-        running: root.playing
+        running: root.playing && root.shown
         onTriggered: {
             if (!Visualizer.real)
                 root.phase += frameTime * (2 * Math.PI * 1000 / Theme.visCycle)
@@ -37,6 +47,7 @@ Row {
     }
 
     Repeater {
+        id: bars
         model: Theme.visBars
 
         Rectangle {
@@ -56,16 +67,6 @@ Row {
                 NumberAnimation {
                     duration: Theme.visSettle
                     easing.type: Theme.ease
-                }
-            }
-
-            Connections {
-                target: root
-                function onPlayingChanged() {
-                    if (!root.playing) {
-                        bar.fallback = bar.live
-                        Qt.callLater(() => bar.fallback = Theme.visIdleH)
-                    }
                 }
             }
         }

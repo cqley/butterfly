@@ -24,8 +24,10 @@ ClippingRectangle {
     property string source: ""
 
     function refresh() {
-        source = picture || mark
-        if (img.failed)
+        const next = picture || mark
+        const same = next === root.source
+        source = next
+        if (same && img.failed)
             img.reload()
     }
 

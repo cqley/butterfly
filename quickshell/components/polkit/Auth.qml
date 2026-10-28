@@ -15,7 +15,7 @@ Fade {
     readonly property bool busy: shown && !!flow && !flow.isResponseRequired && !flow.isCompleted
     readonly property bool canSubmit: asking && input.text !== ""
     readonly property bool armed: canSubmit || busy
-    readonly property string shacklePath: "M7 11V7A5 5 0 0 1 17 7V" + leg.toFixed(2)
+    readonly property string shacklePath: Theme.authShackleHead + leg.toFixed(2)
     property bool unlocked: false
     property bool working: false
     property real leg: root.unlocked ? Theme.authLockOpen : Theme.authLockShut

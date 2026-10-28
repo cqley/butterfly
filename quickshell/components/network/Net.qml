@@ -145,19 +145,23 @@ Singleton {
             devs.running = true
     }
 
+    function clearConnectionState() {
+        list = []
+        order = []
+        active = ""
+        activeConnection = ""
+        pending = ""
+        phase = ""
+    }
+
     function setRadio(on) {
         if (toggling || busy)
             return
         toggling = true
         enabled = on
         watch = on
-        if (!on) {
-            list = []
-            order = []
-            active = ""
-            pending = ""
-            phase = ""
-        }
+        if (!on)
+            clearConnectionState()
         radioSet.command = ["nmcli", "radio", "wifi", on ? "on" : "off"]
         radioSet.running = true
     }
@@ -319,21 +323,9 @@ Singleton {
                 }
             }
         }
-        const pos = Object.create(null)
-        for (let i = 0; i < order.length; i++)
-            pos[order[i]] = i
-        const kept = []
-        const fresh = []
-        for (const k in best) {
-            if (pos[k] === undefined)
-                fresh.push(best[k])
-            else
-                kept.push(best[k])
-        }
-        kept.sort((a, b) => pos[a.ssid] - pos[b.ssid])
-        fresh.sort(rank)
-        const out = kept.concat(fresh)
-        order = out.map(r => r.ssid)
+        const result = Theme.stableReorder(Object.values(best), order, r => r.ssid, rank)
+        const out = result.items
+        order = result.order
         list = out
         active = cur
         if (out.length > 0)
@@ -393,13 +385,8 @@ Singleton {
                     root.hw = p[0] === "enabled"
                     if (!root.toggling) {
                         root.enabled = p[1] === "enabled"
-                        if (!root.enabled) {
-                            root.list = []
-                            root.active = ""
-                            root.activeConnection = ""
-                            root.pending = ""
-                            root.phase = ""
-                        }
+                        if (!root.enabled)
+                            root.clearConnectionState()
                     }
                 }
                 root.afterRadio()
@@ -480,9 +467,7 @@ Singleton {
 
     Process {
         id: up
-        stderr: StdioCollector {
-            waitForEnd: false
-        }
+        stderr: StdioCollector {}
         onExited: code => {
             kill.stop()
             if (root.resolved) {

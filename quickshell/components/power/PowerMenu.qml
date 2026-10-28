@@ -1,27 +1,17 @@
 import "../core"
 import QtQuick
 import QtQuick.Shapes
-import Quickshell
 
 Tiles {
     id: root
-    readonly property var items: [
-        { dx: 0, cmd: ["sh", "-c", "pidof hyprlock || exec hyprlock"], icon: Theme.lockGlyphPath },
-        { dx: 0, cmd: ["systemctl", "suspend"], icon: Theme.pwSuspendPath },
-        { dx: 0, cmd: ["sh", "-c", "loginctl terminate-session \"$XDG_SESSION_ID\" || hyprctl dispatch exit"], icon: Theme.pwLogoutPath },
-        { dx: -1, cmd: ["systemctl", "reboot"], icon: Theme.pwRebootPath },
-        { dx: 0, cmd: ["systemctl", "poweroff"], icon: Theme.pwOffPath }
-    ]
+    readonly property var items: Power.items
 
     n: items.length
     width: Theme.powerW - 2 * Theme.pwPad
     height: Theme.pwH
 
     function run(i) {
-        if (i < 0 || i >= items.length)
-            return
-        Quickshell.execDetached(items[i].cmd)
-        Power.open = false
+        Power.run(i)
     }
 
     onVisibleChanged: {

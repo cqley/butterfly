@@ -23,13 +23,11 @@ Singleton {
             const parts = []
             for (let i = 0; i < Brightness.count; i++) {
                 const d = Brightness.devices.get(i)
-                parts.push(d.label + " " + (d.ready ? Math.round(d.value * 100) + "%" : "unavailable"))
+                parts.push(d.label + " " + Theme.pctOrUnavailable(d.ready, d.value))
             }
             for (let i = 0; i < Audio.count; i++) {
                 const name = i === 0 ? "volume" : "mic"
-                parts.push(Audio.node(i)
-                    ? name + " " + Math.round(Audio.level(i) * 100) + "%" + (Audio.muted(i) ? " muted" : "")
-                    : name + " unavailable")
+                parts.push(name + " " + Theme.pctOrUnavailable(Audio.node(i) !== null, Audio.level(i), Audio.muted(i) ? " muted" : ""))
             }
             return parts.join(", ")
         }

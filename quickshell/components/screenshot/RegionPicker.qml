@@ -85,18 +85,18 @@ Variants {
             Rectangle {
                 visible: !Screenshot.dragging && Screenshot.picking && win.hasPointer
                 x: 0
-                y: win.localY - 0.5
+                y: win.localY - Theme.regionGuideWidth / 2
                 width: win.width
-                height: 1
+                height: Theme.regionGuideWidth
                 color: Theme.accent
                 opacity: Theme.regionGuideOpacity
             }
 
             Rectangle {
                 visible: !Screenshot.dragging && Screenshot.picking && win.hasPointer
-                x: win.localX - 0.5
+                x: win.localX - Theme.regionGuideWidth / 2
                 y: 0
-                width: 1
+                width: Theme.regionGuideWidth
                 height: win.height
                 color: Theme.accent
                 opacity: Theme.regionGuideOpacity
