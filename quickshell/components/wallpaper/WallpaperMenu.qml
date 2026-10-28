@@ -162,7 +162,6 @@ Fade {
                     readonly property int abs: root.winStart + (((index - root.winStart) % root.win) + root.win) % root.win
                     readonly property int realIdx: root.n ? ((abs % root.n) + root.n) % root.n : 0
                     readonly property real dist: Math.abs(abs - root.centerIndex)
-                    readonly property real glow: Math.max(0, 1 - dist)
                     readonly property real glowFast: Math.max(0, 1 - Math.abs(abs - root.focusPos))
                     readonly property var info: root.files[realIdx]
 
