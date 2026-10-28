@@ -621,7 +621,7 @@ Singleton {
     readonly property int gridW: cellW * 7
 
     // island
-    readonly property string islandMode: "classic"
+    readonly property string islandMode: "popout"
     readonly property int islandDuration: speed
     readonly property int islandEase: ease
     readonly property int islandPopW: 16
