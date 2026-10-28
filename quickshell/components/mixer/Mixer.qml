@@ -12,6 +12,7 @@ Singleton {
 
     onOpenChanged: {
         Audio.watch = root.open
+        Brightness.refresh()
         if (root.open)
             Modal.claim("mixer")
     }

@@ -1,5 +1,6 @@
 pragma Singleton
 import "../core"
+import "../mixer"
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -7,10 +8,9 @@ import Quickshell.Services.Pipewire
 
 Singleton {
     id: root
-    property bool open: false
     property bool watch: false
 
-    readonly property bool active: open || watch
+    readonly property bool active: watch
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
     readonly property var sinks: active ? Pipewire.nodes.values.filter(n => n.type === PwNodeType.AudioSink && !n.isStream) : []
@@ -23,8 +23,6 @@ Singleton {
     readonly property real inLevel: inReady ? clamp(source.audio.volume) : 0
     readonly property bool outMuted: outReady && sink.audio.muted
     readonly property bool inMuted: inReady && source.audio.muted
-
-    onOpenChanged: if (open) Modal.claim("audio")
 
     function clamp(v) {
         return Math.max(0, Math.min(1, v))
@@ -116,7 +114,7 @@ Singleton {
 
     IpcHandler {
         target: "audio"
-        function toggle(): void { root.open = !root.open }
+        function toggle(): void { Mixer.open = !Mixer.open }
         function status(): string {
             const out = []
             for (let i = 0; i < root.count; i++) {

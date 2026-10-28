@@ -1,12 +1,12 @@
 pragma Singleton
 import "../core"
+import "../mixer"
 import QtQuick
 import Quickshell
 import Quickshell.Io
 
 Singleton {
     id: root
-    property bool open: false
     property bool scanned: false
     property int screenCount: 0
     property bool probed: false
@@ -19,11 +19,6 @@ Singleton {
     readonly property int count: devs.count
 
     Component.onCompleted: refresh()
-    onOpenChanged: {
-        if (open)
-            Modal.claim("brightness")
-        refresh()
-    }
 
     Connections {
         target: Quickshell
@@ -242,7 +237,7 @@ Singleton {
 
     IpcHandler {
         target: "brightness"
-        function toggle(): void { root.open = !root.open }
+        function toggle(): void { Mixer.open = !Mixer.open }
         function status(): string {
             if (root.count === 0)
                 return root.scanned ? "unavailable" : "not probed"

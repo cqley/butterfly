@@ -3,7 +3,6 @@ import Quickshell
 import Quickshell.Widgets
 import "../audio"
 import "../bluetooth"
-import "../brightness"
 import "../calendar"
 import "../core"
 import "../launcher"
@@ -121,8 +120,6 @@ Item {
         Modal.register("screenshot", Screenshot)
         Modal.register("net", Net)
         Modal.register("mixer", Mixer)
-        Modal.register("brightness", Brightness)
-        Modal.register("audio", Audio)
         Modal.register("bluetooth", Bt)
         Modal.register("notifs", Notifs)
     }
@@ -205,8 +202,6 @@ Item {
         { cond: () => Screenshot.open, w: () => shot.width + 2 * Theme.pwPad, h: () => shot.y + shot.height + Theme.pwPad },
         { cond: () => Net.open, w: () => Theme.netW, h: () => net.y + net.height + Theme.netPad },
         { cond: () => Mixer.open, w: () => mixer.width + 2 * Theme.mixerPad, h: () => mixer.y + mixer.height + Theme.mixerPad },
-        { cond: () => Brightness.open, w: () => Theme.brightW, h: () => bright.y + bright.height + Theme.brightPad },
-        { cond: () => Audio.open, w: () => Theme.audioW, h: () => audio.y + audio.height + Theme.audioPad },
         { cond: () => Bt.open, w: () => Theme.btW, h: () => bt.y + bt.height + Theme.btPad },
         { cond: () => Notifs.open, w: () => Theme.centerW, h: () => center.y + center.height + Theme.centerPad },
         { cond: () => root.popout && islandPop.calendarShown, w: () => Theme.islandCalW, h: () => cal.y + cal.height + Theme.islandCalPad },
@@ -439,24 +434,6 @@ Item {
             x: root.centerX(width)
             y: Theme.mixerPad
             shown: Mixer.open
-            ready: root.panelReveal
-            rise: root.panelRise
-        }
-
-        BrightnessMenu {
-            id: bright
-            x: root.centerX(width)
-            y: Theme.brightPad
-            shown: Brightness.open
-            ready: root.panelReveal
-            rise: root.panelRise
-        }
-
-        AudioMenu {
-            id: audio
-            x: root.centerX(width)
-            y: Theme.audioPad
-            shown: Audio.open
             ready: root.panelReveal
             rise: root.panelRise
         }
