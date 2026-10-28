@@ -10,17 +10,14 @@ Item {
     property bool muted: false
     property bool focused: false
     property bool filled: true
-    property bool meter: false
     property bool waves: false
     property bool toggles: false
-    property real peak: 0
     property string path: ""
     property string path2: ""
     property string icon: ""
     property bool dragging: false
     readonly property real travel: Theme.mixerTrackH - Theme.mixerHandleH
     readonly property real base: Theme.mixerHandleH / 2
-    readonly property real glow: meter ? Math.pow(root.peak, Theme.audioMeterGamma) * root.value : 0
     readonly property int waveTier: !waves || muted || !ready || value <= 0 ? 0
         : value < Theme.audioWaveLowAt ? 1
         : value < Theme.audioWaveHighAt ? 2
@@ -91,21 +88,6 @@ Item {
 
                 Behavior on color {
                     ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
-                }
-            }
-
-            Rectangle {
-                visible: root.meter
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                width: Theme.mixerTrackW
-                height: root.glow > 0 ? root.base + root.glow * root.travel : 0
-                radius: width / 2
-                color: Theme.accent
-                antialiasing: true
-
-                Behavior on height {
-                    NumberAnimation { duration: Theme.audioMeterDecay }
                 }
             }
 
@@ -281,6 +263,7 @@ Item {
         Txt {
             width: parent.width
             height: Theme.mixerLabelH
+            visible: root.label !== ""
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             text: root.label

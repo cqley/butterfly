@@ -136,11 +136,6 @@ Singleton {
         return i === 0 ? outMuted : inMuted
     }
 
-    function peak(i) {
-        const m = i === 0 ? outMeter : inMeter
-        return m.node && ready(i) && !muted(i) ? clamp(m.peak) : 0
-    }
-
     function label(i) {
         const t = deviceName(current(i))
         return t === "" ? (i === 0 ? "no output" : "no input") : t
@@ -187,18 +182,6 @@ Singleton {
 
     PwObjectTracker {
         objects: root.streams
-    }
-
-    PwNodePeakMonitor {
-        id: outMeter
-        node: root.active ? Pipewire.defaultAudioSink : null
-        enabled: root.active
-    }
-
-    PwNodePeakMonitor {
-        id: inMeter
-        node: root.active ? Pipewire.defaultAudioSource : null
-        enabled: root.active
     }
 
     IpcHandler {

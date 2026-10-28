@@ -506,8 +506,6 @@ Singleton {
     readonly property string brightSunPath: "M12 7A5 5 0 1 1 12 17A5 5 0 1 1 12 7ZM12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22"
 
     // audio
-    readonly property int audioMeterDecay: 90
-    readonly property real audioMeterGamma: 0.4
     readonly property color audioFill: Qt.rgba(accent.r, accent.g, accent.b, 0.45)
     readonly property real audioIconStroke: glyphStroke(mixerIcon)
     readonly property real audioSlashStroke: glyphStroke(mixerIcon, 2.2)
@@ -536,27 +534,16 @@ Singleton {
     readonly property int mixerGap: 10
     readonly property int mixerPctH: fsS + 2
     readonly property int mixerLabelH: fsXXS + 2
-    readonly property bool mixerPct: true
+    readonly property bool mixerPct: false
+    readonly property bool mixerApps: false
     readonly property int mixerStep: 5
     readonly property int mixerFineStep: 1
     readonly property int mixerBigStep: 10
     readonly property real mixerResponse: springResponse
     readonly property real mixerDamping: springDamping
-    readonly property real mixerSizeResponse: islandResponse
-    readonly property real mixerSizeDamping: islandDamping
     readonly property int mixerAppIcon: 18
-    readonly property int mixerPickMinW: 232
-    readonly property int mixerPickH: 26
-    readonly property int mixerPickGap: 6
-    readonly property int mixerPickPad: 8
-    readonly property int mixerPickR: 8
-    readonly property int mixerPickCaret: 10
-    readonly property int mixerPickTitleW: 42
-    readonly property int mixerSectionGap: 14
     readonly property color mixerMutedFill: mix(bg, fg, 0.22)
     readonly property real mixerZeroDim: 0.3
-    readonly property string mixerCaretPath: "M8 10L12 14L16 10"
-    readonly property string mixerDotPath: "M12 8A4 4 0 1 1 12 16A4 4 0 1 1 12 8Z"
 
     // screenshot
     readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"
