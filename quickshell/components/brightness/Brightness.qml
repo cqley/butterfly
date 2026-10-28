@@ -11,7 +11,6 @@ Singleton {
     property int screenCount: 0
     property bool probed: false
     property bool backlit: false
-    property int writing: -1
     property int fetchBus: 0
     property var queue: []
     property alias devices: devs
@@ -43,8 +42,13 @@ Singleton {
             queue.push(bus)
     }
 
+    function writer(i) {
+        return i >= 0 && i < writers.count ? writers.objectAt(i) : null
+    }
+
     function held(i) {
-        return devs.get(i).dirty || (writer.running && writing === i)
+        const w = writer(i)
+        return w !== null && w.active
     }
 
     function home() {
@@ -55,14 +59,20 @@ Singleton {
         return 0
     }
 
-    function refresh() {
+    function reread() {
         for (let i = 0; i < devs.count; i++) {
             const d = devs.get(i)
-            if (d.kind === "ddc" && !d.ready)
+            if (d.kind === "ddc" && !held(i))
                 enqueue(d.bus)
         }
-        if (!scanned || count === 0 || screenCount !== Quickshell.screens.length || queue.length > 0)
+        pump()
+    }
+
+    function refresh() {
+        if (!scanned || count === 0 || screenCount !== Quickshell.screens.length)
             settle.restart()
+        else
+            rest.restart()
         if (!probed || backlit)
             probe.running = true
     }
@@ -74,30 +84,14 @@ Singleton {
         if (next === devs.get(i).value)
             return
         devs.setProperty(i, "value", next)
-        devs.setProperty(i, "dirty", true)
-        flush()
+        const w = writer(i)
+        if (w !== null)
+            w.push(next)
     }
 
     function nudge(i, d) {
         if (i >= 0 && i < devs.count)
             set(i, (Math.round(devs.get(i).value * 100) + d) / 100)
-    }
-
-    function flush() {
-        if (writer.running)
-            return
-        for (let i = 0; i < devs.count; i++) {
-            const d = devs.get(i)
-            if (!d.dirty)
-                continue
-            devs.setProperty(i, "dirty", false)
-            writing = i
-            writer.command = d.kind === "ddc"
-                ? ["ddcutil", "--bus", String(d.bus), "setvcp", "10", String(Math.round(d.value * d.vcpMax))]
-                : ["brightnessctl", "-q", "-c", "backlight", "set", Math.round(d.value * 100) + "%"]
-            writer.running = true
-            return
-        }
     }
 
     function pump() {
@@ -119,7 +113,7 @@ Singleton {
         }
         const v = clamp(parseInt(p[3]) / 100)
         if (i < 0)
-            devs.insert(0, { kind: "backlight", bus: 0, label: "internal", value: v, vcpMax: 100, ready: true, dirty: false })
+            devs.insert(0, { kind: "backlight", bus: 0, label: "internal", value: v, vcpMax: 100, ready: true })
         else if (!held(i))
             devs.setProperty(i, "value", v)
     }
@@ -162,9 +156,13 @@ Singleton {
             if (devs.get(i).kind === "ddc" && !found.some(f => f.bus === devs.get(i).bus))
                 devs.remove(i)
         for (let i = 0; i < found.length; i++) {
-            if (find("ddc", found[i].bus) >= 0)
+            const at = find("ddc", found[i].bus)
+            if (at >= 0) {
+                if (!devs.get(at).ready)
+                    enqueue(found[i].bus)
                 continue
-            devs.append({ kind: "ddc", bus: found[i].bus, label: found[i].label, value: 0, vcpMax: 100, ready: false, dirty: false })
+            }
+            devs.append({ kind: "ddc", bus: found[i].bus, label: found[i].label, value: 0, vcpMax: 100, ready: false })
             enqueue(found[i].bus)
         }
         scanned = true
@@ -184,17 +182,35 @@ Singleton {
         pump()
     }
 
-    function onWrite(code) {
-        if (code === 0 || writing < 0 || writing >= devs.count)
+    function onSettled(kind, bus, ok) {
+        if (ok) {
+            rest.restart()
             return
-        const d = devs.get(writing)
-        if (d.kind === "backlight") {
+        }
+        if (kind !== "ddc") {
             probe.running = true
             return
         }
-        devs.setProperty(writing, "ready", false)
-        enqueue(d.bus)
+        const i = find(kind, bus)
+        if (i >= 0)
+            devs.setProperty(i, "ready", false)
+        scanned = false
         settle.restart()
+    }
+
+    Instantiator {
+        id: writers
+        model: devs
+
+        delegate: Writer {
+            onSettled: ok => root.onSettled(kind, bus, ok)
+        }
+    }
+
+    Timer {
+        id: rest
+        interval: Theme.brightSettle
+        onTriggered: root.reread()
     }
 
     Timer {
@@ -224,15 +240,9 @@ Singleton {
 
     Process {
         id: fetch
-        command: ["ddcutil", "--bus", String(root.fetchBus), "getvcp", "10", "--brief"]
+        command: ["ddcutil", "--bus", String(root.fetchBus), "--skip-ddc-checks", "getvcp", "10", "--brief"]
         stdout: StdioCollector {}
         onRunningChanged: if (!running) root.onFetch(stdout.text)
-    }
-
-    Process {
-        id: writer
-        onExited: code => root.onWrite(code)
-        onRunningChanged: if (!running) root.flush()
     }
 
     IpcHandler {
