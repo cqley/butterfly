@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import Quickshell.Io
 
 Singleton {
     id: root
@@ -61,5 +62,11 @@ Singleton {
             return
         close(name)
         registry[name].open = true
+    }
+
+    IpcHandler {
+        target: "modal"
+        function dismiss(): void { root.dismiss() }
+        function status(): string { return root.any ? root.which : "none" }
     }
 }
