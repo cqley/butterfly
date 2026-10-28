@@ -6,6 +6,8 @@ import "components/pill"
 import "components/screenshot"
 
 Scope {
+    readonly property bool probing: Probe.on
+
     Variants {
         model: {
             const m = Quickshell.screens.filter(s => s.name === Theme.screen)
