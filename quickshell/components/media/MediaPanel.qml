@@ -31,13 +31,13 @@ Fade {
     readonly property string artSource: artUrl === "" ? ""
         : artUrl.indexOf("file:") === 0 ? artUrl + "#" + Qt.md5(artKey) : artUrl
 
-    onLenChanged: if (Media.player) dur = len
-    onSrcOnChanged: if (Media.player) on = srcOn
-    onSrcTitleChanged: if (Media.player) title = srcTitle
-    onSrcArtistChanged: if (Media.player) artist = srcArtist
-    onSrcArtChanged: if (Media.player) artUrl = srcArt
-    onSrcKeyChanged: if (Media.player) artKey = srcKey
-    onSrcFracChanged: if (Media.player) frac = srcFrac
+    onLenChanged: if (p) dur = len
+    onSrcOnChanged: if (p) on = srcOn
+    onSrcTitleChanged: if (p) title = srcTitle
+    onSrcArtistChanged: if (p) artist = srcArtist
+    onSrcArtChanged: if (p) artUrl = srcArt
+    onSrcKeyChanged: if (p) artKey = srcKey
+    onSrcFracChanged: if (p) frac = srcFrac
 
     onPChanged: {
         scrubbing = false
@@ -184,7 +184,7 @@ Fade {
         hoverEnabled: true
         acceptedButtons: root.raisable ? Qt.LeftButton : Qt.NoButton
         cursorShape: root.raisable ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onClicked: root.p.raise()
+        onClicked: if (root.p !== null && root.p.canRaise) root.p.raise()
     }
 
     Item {

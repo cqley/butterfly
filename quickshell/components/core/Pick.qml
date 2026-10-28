@@ -68,11 +68,10 @@ Fade {
         const k = e.key
         const c = e.modifiers & Qt.ControlModifier
         const s = e.modifiers & Qt.ShiftModifier
-        const w = true
         if (k === Qt.Key_Down || k === Qt.Key_J || k === Qt.Key_L || k === Qt.Key_Tab || c && k === Qt.Key_N)
-            move(1, w)
+            move(1, true)
         else if (k === Qt.Key_Up || k === Qt.Key_K || k === Qt.Key_H || k === Qt.Key_Backtab || c && k === Qt.Key_P)
-            move(-1, w)
+            move(-1, true)
         else if (k === Qt.Key_PageDown)
             move(1, false)
         else if (k === Qt.Key_PageUp)

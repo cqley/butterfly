@@ -31,7 +31,7 @@ Item {
     readonly property bool silent: ready && (muted || value <= 0)
     property real dim: live ? 1 : Theme.dimEmpty
     readonly property color ink: Theme.mix(Theme.bg, Theme.fg, root.dim)
-    readonly property real shown: pos.value
+    readonly property real level: pos.value
 
     width: Theme.mixerColW
     height: col.height
@@ -82,7 +82,7 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 width: Theme.mixerTrackW
-                height: root.shown > 0 ? root.base + root.shown * root.travel : 0
+                height: root.level > 0 ? root.base + root.level * root.travel : 0
                 radius: width / 2
                 color: root.muted ? Theme.mixerMutedFill : Theme.audioFill
                 opacity: root.dim
@@ -96,7 +96,7 @@ Item {
             Rectangle {
                 id: handle
                 anchors.horizontalCenter: parent.horizontalCenter
-                y: (1 - root.shown) * root.travel
+                y: (1 - root.level) * root.travel
                 width: Theme.mixerHandleW
                 height: Theme.mixerHandleH
                 radius: height / 2
