@@ -53,6 +53,8 @@ Item {
         target: root.value
         response: Theme.mixerResponse
         damping: Theme.mixerDamping
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
     }
 
     Column {

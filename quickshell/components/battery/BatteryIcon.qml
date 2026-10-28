@@ -14,26 +14,34 @@ Item {
     property int settledGap: Math.round(leadingGap)
     readonly property bool active: root.shown && root.available
     readonly property real targetWidth: root.active ? root.settledGap + Theme.batW + Theme.batNubGap + Theme.batNubW : 0
-    property real enter: root.active ? 1 : 0
-    property real boltEnter: root.pluggedIn ? 1 : 0
+    readonly property real enter: enterMotion.value
+    readonly property real boltEnter: boltMotion.value
 
     width: (root.leadingGap + Theme.batW + Theme.batNubGap + Theme.batNubW) * root.enter
     height: Theme.h
     visible: root.enter > 0
     clip: true
 
-    Behavior on enter {
-        NumberAnimation {
-            duration: Theme.idlePopDuration
-            easing.type: Theme.ease
-        }
+    Spring {
+        id: enterMotion
+        target: root.active ? 1 : 0
+        response: Theme.idlePopResponse
+        damping: Theme.idlePopDamping
+        duration: Theme.idlePopDuration
+        easing: Theme.ease
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
     }
 
-    Behavior on boltEnter {
-        NumberAnimation {
-            duration: Theme.batBoltDuration
-            easing.type: Theme.ease
-        }
+    Spring {
+        id: boltMotion
+        target: root.pluggedIn ? 1 : 0
+        response: Theme.batBoltResponse
+        damping: Theme.batBoltDamping
+        duration: Theme.batBoltDuration
+        easing: Theme.ease
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
     }
 
     Item {
