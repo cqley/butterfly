@@ -4,19 +4,58 @@ import QtQuick
 Item {
     id: root
     property string source: ""
+    property string loaded: ""
     property color a: Theme.visFallback
     property color b: Theme.visFallback
 
+    Behavior on a { ColorAnimation { duration: Theme.visTint; easing.type: Theme.ease } }
+
+    Behavior on b { ColorAnimation { duration: Theme.visTint; easing.type: Theme.ease } }
+
     onSourceChanged: {
+        if (loaded !== "" && loaded !== source)
+            cv.unloadImage(loaded)
+        loaded = source
+        wait.stop()
         if (source === "") {
-            a = Theme.visFallback
-            b = Theme.visFallback
+            reset()
             return
         }
-        if (cv.isImageLoaded(source))
+        if (cv.isImageLoaded(source)) {
             cv.requestPaint()
-        else
-            cv.loadImage(source)
+            return
+        }
+        cv.loadImage(source)
+        wait.restart()
+    }
+
+    function reset() {
+        a = Theme.visFallback
+        b = Theme.visFallback
+    }
+
+    function rgb(k) {
+        return Qt.rgba(((k >> 16) & 0xff) / 255, ((k >> 8) & 0xff) / 255, (k & 0xff) / 255, 1)
+    }
+
+    function chroma(c) {
+        return Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b)
+    }
+
+    function lift(c) {
+        if (c.hslLightness >= Theme.visDim)
+            return c
+        return Qt.hsla(Math.max(0, c.hslHue), c.hslSaturation, Theme.visDim, 1)
+    }
+
+    function apart(x, y) {
+        return Math.abs(x.r - y.r) + Math.abs(x.g - y.g) + Math.abs(x.b - y.b) >= Theme.visSpread
+    }
+
+    Timer {
+        id: wait
+        interval: Theme.visSampleWait
+        onTriggered: if (!cv.isImageLoaded(root.source)) root.reset()
     }
 
     Canvas {
@@ -28,32 +67,60 @@ Item {
         onImageLoaded: requestPaint()
 
         onPaint: {
-            if (root.source === "" || !isImageLoaded(root.source))
+            const src = root.source
+            if (src === "")
                 return
+            if (isImageError(src)) {
+                wait.stop()
+                root.reset()
+                return
+            }
+            if (!isImageLoaded(src))
+                return
+            wait.stop()
             const ctx = getContext("2d")
-            ctx.drawImage(root.source, 0, 0, width, height)
+            ctx.clearRect(0, 0, width, height)
+            ctx.drawImage(src, 0, 0, width, height)
             const d = ctx.getImageData(0, 0, width, height).data
-            let sr = 0, sg = 0, sb = 0, n = 0
-            let br = 0, bg = 0, bb = 0, best = -1
+            const bins = {}
+            let mode = -1
+            let modeN = 0
+            let n = 0
             for (let i = 0; i < d.length; i += 4) {
-                if (d[i + 3] === 0)
+                if (d[i + 3] < Theme.visSampleAlpha)
                     continue
-                const r = d[i], g = d[i + 1], bl = d[i + 2]
-                sr += r; sg += g; sb += bl; n++
-                const mx = Math.max(r, g, bl), mn = Math.min(r, g, bl)
-                const score = mx === 0 ? 0 : (mx - mn) / 255
-                if (score > best) {
-                    best = score
-                    br = r; bg = g; bb = bl
+                const k = ((d[i] & 0xf8) << 16) | ((d[i + 1] & 0xf8) << 8) | (d[i + 2] & 0xf8)
+                const c = (bins[k] || 0) + 1
+                bins[k] = c
+                n++
+                if (c > modeN) {
+                    modeN = c
+                    mode = k
                 }
             }
             if (n === 0) {
-                root.a = Theme.visFallback
-                root.b = Theme.visFallback
+                root.reset()
                 return
             }
-            root.a = Qt.rgba(sr / n / 255, sg / n / 255, sb / n / 255, 1)
-            root.b = Qt.rgba(br / 255, bg / 255, bb / 255, 1)
+            let pick = mode
+            let best = -1
+            for (const key in bins) {
+                const k = Number(key)
+                const score = root.chroma(root.rgb(k)) * Math.sqrt(bins[k] / n)
+                if (score > best) {
+                    best = score
+                    pick = k
+                }
+            }
+            const base = root.rgb(mode)
+            const lead = root.rgb(pick)
+            if (root.chroma(lead) < Theme.visSatFloor) {
+                root.reset()
+                return
+            }
+            const tint = root.lift(base)
+            root.a = tint
+            root.b = root.apart(base, lead) ? root.lift(lead) : Qt.lighter(tint, Theme.visLift)
         }
     }
 }

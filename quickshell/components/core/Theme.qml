@@ -10,6 +10,7 @@ Singleton {
     readonly property string screen: "HDMI-A-1"
     readonly property string font: "Inter"
     readonly property real fontScale: 1
+    readonly property var tabular: ({ "tnum": 1 })
     readonly property int fsXXS: fs(9)
     readonly property int fsXS: fs(10)
     readonly property int fsS: fs(11)
@@ -97,6 +98,7 @@ Singleton {
     readonly property int idleFall: fade
     readonly property int idleWait: 0
     readonly property bool holdPill: false
+    readonly property bool holdPanels: true
     readonly property bool blockSwap: false
     readonly property int glide: 240
     readonly property int fast: 60
@@ -105,6 +107,14 @@ Singleton {
     readonly property real feedbackPressScale: 0.97
     readonly property real feedbackFocusBorder: 1
     readonly property int ease: Easing.OutCubic
+    readonly property string motionStyle: "spring"
+    readonly property bool motionReduce: false
+    readonly property int motionReduceDuration: fast
+    readonly property real springResponse: 0.32
+    readonly property real springDamping: 1
+    readonly property real springEps: 0.1
+    readonly property real springStop: 3
+    readonly property real springMaxFrame: 1 / 30
     readonly property int pulse: 1400
     readonly property int blink: 700
     readonly property real settleEps: 0.5
@@ -413,6 +423,7 @@ Singleton {
     readonly property int mediaTimeGap: 5
     readonly property int mediaTimeH: 11
     readonly property string mediaRemainChar: "−"
+    readonly property int artFade: 220
     readonly property int artR: 18
     readonly property int artGlyph: 32
     readonly property string artNotePath: "M9 18V5L21 3V16M9 18A3 3 0 0 1 3 18A3 3 0 0 1 9 18ZM21 16A3 3 0 0 1 15 16A3 3 0 0 1 21 16Z"
@@ -601,19 +612,15 @@ Singleton {
     readonly property int weekDays: 7
     readonly property int weekGap: 4
     readonly property int weekTodayR: 11
-    readonly property int weekTodayPx: fs(16)
     readonly property real weekFadeMin: 0.12
     readonly property real weekFadeSpan: 4.7
+    readonly property real weekFadeCurve: 1
     readonly property real todayFill: 0.15
     readonly property real outMonth: 0.25
     readonly property int calSlide: 10
     readonly property int calGap: 6
     readonly property int calTitleX: 4
     readonly property int calHeadH: 16
-    readonly property int calNavDia: 22
-    readonly property real calNavFill: 0.05
-    readonly property real calNavHoverFill: 0.1
-    readonly property int calNavGlyph: 11
     readonly property real calTodayScale: 0.86
     readonly property int cellW: 30
     readonly property int cellH: 24
@@ -622,26 +629,35 @@ Singleton {
 
     // island
     readonly property string islandMode: "popout"
-    readonly property int islandDuration: speed
-    readonly property int islandEase: ease
-    readonly property int islandPopW: 16
-    readonly property int islandPopH: 5
-    readonly property int islandPopDrop: 8
+    readonly property int islandDuration: 200
+    readonly property int islandEase: Easing.OutQuad
+    readonly property real islandResponse: springResponse
+    readonly property real islandDamping: springDamping
+    readonly property real islandDropResponse: islandResponse
+    readonly property real islandDropDamping: islandDamping
+    readonly property real islandContentResponse: islandResponse * 1.3
+    readonly property real islandContentDamping: springDamping
+    readonly property int islandPopW: 12
+    readonly property int islandPopH: 6
+    readonly property int islandPopDrop: 5
+    readonly property int islandHitGrow: 4
+    readonly property int islandContentSlide: 6
+    readonly property int islandContentStage: 40
     readonly property int islandWeekCells: weekCells
     readonly property int islandWeekLead: 0
-    readonly property real islandWeekFadeSpan: 3.1
-    readonly property real islandWeekFadeMin: 0
+    readonly property real islandWeekFadeSpan: 5.4
+    readonly property real islandWeekFadeMin: 0.08
+    readonly property real islandWeekFadeCurve: 2
+    readonly property int islandWeekPad: 14
     readonly property int islandWeekW: cellW * islandWeekCells
-    readonly property int islandWeekStripY: 58
-    readonly property int islandWeekClockY: 12
-    readonly property int islandWeekH: islandWeekStripY + stripH + 25
-    readonly property int islandWeekRadius: 22
-    readonly property real islandWeekClockScale: 1.44
+    readonly property int islandWeekH: stripH + 2 * islandWeekPad
     readonly property int islandCalCellW: 38
     readonly property int islandCalCellH: 28
     readonly property int islandCalPad: 16
-    readonly property int islandCalRadius: 22
     readonly property int islandCalW: islandCalCellW * weekDays + 2 * islandCalPad
+    readonly property int islandMediaPad: 16
+    readonly property int islandMediaW: mediaW + 2 * islandMediaPad
+    readonly property int islandMediaH: artS + 2 * islandMediaPad
 
     // visualizer
     readonly property int visBars: 6
@@ -655,7 +671,14 @@ Singleton {
     readonly property real visOffset: 1.1
     readonly property int visSettle: speed
     readonly property color visFallback: accent
-    readonly property int visSampleSize: 8
+    readonly property int visSampleSize: 32
+    readonly property int visSampleAlpha: 128
+    readonly property int visSampleWait: 1200
+    readonly property real visSatFloor: 0.12
+    readonly property real visSpread: 0.35
+    readonly property real visLift: 1.45
+    readonly property real visDim: 0.3
+    readonly property int visTint: speed
     readonly property int visOffDelay: 8000
     readonly property int visFps: 60
     readonly property int visNoiseReduction: 77

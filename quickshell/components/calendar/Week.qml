@@ -10,6 +10,8 @@ Fade {
     property int lead: Theme.weekLead
     property real fadeSpan: Theme.weekFadeSpan
     property real fadeMin: Theme.weekFadeMin
+    property real fadeCurve: Theme.weekFadeCurve
+    property int slide: 0
     readonly property int center: (cells - 1) / 2
     readonly property int base: Math.floor(pos)
     readonly property real frac: pos - base
@@ -21,6 +23,19 @@ Fade {
     onVisibleChanged: if (!visible) target = 0
 
     Behavior on pos { NumberAnimation { duration: Theme.glide; easing.type: Theme.ease } }
+
+    transform: Translate {
+        y: slideMotion.value
+    }
+
+    Spring {
+        id: slideMotion
+        target: root.active ? 0 : root.slide
+        response: Theme.islandContentResponse
+        damping: Theme.islandContentDamping
+        duration: root.rise
+        easing: Theme.ease
+    }
 
     Repeater {
         model: root.cells
@@ -36,7 +51,7 @@ Fade {
             x: (index - root.lead - root.frac) * Theme.cellW
             width: Theme.cellW
             height: Theme.stripH
-            opacity: Math.max(root.fadeMin, 1 - Math.abs(x + Theme.cellW / 2 - root.width / 2) / (Theme.cellW * root.fadeSpan))
+            opacity: Math.max(root.fadeMin, Math.pow(Math.max(0, 1 - Math.abs(x + Theme.cellW / 2 - root.width / 2) / (Theme.cellW * root.fadeSpan)), root.fadeCurve))
 
             Rectangle {
                 anchors.fill: parent
@@ -52,17 +67,16 @@ Fade {
 
                 Txt {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: today ? Qt.formatDate(d, "ddd").toLowerCase() : "smtwtfs"[d.getDay()]
+                    text: "smtwtfs"[d.getDay()]
                     color: tint
                     font.pixelSize: Theme.fsXXS
-                    font.weight: today ? Font.DemiBold : Font.Normal
                 }
 
                 Txt {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: d.getDate()
                     color: tint
-                    font.pixelSize: today ? Theme.weekTodayPx : Theme.fsXL
+                    font.pixelSize: Theme.fsXL
                     font.weight: today ? Font.Bold : Font.Medium
                 }
             }
