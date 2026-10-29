@@ -1,30 +1,19 @@
 import QtQuick
+import QtQuick.Effects
 
-Item {
+// adapted from minflair (github.com/t4lentles5/minflair, GPL-3.0),
+// config/quickshell/Core/Components/ThemedShadow.qml: the approach of wrapping
+// Qt's RectangularShadow in one themed component instead of stacking
+// translucent rects. Token wiring, geometry and defaults below are ours.
+RectangularShadow {
     id: root
-    property int radius: 0
-    property color color: Theme.shadowColor
     property real strength: Theme.shadowOpacity
-    property int blur: Theme.shadowBlur
-    property int layers: Theme.shadowLayers
-    property int offsetY: Theme.shadowOffsetY
+
+    visible: Theme.shadowOn && root.strength > 0
+    blur: Theme.shadowBlur
+    spread: Theme.shadowSpread
+    offset: Qt.vector2d(Theme.shadowOffsetX, Theme.shadowOffsetY)
+    color: Qt.rgba(Theme.shadowColor.r, Theme.shadowColor.g, Theme.shadowColor.b, root.strength)
+    cached: true
     z: -1
-
-    Repeater {
-        model: root.layers
-
-        Rectangle {
-            required property int index
-            readonly property real t: (index + 1) / root.layers
-
-            anchors.fill: parent
-            anchors.margins: -t * root.blur
-            anchors.topMargin: -t * root.blur + root.offsetY
-            anchors.bottomMargin: -t * root.blur - root.offsetY
-            radius: root.radius + t * root.blur
-            color: root.color
-            opacity: root.strength * (1 - t) * (1 - t) / root.layers * 2.4
-            antialiasing: true
-        }
-    }
 }

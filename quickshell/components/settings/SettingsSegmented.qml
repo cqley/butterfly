@@ -19,7 +19,7 @@ Rectangle {
         width: root.segW
         height: parent.height
         radius: parent.radius
-        color: Theme.settingsCardAlt
+        color: Theme.settingsTrack
         antialiasing: true
 
         Behavior on x {

@@ -14,8 +14,9 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: Theme.settingsCardRadius
-        color: root.selected ? Theme.settingsCardAlt : "transparent"
+        radius: Theme.settingsSidebarItemRadius
+        color: root.selected ? Theme.settingsSelected : "transparent"
+        antialiasing: true
 
         Behavior on color {
             ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
@@ -25,11 +26,11 @@ Item {
     Rectangle {
         id: iconBg
         x: Theme.settingsSidebarPadX
-        anchors.verticalCenter: parent.verticalCenter
+        y: Math.round((root.height - height) / 2)
         width: Theme.settingsSidebarIconD
         height: Theme.settingsSidebarIconD
         radius: width / 2
-        color: root.selected ? Theme.accent : Theme.chip
+        color: root.selected ? Theme.settingsIconOnBg : Theme.settingsIconOffBg
         antialiasing: true
 
         Behavior on color {
@@ -38,13 +39,14 @@ Item {
 
         Shape {
             anchors.centerIn: parent
-            width: Theme.settingsSidebarIconD * 0.5
-            height: width
+            width: Theme.iconGrid
+            height: Theme.iconGrid
+            scale: Theme.settingsSidebarIcon / Theme.iconGrid
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {
-                strokeWidth: Theme.iconStroke
-                strokeColor: root.selected ? Theme.bg : Theme.fg
+                strokeWidth: Theme.glyphStroke(Theme.settingsSidebarIcon, Theme.settingsIconStroke)
+                strokeColor: root.selected ? Theme.settingsIconOnInk : Theme.settingsIconOffInk
                 fillColor: "transparent"
                 capStyle: ShapePath.RoundCap
                 joinStyle: ShapePath.RoundJoin
@@ -60,8 +62,7 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: root.label
         font.pixelSize: Theme.settingsSidebarPx
-        font.weight: root.selected ? Font.DemiBold : Font.Normal
-        color: root.selected ? Theme.fg : Theme.mix(Theme.fg, Theme.bg, Theme.dimSoft)
+        color: Theme.fg
     }
 
     MouseArea {

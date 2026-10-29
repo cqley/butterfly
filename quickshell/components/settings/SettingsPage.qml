@@ -7,7 +7,7 @@ Column {
     readonly property string catId: root.category ? root.category.id : ""
 
     width: parent ? parent.width : 0
-    spacing: Theme.settingsSectionGap
+    spacing: Theme.settingsGroupGap
 
     SettingsHeaderCard {
         width: parent.width
@@ -36,8 +36,11 @@ Column {
         visible: root.catId === "style"
         text: "accent"
         font.pixelSize: Theme.settingsSectionPx
-        color: Theme.mix(Theme.fg, Theme.bg, Theme.dimSoft)
+        color: Theme.settingsSectionInk
+        font.weight: Font.Normal
         leftPadding: Theme.settingsRowPadX
+        height: Theme.settingsSectionH
+        verticalAlignment: Text.AlignVCenter
     }
 
     SettingsGroup {
@@ -63,7 +66,7 @@ Column {
                 width: Theme.settingsFieldW
                 height: Theme.settingsFieldH
                 radius: height / 2
-                color: Theme.bg
+                color: Theme.settingsFieldBg
                 border.width: hex.activeFocus ? Theme.feedbackFocusBorder : 0
                 border.color: Theme.accent
                 antialiasing: true
@@ -99,8 +102,11 @@ Column {
         visible: root.catId === "style"
         text: "type"
         font.pixelSize: Theme.settingsSectionPx
-        color: Theme.mix(Theme.fg, Theme.bg, Theme.dimSoft)
+        color: Theme.settingsSectionInk
+        font.weight: Font.Normal
         leftPadding: Theme.settingsRowPadX
+        height: Theme.settingsSectionH
+        verticalAlignment: Text.AlignVCenter
     }
 
     SettingsGroup {

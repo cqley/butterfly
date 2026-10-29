@@ -56,16 +56,16 @@ Scope {
     }
 
     Variants {
-        model: Quickshell.screens
+        model: Quickshell.screens.filter(s => s.name === Settings.screenName)
 
         Scope {
             required property var modelData
 
             PanelWindow {
                 id: setWin
-                readonly property bool here: Settings.open && Settings.screenName === modelData.name
 
                 screen: modelData
+                visible: settingsPopup.alive
                 anchors {
                     top: true
                     bottom: true
@@ -74,9 +74,10 @@ Scope {
                 }
                 exclusionMode: ExclusionMode.Ignore
                 color: "transparent"
-                mask: setWin.here ? openMask : closedMask
+                mask: Settings.open ? openMask : closedMask
                 WlrLayershell.layer: WlrLayer.Overlay
-                WlrLayershell.keyboardFocus: setWin.here ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+                WlrLayershell.namespace: "quickshell-settings"
+                WlrLayershell.keyboardFocus: Settings.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
                 property var openMask: Region { width: setWin.width; height: setWin.height }
                 property var closedMask: Region {}
@@ -85,7 +86,7 @@ Scope {
                     anchors.fill: parent
 
                     TapHandler {
-                        enabled: setWin.here
+                        enabled: Settings.open
                         onTapped: p => {
                             const point = settingsPopup.mapFromItem(parent, p.position)
                             if (!settingsPopup.contains(point))

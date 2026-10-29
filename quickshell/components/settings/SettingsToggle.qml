@@ -11,7 +11,7 @@ Rectangle {
     width: Theme.settingsToggleW
     height: Theme.settingsToggleH
     radius: height / 2
-    color: root.checked ? Theme.accent : Theme.settingsCardAlt
+    color: root.checked ? Theme.accent : Theme.settingsTrack
     antialiasing: true
 
     Behavior on color {

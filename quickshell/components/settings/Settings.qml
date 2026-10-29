@@ -3,7 +3,6 @@ import "../core"
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
 
 Singleton {
     id: root
@@ -15,21 +14,21 @@ Singleton {
         {
             id: "general",
             label: "general",
-            icon: "M5 7H19M5 12H19M5 17H19",
+            icon: Theme.settingsGeneralPath,
             title: "general",
             subtitle: "placeholder page — 1B fills this in with real categories."
         },
         {
             id: "style",
             label: "style",
-            icon: "M4,12 A8,8 0 1,0 20,12 A8,8 0 1,0 4,12",
+            icon: Theme.settingsStylePath,
             title: "style",
             subtitle: "theme, accent and type — reference mock for look and feel."
         },
         {
             id: "motion",
             label: "motion",
-            icon: "M6 18L18 6M18 6H10M18 6V14",
+            icon: Theme.settingsMotionPath,
             title: "motion",
             subtitle: "segmented control and slider demo."
         }
@@ -46,13 +45,22 @@ Singleton {
     onOpenChanged: {
         if (open) {
             Modal.claim("settings")
-            screenName = Compositor.isHyprland && Hyprland.focusedMonitor
-                ? Hyprland.focusedMonitor.name
-                : (Quickshell.screens.length ? Quickshell.screens[0].name : "")
+            screenName = Compositor.focusedScreenName()
         }
     }
 
     Component.onCompleted: Modal.register("settings", root)
+
+    Connections {
+        target: Quickshell
+
+        function onScreensChanged() {
+            if (root.screenName !== "" && !Compositor.hasScreen(root.screenName)) {
+                root.open = false
+                root.screenName = ""
+            }
+        }
+    }
 
     IpcHandler {
         target: "settings"

@@ -668,42 +668,69 @@ Singleton {
     readonly property real visLerp: 0.3
 
     // shadow
+    readonly property bool shadowOn: true
     readonly property color shadowColor: "#000000"
-    readonly property real shadowOpacity: 0.55
-    readonly property int shadowBlur: 36
-    readonly property int shadowLayers: 6
-    readonly property int shadowOffsetY: 10
+    readonly property real shadowOpacity: 0.5
+    readonly property int shadowBlur: 60
+    readonly property int shadowSpread: 4
+    readonly property int shadowOffsetX: 0
+    readonly property int shadowOffsetY: 14
 
     // settings
     readonly property int settingsW: 630
     readonly property int settingsH: 430
-    readonly property int settingsRadius: 28
-    readonly property int settingsPad: 16
+    readonly property int settingsRadius: 18
+    readonly property int settingsPad: 6
     readonly property int settingsCardRadius: settingsRadius - settingsPad
-    readonly property int settingsSidebarW: 184
-    readonly property int settingsGap: 14
+    readonly property int settingsSidebarW: 156
+    readonly property int settingsGap: 28
     readonly property int settingsBorderWidth: pillBorderWidth
     readonly property real settingsBorderOpacity: pillBorderOpacity
-    readonly property color settingsCard: chip
-    readonly property color settingsCardAlt: tile
+    readonly property real settingsDarken: 0.45
+    readonly property color settingsBg: Qt.rgba(bg.r * (1 - settingsDarken), bg.g * (1 - settingsDarken), bg.b * (1 - settingsDarken), 1)
+    readonly property real settingsBgOpacity: 1
+    readonly property color settingsCard: mix(settingsBg, fg, 0.07)
+    readonly property color settingsSelected: mix(settingsBg, fg, 0.2)
+    readonly property color settingsScroll: mix(settingsBg, fg, 0.18)
+    readonly property color settingsTrack: mix(settingsBg, fg, 0.2)
     readonly property color settingsDivider: Qt.rgba(1, 1, 1, 0.07)
-    readonly property int settingsRowH: 40
-    readonly property int settingsRowPadX: 14
-    readonly property int settingsSectionGap: 20
-    readonly property int settingsSidebarItemH: 38
-    readonly property int settingsSidebarIconD: 28
-    readonly property int settingsSidebarPadX: 10
-    readonly property int settingsSidebarGap: 2
-    readonly property int settingsHeaderIconD: 56
+    readonly property color settingsValueInk: mix(fg, settingsBg, 0.45)
+    readonly property color settingsSectionInk: mix(fg, settingsBg, 0.5)
+    readonly property int settingsRowH: 35
+    readonly property int settingsRowPadX: 12
+    readonly property int settingsValueGap: 6
+    readonly property int settingsGroupGap: 9
+    readonly property int settingsSectionH: 10
+    readonly property int settingsSidebarItemH: 34
+    readonly property int settingsSidebarItemRadius: 10
+    readonly property int settingsSidebarPadX: 7
+    readonly property int settingsSidebarGap: 0
+    readonly property int settingsHeaderPad: 15
     readonly property int settingsHeaderGap: 10
-    readonly property int settingsTitlePx: fs(18)
+    readonly property int settingsHeaderSubGap: 4
+    readonly property int settingsTitlePx: fs(16)
     readonly property int settingsSubtitlePx: fs(11)
     readonly property int settingsSectionPx: fs(10)
     readonly property int settingsLabelPx: fs(12)
     readonly property int settingsValuePx: fs(12)
     readonly property int settingsSidebarPx: fs(12)
-    readonly property int settingsScrollW: 3
-    readonly property int settingsScrollPad: 6
+    readonly property int settingsScrollW: 4
+    readonly property int settingsScrollPad: 12
+    readonly property int settingsSidebarIconD: 22
+    readonly property int settingsSidebarIcon: 13
+    readonly property int settingsHeaderIconD: 45
+    readonly property int settingsHeaderIcon: 24
+    readonly property real settingsIconStroke: 1.7
+    readonly property color settingsIconOnBg: accent
+    readonly property color settingsIconOnInk: settingsBg
+    readonly property color settingsIconOffBg: mix(settingsBg, accent, 0.22)
+    readonly property color settingsIconOffInk: mix(accent, settingsBg, 0.16)
+    readonly property int settingsArrowSize: 13
+    readonly property color settingsArrowInk: settingsValueInk
+    readonly property string settingsArrowPath: "M5 12H19M13 6L19 12L13 18"
+    readonly property string settingsGeneralPath: "M21 4H14M10 4H3M21 12H12M8 12H3M21 20H16M12 20H3M14 2V6M8 10V14M16 18V22"
+    readonly property string settingsStylePath: "M9.06 11.9L17.13 3.84A2.85 2.85 0 1 1 21.16 7.87L13.1 15.95M7.07 14.94C5.41 14.94 4.07 16.29 4.07 17.96C4.07 19.29 1.57 19.48 2.07 19.98C3.15 21.08 4.56 22 6.07 22C8.27 22 10.07 20.2 10.07 17.96A3.01 3.01 0 0 0 7.07 14.94Z"
+    readonly property string settingsMotionPath: "M3 12C5 6 7 6 9 12C11 18 13 18 15 12C17 6 19 6 21 12"
     readonly property real settingsScaleFrom: 0.94
     readonly property int settingsRiseOffset: 10
     readonly property int settingsPopDuration: speed
@@ -721,5 +748,5 @@ Singleton {
     readonly property int settingsSliderKnobD: 14
     readonly property int settingsFieldH: 26
     readonly property int settingsFieldW: 140
-    readonly property int settingsArrowSize: 8
+    readonly property color settingsFieldBg: mix(settingsBg, fg, 0.13)
 }

@@ -21,42 +21,51 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: root.label
         font.pixelSize: Theme.settingsLabelPx
+        font.weight: Font.Medium
         color: Theme.fg
     }
 
     Row {
         id: slot
         anchors.right: arrow.visible ? arrow.left : parent.right
-        anchors.rightMargin: arrow.visible ? Theme.settingsSidebarGap : Theme.settingsRowPadX
+        anchors.rightMargin: arrow.visible ? Theme.settingsValueGap : Theme.settingsRowPadX
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.settingsSidebarGap
+        spacing: Theme.settingsValueGap
 
         Txt {
             visible: root.value !== ""
+            anchors.verticalCenter: parent.verticalCenter
             text: root.value
             font.pixelSize: Theme.settingsValuePx
-            color: Theme.mix(Theme.fg, Theme.bg, Theme.dimSoft)
+            font.weight: Font.Normal
+            color: Theme.settingsValueInk
         }
     }
 
-    Shape {
+    Item {
         id: arrow
         visible: root.showArrow
-        anchors.right: parent.right
-        anchors.rightMargin: Theme.settingsRowPadX
-        anchors.verticalCenter: parent.verticalCenter
         width: Theme.settingsArrowSize
         height: Theme.settingsArrowSize
-        preferredRendererType: Shape.CurveRenderer
+        x: Math.round(root.width - Theme.settingsRowPadX - width)
+        y: Math.round((root.height - height) / 2)
 
-        ShapePath {
-            strokeWidth: Theme.iconStroke
-            strokeColor: Theme.mix(Theme.fg, Theme.bg, Theme.dimSoft)
-            fillColor: "transparent"
-            capStyle: ShapePath.RoundCap
-            joinStyle: ShapePath.RoundJoin
+        Shape {
+            anchors.centerIn: parent
+            width: Theme.iconGrid
+            height: Theme.iconGrid
+            scale: Theme.settingsArrowSize / Theme.iconGrid
+            preferredRendererType: Shape.CurveRenderer
 
-            PathSvg { path: "M1 1L7 4L1 7" }
+            ShapePath {
+                strokeWidth: Theme.glyphStroke(Theme.settingsArrowSize, Theme.settingsIconStroke)
+                strokeColor: Theme.settingsArrowInk
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+
+                PathSvg { path: Theme.settingsArrowPath }
+            }
         }
     }
 
@@ -65,6 +74,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.leftMargin: Theme.settingsRowPadX
+        anchors.rightMargin: Theme.settingsRowPadX
         anchors.bottom: parent.bottom
         height: 1
         color: Theme.settingsDivider

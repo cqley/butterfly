@@ -2,56 +2,70 @@ import "../core"
 import QtQuick
 import QtQuick.Shapes
 
-Column {
+Rectangle {
     id: root
     property string icon: ""
     property string title: ""
     property string subtitle: ""
 
     width: parent ? parent.width : 0
-    spacing: Theme.settingsHeaderGap
+    height: col.height + 2 * Theme.settingsHeaderPad
+    radius: Theme.settingsCardRadius
+    color: Theme.settingsCard
+    antialiasing: true
 
-    Rectangle {
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: Theme.settingsHeaderIconD
-        height: Theme.settingsHeaderIconD
-        radius: width / 2
-        color: Theme.accent
-        antialiasing: true
+    Column {
+        id: col
+        y: Theme.settingsHeaderPad
+        width: parent.width
+        spacing: 0
 
-        Shape {
-            anchors.centerIn: parent
-            width: Theme.settingsHeaderIconD * 0.46
-            height: width
-            preferredRendererType: Shape.CurveRenderer
+        Rectangle {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Theme.settingsHeaderIconD
+            height: Theme.settingsHeaderIconD
+            radius: width / 2
+            color: Theme.settingsIconOffBg
+            antialiasing: true
 
-            ShapePath {
-                strokeWidth: Theme.iconStroke * 1.1
-                strokeColor: Theme.bg
-                fillColor: "transparent"
-                capStyle: ShapePath.RoundCap
-                joinStyle: ShapePath.RoundJoin
+            Shape {
+                anchors.centerIn: parent
+                width: Theme.iconGrid
+                height: Theme.iconGrid
+                scale: Theme.settingsHeaderIcon / Theme.iconGrid
+                preferredRendererType: Shape.CurveRenderer
 
-                PathSvg { path: root.icon }
+                ShapePath {
+                    strokeWidth: Theme.glyphStroke(Theme.settingsHeaderIcon, Theme.settingsIconStroke)
+                    strokeColor: Theme.settingsIconOffInk
+                    fillColor: "transparent"
+                    capStyle: ShapePath.RoundCap
+                    joinStyle: ShapePath.RoundJoin
+
+                    PathSvg { path: root.icon }
+                }
             }
         }
-    }
 
-    Txt {
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: root.title
-        font.pixelSize: Theme.settingsTitlePx
-        font.weight: Font.DemiBold
-        color: Theme.fg
-    }
+        Txt {
+            anchors.horizontalCenter: parent.horizontalCenter
+            topPadding: Theme.settingsHeaderGap
+            text: root.title
+            font.pixelSize: Theme.settingsTitlePx
+            font.weight: Font.DemiBold
+            color: Theme.fg
+        }
 
-    Txt {
-        anchors.horizontalCenter: parent.horizontalCenter
-        text: root.subtitle
-        font.pixelSize: Theme.settingsSubtitlePx
-        color: Theme.mix(Theme.fg, Theme.bg, Theme.dimSoft)
-        horizontalAlignment: Text.AlignHCenter
-        width: Math.min(implicitWidth, root.width)
-        wrapMode: Text.WordWrap
+        Txt {
+            anchors.horizontalCenter: parent.horizontalCenter
+            topPadding: Theme.settingsHeaderSubGap
+            text: root.subtitle
+            font.pixelSize: Theme.settingsSubtitlePx
+            font.weight: Font.Normal
+            color: Theme.settingsValueInk
+            horizontalAlignment: Text.AlignHCenter
+            width: Math.min(implicitWidth, root.width - 2 * Theme.settingsRowPadX)
+            wrapMode: Text.WordWrap
+        }
     }
 }

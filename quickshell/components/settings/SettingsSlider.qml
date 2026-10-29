@@ -24,7 +24,7 @@ Item {
         width: parent.width
         height: Theme.settingsSliderH
         radius: height / 2
-        color: Theme.settingsCardAlt
+        color: Theme.settingsTrack
         antialiasing: true
 
         Rectangle {

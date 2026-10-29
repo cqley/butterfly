@@ -5,12 +5,13 @@ import Quickshell.Widgets
 Item {
     id: popup
     property bool shown: Settings.open
+    readonly property bool alive: pop.value > 0.001 || popup.shown
 
     width: Theme.settingsW
     height: Theme.settingsH
     x: parent ? Math.round((parent.width - width) / 2) : 0
     y: parent ? Math.round((parent.height - height) / 2) : 0
-    visible: opacity > 0.001 || popup.shown
+    visible: popup.alive
     transformOrigin: Item.Center
     scale: Theme.settingsScaleFrom + (1 - Theme.settingsScaleFrom) * pop.value
     opacity: Math.max(0, Math.min(1, pop.value))
@@ -41,7 +42,7 @@ Item {
         id: shell
         anchors.fill: parent
         radius: Theme.settingsRadius
-        color: Theme.bg
+        color: Qt.rgba(Theme.settingsBg.r, Theme.settingsBg.g, Theme.settingsBg.b, Theme.settingsBgOpacity)
         border.width: Theme.settingsBorderWidth
         border.color: Qt.rgba(1, 1, 1, Theme.settingsBorderOpacity)
 
@@ -157,13 +158,12 @@ Item {
 
             Rectangle {
                 anchors.right: parent.right
-                y: stage.activeFlick.visibleArea.yPosition * stage.activeFlick.height
+                y: Math.round(stage.activeFlick.visibleArea.yPosition * stage.activeFlick.height)
                 width: Theme.settingsScrollW
-                height: stage.activeFlick.visibleArea.heightRatio * stage.activeFlick.height
+                height: Math.round(stage.activeFlick.visibleArea.heightRatio * stage.activeFlick.height)
                 radius: width / 2
-                color: Theme.settingsCardAlt
-                opacity: stage.activeFlick.visibleArea.heightRatio < 1 ? Theme.dimMuted : 0
-                visible: opacity > 0.01
+                color: Theme.settingsScroll
+                visible: stage.activeFlick.visibleArea.heightRatio < 1
                 antialiasing: true
             }
         }
