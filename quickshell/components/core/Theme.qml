@@ -666,4 +666,60 @@ Singleton {
     readonly property int visFps: 60
     readonly property int visNoiseReduction: 77
     readonly property real visLerp: 0.3
+
+    // shadow
+    readonly property color shadowColor: "#000000"
+    readonly property real shadowOpacity: 0.55
+    readonly property int shadowBlur: 36
+    readonly property int shadowLayers: 6
+    readonly property int shadowOffsetY: 10
+
+    // settings
+    readonly property int settingsW: 630
+    readonly property int settingsH: 430
+    readonly property int settingsRadius: 28
+    readonly property int settingsPad: 16
+    readonly property int settingsCardRadius: settingsRadius - settingsPad
+    readonly property int settingsSidebarW: 184
+    readonly property int settingsGap: 14
+    readonly property int settingsBorderWidth: pillBorderWidth
+    readonly property real settingsBorderOpacity: pillBorderOpacity
+    readonly property color settingsCard: chip
+    readonly property color settingsCardAlt: tile
+    readonly property color settingsDivider: Qt.rgba(1, 1, 1, 0.07)
+    readonly property int settingsRowH: 40
+    readonly property int settingsRowPadX: 14
+    readonly property int settingsSectionGap: 20
+    readonly property int settingsSidebarItemH: 38
+    readonly property int settingsSidebarIconD: 28
+    readonly property int settingsSidebarPadX: 10
+    readonly property int settingsSidebarGap: 2
+    readonly property int settingsHeaderIconD: 56
+    readonly property int settingsHeaderGap: 10
+    readonly property int settingsTitlePx: fs(18)
+    readonly property int settingsSubtitlePx: fs(11)
+    readonly property int settingsSectionPx: fs(10)
+    readonly property int settingsLabelPx: fs(12)
+    readonly property int settingsValuePx: fs(12)
+    readonly property int settingsSidebarPx: fs(12)
+    readonly property int settingsScrollW: 3
+    readonly property int settingsScrollPad: 6
+    readonly property real settingsScaleFrom: 0.94
+    readonly property int settingsRiseOffset: 10
+    readonly property int settingsPopDuration: speed
+    readonly property real settingsPopResponse: springResponse
+    readonly property real settingsPopDamping: springDamping
+    readonly property int settingsSwapDuration: 140
+    readonly property int settingsSwapSlide: 8
+    readonly property int settingsToggleW: 34
+    readonly property int settingsToggleH: 20
+    readonly property int settingsToggleKnob: 16
+    readonly property int settingsDotD: 16
+    readonly property int settingsDotGap: 10
+    readonly property int settingsDotRingPad: 3
+    readonly property int settingsSliderH: 4
+    readonly property int settingsSliderKnobD: 14
+    readonly property int settingsFieldH: 26
+    readonly property int settingsFieldW: 140
+    readonly property int settingsArrowSize: 8
 }

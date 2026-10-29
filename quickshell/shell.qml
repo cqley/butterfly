@@ -4,6 +4,7 @@ import QtQuick
 import "components/core"
 import "components/pill"
 import "components/screenshot"
+import "components/settings"
 
 Scope {
     readonly property bool probing: Probe.on
@@ -50,6 +51,50 @@ Scope {
                 WlrLayershell.keyboardFocus: modal ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
                 Pill { id: pill }
+            }
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        Scope {
+            required property var modelData
+
+            PanelWindow {
+                id: setWin
+                readonly property bool here: Settings.open && Settings.screenName === modelData.name
+
+                screen: modelData
+                anchors {
+                    top: true
+                    bottom: true
+                    left: true
+                    right: true
+                }
+                exclusionMode: ExclusionMode.Ignore
+                color: "transparent"
+                mask: setWin.here ? openMask : closedMask
+                WlrLayershell.layer: WlrLayer.Overlay
+                WlrLayershell.keyboardFocus: setWin.here ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+                property var openMask: Region { width: setWin.width; height: setWin.height }
+                property var closedMask: Region {}
+
+                Item {
+                    anchors.fill: parent
+
+                    TapHandler {
+                        enabled: setWin.here
+                        onTapped: p => {
+                            const point = settingsPopup.mapFromItem(parent, p.position)
+                            if (!settingsPopup.contains(point))
+                                Modal.dismiss()
+                        }
+                    }
+
+                    SettingsWindow { id: settingsPopup }
+                }
             }
         }
     }
