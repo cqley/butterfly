@@ -119,9 +119,6 @@ Singleton {
     readonly property real feedbackPressScale: 0.97
     readonly property real feedbackFocusBorder: 1
     readonly property int ease: Easing.OutCubic
-    readonly property string motionStyle: cfg("motionStyle", "spring")
-    readonly property bool motionReduce: cfg("motionReduce", false)
-    readonly property int motionReduceDuration: fast
     readonly property real springResponse: cfg("springResponse", 0.26)
     readonly property real springDamping: cfg("springDamping", 1)
     readonly property real springEps: 0.1
@@ -202,7 +199,6 @@ Singleton {
     readonly property int recordOffsetX: 0
     readonly property int recordOffsetY: 0
     readonly property int clockGap: cfg("clockGap", 4)
-    readonly property int idlePopDuration: speed
     readonly property real idlePopResponse: springResponse
     readonly property real idlePopDamping: springDamping
     readonly property int slotHit: 6
@@ -229,7 +225,6 @@ Singleton {
     readonly property real batBoltYOffset: 0.1
     readonly property real batPopScale: slotScale
     readonly property real batBoltScale: 0.75
-    readonly property int batBoltDuration: 140
     readonly property real batBoltResponse: springResponse
     readonly property real batBoltDamping: springDamping
     readonly property color batRed: "#ff3b30"
@@ -626,7 +621,6 @@ Singleton {
     // island
     readonly property string islandMode: cfg("islandMode", "popout")
     readonly property int islandDuration: 200
-    readonly property int islandEase: Easing.OutQuad
     readonly property real islandResponse: springResponse
     readonly property real islandDamping: springDamping
     readonly property real islandDropResponse: islandResponse
@@ -753,11 +747,13 @@ Singleton {
     readonly property string settingsMotionPath: "M3 12C5 6 7 6 9 12C11 18 13 18 15 12C17 6 19 6 21 12"
     readonly property real settingsScaleFrom: 0.94
     readonly property int settingsRiseOffset: 10
-    readonly property int settingsPopDuration: speed
     readonly property real settingsPopResponse: springResponse
     readonly property real settingsPopDamping: springDamping
-    readonly property int settingsSwapDuration: 140
-    readonly property int settingsSwapSlide: 8
+    readonly property real settingsMoveResponse: 0.2
+    readonly property real settingsMoveDamping: springDamping
+    readonly property real settingsSwapResponse: 0.3
+    readonly property real settingsSwapDamping: springDamping
+    readonly property int settingsSwapSlide: 14
     readonly property int settingsToggleW: 34
     readonly property int settingsToggleH: 20
     readonly property int settingsToggleKnob: 16

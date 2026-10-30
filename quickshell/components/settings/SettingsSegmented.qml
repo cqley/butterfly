@@ -39,17 +39,22 @@ Rectangle {
         focused: root.activeFocus
     }
 
+    Spring {
+        id: thumb
+        target: root.current
+        response: Theme.settingsMoveResponse
+        damping: Theme.settingsMoveDamping
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
+    }
+
     Rectangle {
-        x: root.segW * root.current
+        x: root.segW * thumb.value
         width: root.segW
         height: parent.height
         radius: parent.radius
         color: Theme.settingsTrack
         antialiasing: true
-
-        Behavior on x {
-            NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
-        }
     }
 
     Row {

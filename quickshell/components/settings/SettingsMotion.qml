@@ -3,28 +3,12 @@ import QtQuick
 
 Column {
     id: root
-    readonly property var styles: ["spring", "classic"]
     readonly property var modes: ["popout", "classic"]
-    readonly property string springNote: Theme.motionStyle === "spring" ? "" : "spring style only"
 
     width: parent ? parent.width : 0
     spacing: Theme.settingsGroupGap
 
     SettingsGroup {
-        SettingsRow {
-            label: "animation style"
-            token: "motionStyle"
-
-            SettingsSegmented {
-                options: ["new (spring)", "classic"]
-                current: Math.max(0, root.styles.indexOf(Theme.motionStyle))
-                onPicked: i => {
-                    Cfg.set("motionStyle", root.styles[i])
-                    Cfg.flush()
-                }
-            }
-        }
-
         SettingsRow {
             label: "island interaction"
             note: "click to open a panel, or open on hover"
@@ -35,20 +19,6 @@ Column {
                 current: Math.max(0, root.modes.indexOf(Theme.islandMode))
                 onPicked: i => {
                     Cfg.set("islandMode", root.modes[i])
-                    Cfg.flush()
-                }
-            }
-        }
-
-        SettingsRow {
-            label: "reduce motion"
-            note: "collapses every transition to a short fade"
-            token: "motionReduce"
-
-            SettingsToggle {
-                checked: Theme.motionReduce
-                onToggled: on => {
-                    Cfg.set("motionReduce", on)
                     Cfg.flush()
                 }
             }
@@ -66,7 +36,6 @@ Column {
     SettingsGroup {
         SettingsRow {
             label: "response"
-            note: root.springNote
             token: "springResponse"
             value: Theme.springResponse.toFixed(2) + " s"
 
@@ -82,7 +51,6 @@ Column {
 
         SettingsRow {
             label: "damping"
-            note: root.springNote
             token: "springDamping"
             value: Theme.springDamping.toFixed(2)
 
@@ -102,7 +70,7 @@ Column {
     SettingsGroup {
         SettingsRow {
             label: "transition"
-            note: "classic easing duration, and the fallback when springs are off"
+            note: "panel and window transitions"
             token: "speed"
             value: Theme.speed + " ms"
 

@@ -238,8 +238,6 @@ Item {
         return root.classicHot ? (root.media ? tune.y + tune.height + Theme.pad : Theme.openH) : Theme.h
     }
 
-    readonly property int islandResizeDuration: root.popout ? Theme.islandDuration : Theme.speed
-    readonly property int islandResizeEase: root.popout ? Theme.islandEase : Theme.ease
     readonly property real idleCenterDrop: dropMotion.value
     readonly property real bodyDrop: Theme.gap + (root.popout && islandPop.popped ? Theme.islandPopDrop : 0)
 
@@ -248,8 +246,6 @@ Item {
         target: root.targetW
         response: Theme.islandResponse
         damping: Theme.islandDamping
-        duration: root.islandResizeDuration
-        easing: root.islandResizeEase
         epsilon: Theme.settleEps
     }
 
@@ -258,8 +254,6 @@ Item {
         target: root.targetH
         response: Theme.islandResponse
         damping: Theme.islandDamping
-        duration: root.islandResizeDuration
-        easing: root.islandResizeEase
         epsilon: Theme.settleEps
     }
 
@@ -268,8 +262,6 @@ Item {
         target: root.bodyDrop
         response: Theme.islandDropResponse
         damping: Theme.islandDropDamping
-        duration: root.islandResizeDuration
-        easing: root.islandResizeEase
         epsilon: Theme.settleEps
     }
 
@@ -278,8 +270,6 @@ Item {
         target: root.popout && islandPop.popped ? Theme.islandPopH / 2 : 0
         response: Theme.islandResponse
         damping: Theme.islandDamping
-        duration: root.islandResizeDuration
-        easing: root.islandResizeEase
         epsilon: Theme.settleEps
     }
 
@@ -496,8 +486,6 @@ Item {
             target: idle.active ? 1 : 0
             response: Theme.idlePopResponse
             damping: Theme.idlePopDamping
-            duration: Theme.idlePopDuration
-            easing: Theme.ease
             epsilon: Theme.springUnitEps
             rest: Theme.springUnitStop
         }
@@ -534,8 +522,6 @@ Item {
                         target: clockFade.active ? 1 : 0
                         response: Theme.idlePopResponse
                         damping: Theme.idlePopDamping
-                        duration: Theme.idlePopDuration
-                        easing: Theme.ease
                         epsilon: Theme.springUnitEps
                         rest: Theme.springUnitStop
                     }
@@ -571,8 +557,6 @@ Item {
                         target: visFade.active ? 1 : 0
                         response: Theme.idlePopResponse
                         damping: Theme.idlePopDamping
-                        duration: Theme.idlePopDuration
-                        easing: Theme.ease
                         epsilon: Theme.springUnitEps
                         rest: Theme.springUnitStop
                     }

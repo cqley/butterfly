@@ -17,6 +17,17 @@ Item {
     height: Theme.settingsSliderKnobD
     activeFocusOnTab: true
 
+    onRatioChanged: if (drag.pressed) pos.land(root.ratio)
+
+    Spring {
+        id: pos
+        target: root.ratio
+        response: Theme.settingsMoveResponse
+        damping: Theme.settingsMoveDamping
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
+    }
+
     function quantize(v) {
         const clamped = Math.max(root.from, Math.min(root.to, v))
         if (root.step <= 0)
@@ -66,7 +77,7 @@ Item {
         antialiasing: true
 
         Rectangle {
-            width: parent.width * root.ratio
+            width: parent.width * pos.value
             height: parent.height
             radius: height / 2
             color: Theme.accent
@@ -75,7 +86,7 @@ Item {
     }
 
     Rectangle {
-        x: root.ratio * (root.width - width)
+        x: pos.value * (root.width - width)
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.settingsSliderKnobD
         height: Theme.settingsSliderKnobD

@@ -25,8 +25,6 @@ Item {
         target: popup.shown ? 1 : 0
         response: Theme.settingsPopResponse
         damping: Theme.settingsPopDamping
-        duration: Theme.settingsPopDuration
-        easing: Theme.ease
         epsilon: Theme.springUnitEps
         rest: Theme.springUnitStop
     }
@@ -66,6 +64,23 @@ Item {
                 width: Theme.settingsSidebarW
                 height: parent.height - 2 * Theme.settingsPad
                 focus: true
+
+                Rectangle {
+                    width: parent.width
+                    height: Theme.settingsSidebarItemH
+                    y: Math.round(mark.value)
+                    radius: Theme.settingsSidebarItemRadius
+                    color: Theme.settingsSelected
+                    antialiasing: true
+
+                    Spring {
+                        id: mark
+                        target: Settings.selected * (Theme.settingsSidebarItemH + Theme.settingsSidebarGap)
+                        response: Theme.settingsMoveResponse
+                        damping: Theme.settingsMoveDamping
+                        epsilon: Theme.settleEps
+                    }
+                }
 
                 Column {
                     width: parent.width
@@ -109,6 +124,15 @@ Item {
 
                     Component.onCompleted: stage.aCategory = Settings.categories[Settings.selected]
 
+                    Spring {
+                        id: swap
+                        target: stage.aFront ? 1 : 0
+                        response: Theme.settingsSwapResponse
+                        damping: Theme.settingsSwapDamping
+                        epsilon: Theme.springUnitEps
+                        rest: Theme.springUnitStop
+                    }
+
                     Connections {
                         target: Settings
                         function onSelectedChanged() {
@@ -127,17 +151,10 @@ Item {
                         anchors.bottom: parent.bottom
                         width: parent.width
                         category: stage.aCategory
-                        opacity: stage.aFront ? 1 : 0
-                        visible: opacity > 0
+                        opacity: swap.value
+                        visible: opacity > 0.001
                         enabled: stage.aFront
-                        x: stage.aFront ? 0 : Theme.settingsSwapSlide
-
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.settingsSwapDuration; easing.type: Theme.ease }
-                        }
-                        Behavior on x {
-                            NumberAnimation { duration: Theme.settingsSwapDuration; easing.type: Theme.ease }
-                        }
+                        x: Math.round((1 - swap.value) * Theme.settingsSwapSlide)
                     }
 
                     SettingsPageView {
@@ -146,17 +163,10 @@ Item {
                         anchors.bottom: parent.bottom
                         width: parent.width
                         category: stage.bCategory
-                        opacity: stage.aFront ? 0 : 1
-                        visible: opacity > 0
+                        opacity: 1 - swap.value
+                        visible: opacity > 0.001
                         enabled: !stage.aFront
-                        x: stage.aFront ? -Theme.settingsSwapSlide : 0
-
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.settingsSwapDuration; easing.type: Theme.ease }
-                        }
-                        Behavior on x {
-                            NumberAnimation { duration: Theme.settingsSwapDuration; easing.type: Theme.ease }
-                        }
+                        x: Math.round(-swap.value * Theme.settingsSwapSlide)
                     }
                 }
 

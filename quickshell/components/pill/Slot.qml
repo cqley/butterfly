@@ -22,8 +22,6 @@ Item {
         target: root.shown ? 1 : 0
         response: Theme.idlePopResponse
         damping: Theme.idlePopDamping
-        duration: Theme.idlePopDuration
-        easing: Theme.ease
         epsilon: Theme.springUnitEps
         rest: Theme.springUnitStop
     }

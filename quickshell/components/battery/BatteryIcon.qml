@@ -27,8 +27,6 @@ Item {
         target: root.active ? 1 : 0
         response: Theme.idlePopResponse
         damping: Theme.idlePopDamping
-        duration: Theme.idlePopDuration
-        easing: Theme.ease
         epsilon: Theme.springUnitEps
         rest: Theme.springUnitStop
     }
@@ -38,8 +36,6 @@ Item {
         target: root.pluggedIn ? 1 : 0
         response: Theme.batBoltResponse
         damping: Theme.batBoltDamping
-        duration: Theme.batBoltDuration
-        easing: Theme.ease
         epsilon: Theme.springUnitEps
         rest: Theme.springUnitStop
     }

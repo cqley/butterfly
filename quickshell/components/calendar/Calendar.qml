@@ -35,8 +35,6 @@ Fade {
         target: root.active ? 0 : root.slide
         response: Theme.islandContentResponse
         damping: Theme.islandContentDamping
-        duration: root.rise
-        easing: Theme.ease
     }
 
     ParallelAnimation {

@@ -42,18 +42,23 @@ Rectangle {
         focused: root.activeFocus
     }
 
+    Spring {
+        id: knob
+        target: root.checked ? 1 : 0
+        response: Theme.settingsMoveResponse
+        damping: Theme.settingsMoveDamping
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
+    }
+
     Rectangle {
-        x: root.checked ? root.width - width - root.gap : root.gap
+        x: root.gap + knob.value * (root.width - width - 2 * root.gap)
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.settingsToggleKnob
         height: Theme.settingsToggleKnob
         radius: width / 2
         color: Theme.fg
         antialiasing: true
-
-        Behavior on x {
-            NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
-        }
     }
 
     MouseArea {

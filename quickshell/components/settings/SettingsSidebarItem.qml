@@ -30,17 +30,6 @@ Item {
     }
 
     Rectangle {
-        anchors.fill: parent
-        radius: Theme.settingsSidebarItemRadius
-        color: root.selected ? Theme.settingsSelected : "transparent"
-        antialiasing: true
-
-        Behavior on color {
-            ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
-        }
-    }
-
-    Rectangle {
         id: iconBg
         x: Theme.settingsSidebarPadX
         y: Math.round((root.height - height) / 2)
@@ -51,7 +40,7 @@ Item {
         antialiasing: true
 
         Behavior on color {
-            ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
+            ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
         }
 
         Shape {

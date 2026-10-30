@@ -2,17 +2,13 @@ import QtQuick
 
 Item {
     id: root
-    property string style: Theme.motionStyle
     property real response: Theme.springResponse
     property real damping: Theme.springDamping
     property real epsilon: Theme.springEps
     property real rest: Theme.springStop
-    property int duration: Theme.speed
-    property int easing: Theme.ease
     property real target: 0
     property real value: 0
     property real velocity: 0
-    readonly property bool physical: root.style === "spring" && !Theme.motionReduce
     readonly property bool moving: drive.running
 
     function land(v) {
@@ -23,8 +19,7 @@ Item {
 
     function kick(v) {
         root.velocity += v
-        if (root.physical)
-            drive.start()
+        drive.start()
     }
 
     function step(dt) {
@@ -64,32 +59,9 @@ Item {
         root.velocity = v
     }
 
-    onTargetChanged: if (root.physical) drive.start()
-    onPhysicalChanged: {
-        if (root.physical && Math.abs(root.value - root.target) > root.epsilon)
-            drive.start()
-        else if (!root.physical)
-            root.velocity = 0
-    }
+    onTargetChanged: drive.start()
 
-    Component.onCompleted: if (root.physical) root.land(root.target)
-
-    Binding {
-        target: root
-        property: "value"
-        value: root.target
-        when: !root.physical
-        restoreMode: Binding.RestoreNone
-    }
-
-    Behavior on value {
-        enabled: !root.physical
-
-        NumberAnimation {
-            duration: Theme.motionReduce ? Theme.motionReduceDuration : root.duration
-            easing.type: Theme.motionReduce ? Easing.OutQuad : root.easing
-        }
-    }
+    Component.onCompleted: root.land(root.target)
 
     FrameAnimation {
         id: drive
