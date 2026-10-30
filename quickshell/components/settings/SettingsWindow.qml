@@ -103,9 +103,11 @@ Item {
                     anchors.rightMargin: Theme.settingsScrollPad
 
                     property bool aFront: true
-                    property var aCategory: Settings.categories[Settings.selected]
-                    property var bCategory: Settings.categories[Settings.selected]
+                    property var aCategory: null
+                    property var bCategory: null
                     readonly property var activeFlick: aFront ? viewA : viewB
+
+                    Component.onCompleted: stage.aCategory = Settings.categories[Settings.selected]
 
                     Connections {
                         target: Settings
@@ -126,6 +128,8 @@ Item {
                         width: parent.width
                         category: stage.aCategory
                         opacity: stage.aFront ? 1 : 0
+                        visible: opacity > 0
+                        enabled: stage.aFront
                         x: stage.aFront ? 0 : Theme.settingsSwapSlide
 
                         Behavior on opacity {
@@ -143,6 +147,8 @@ Item {
                         width: parent.width
                         category: stage.bCategory
                         opacity: stage.aFront ? 0 : 1
+                        visible: opacity > 0
+                        enabled: !stage.aFront
                         x: stage.aFront ? -Theme.settingsSwapSlide : 0
 
                         Behavior on opacity {
