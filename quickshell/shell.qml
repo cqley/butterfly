@@ -34,7 +34,7 @@ Scope {
 
             PanelWindow {
                 id: win
-                readonly property bool modal: Modal.any
+                readonly property bool modal: Modal.any && Modal.which !== "settings"
                 property var pillMask: Region { item: pill.hitTarget }
                 property var openMask: Region { width: win.width; height: win.height }
 

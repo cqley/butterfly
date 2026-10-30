@@ -95,7 +95,6 @@ Column {
             label: "reset everything to defaults"
             value: Cfg.count === 0 ? "nothing changed" : Cfg.count + " changed"
             showArrow: Cfg.count > 0
-            interactive: Cfg.count > 0
             onActivated: {
                 Cfg.clearAll()
                 Cfg.flush()

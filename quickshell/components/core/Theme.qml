@@ -707,6 +707,7 @@ Singleton {
     readonly property color settingsScroll: mix(settingsBg, fg, 0.18)
     readonly property color settingsTrack: mix(settingsBg, fg, 0.2)
     readonly property color settingsDivider: Qt.rgba(1, 1, 1, 0.07)
+    readonly property color settingsRowHover: Qt.rgba(1, 1, 1, 0.045)
     readonly property color settingsValueInk: mix(fg, settingsBg, 0.45)
     readonly property color settingsSectionInk: mix(fg, settingsBg, 0.5)
     readonly property int settingsRowH: 35

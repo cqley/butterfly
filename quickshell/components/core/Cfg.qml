@@ -9,9 +9,8 @@ Singleton {
     readonly property string path: home + "/.config/quickshell/settings.json"
     readonly property string shortPath: "~/.config/quickshell/settings.json"
     readonly property int settleMs: 400
-    readonly property int writeGuardMs: 1500
     property var v: ({})
-    property bool writing: false
+    property string mine: ""
     readonly property int count: Object.keys(v).length
 
     function has(key) {
@@ -51,9 +50,8 @@ Singleton {
 
     function flush() {
         settle.stop()
-        root.writing = true
-        guard.restart()
-        file.setText(JSON.stringify(root.v, null, 2) + "\n")
+        root.mine = JSON.stringify(root.v, null, 2) + "\n"
+        file.setText(root.mine)
     }
 
     function adopt(text) {
@@ -72,12 +70,6 @@ Singleton {
         onTriggered: root.flush()
     }
 
-    Timer {
-        id: guard
-        interval: root.writeGuardMs
-        onTriggered: root.writing = false
-    }
-
     FileView {
         id: file
         path: root.path
@@ -86,24 +78,9 @@ Singleton {
         watchChanges: true
         printErrors: false
 
-        onFileChanged: {
-            if (root.writing) {
-                root.writing = false
-                guard.stop()
-                return
-            }
-            reload()
-        }
+        onFileChanged: reload()
         onLoadFailed: root.v = ({})
-        onLoaded: root.adopt(text())
-        onSaved: {
-            root.writing = false
-            guard.stop()
-        }
-        onSaveFailed: {
-            root.writing = false
-            guard.stop()
-        }
+        onLoaded: if (!settle.running && text() !== root.mine) root.adopt(text())
     }
 
 }

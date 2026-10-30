@@ -11,7 +11,8 @@ Item {
     property string token: ""
     property bool showArrow: false
     property bool last: true
-    property bool interactive: showArrow
+    property bool hasActor: false
+    readonly property bool interactive: root.showArrow || root.hasActor
     readonly property bool modified: root.token !== "" && Cfg.has(root.token)
     signal activated
 
@@ -20,14 +21,80 @@ Item {
             Cfg.clear(root.token)
     }
 
+    function actor() {
+        const kids = slot.children
+        for (let i = 0; i < kids.length; i++)
+            if (typeof kids[i].rowActivate === "function")
+                return kids[i]
+        return null
+    }
+
+    function activate() {
+        if (root.showArrow) {
+            root.activated()
+            return
+        }
+        const a = root.actor()
+        if (a)
+            a.rowActivate()
+    }
+
     width: parent ? parent.width : 0
     height: Theme.settingsRowH + (root.note !== "" ? Theme.settingsNoteH : 0)
+
+    Component.onCompleted: root.hasActor = root.actor() !== null
 
     Keys.onPressed: e => {
         Settings.keyNav = true
         if (root.modified && (e.key === Qt.Key_Delete || e.key === Qt.Key_Backspace)) {
             root.reset()
             e.accepted = true
+        }
+    }
+
+    Item {
+        id: hit
+        anchors.fill: parent
+        activeFocusOnTab: root.interactive
+        enabled: root.interactive
+
+        Keys.onPressed: e => {
+            Settings.keyNav = true
+            if (e.key === Qt.Key_Space || e.key === Qt.Key_Return || e.key === Qt.Key_Enter) {
+                root.activate()
+                e.accepted = true
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Theme.settingsCardRadius
+            color: Theme.settingsRowHover
+            opacity: touch.containsMouse ? 1 : 0
+            antialiasing: true
+
+            Behavior on opacity {
+                NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+            }
+        }
+
+        SettingsFocus {
+            anchors.fill: parent
+            anchors.margins: Theme.settingsFocusPad
+            radius: Theme.settingsCardRadius
+            focused: hit.activeFocus
+        }
+
+        MouseArea {
+            id: touch
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                Settings.keyNav = false
+                hit.forceActiveFocus()
+                root.activate()
+            }
         }
     }
 
@@ -61,12 +128,17 @@ Item {
 
     Item {
         id: dot
-        width: root.modified ? Theme.settingsModHit : 0
+        width: root.token !== "" ? Theme.settingsModHit : 0
         height: Theme.settingsModHit
         anchors.right: slot.left
-        anchors.rightMargin: root.modified ? Theme.settingsModGap : 0
+        anchors.rightMargin: root.token !== "" ? Theme.settingsModGap : 0
         anchors.verticalCenter: parent.verticalCenter
-        visible: root.modified
+        enabled: root.modified
+        opacity: root.modified ? 1 : 0
+
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+        }
 
         Rectangle {
             anchors.centerIn: parent
@@ -137,38 +209,5 @@ Item {
         anchors.bottom: parent.bottom
         height: 1
         color: Theme.settingsDivider
-    }
-
-    Item {
-        id: hit
-        anchors.fill: parent
-        activeFocusOnTab: root.interactive
-        visible: root.interactive
-
-        Keys.onPressed: e => {
-            Settings.keyNav = true
-            if (e.key === Qt.Key_Space || e.key === Qt.Key_Return || e.key === Qt.Key_Enter) {
-                root.activated()
-                e.accepted = true
-            }
-        }
-
-        SettingsFocus {
-            anchors.fill: parent
-            anchors.margins: Theme.settingsFocusPad
-            radius: Theme.settingsCardRadius
-            focused: hit.activeFocus
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                Settings.keyNav = false
-                hit.forceActiveFocus()
-                root.activated()
-            }
-        }
     }
 }

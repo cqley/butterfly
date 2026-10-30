@@ -8,6 +8,10 @@ Rectangle {
 
     readonly property real gap: (height - Theme.settingsToggleKnob) / 2
 
+    function rowActivate() {
+        root.toggled(!root.checked)
+    }
+
     width: Theme.settingsToggleW
     height: Theme.settingsToggleH
     radius: height / 2
