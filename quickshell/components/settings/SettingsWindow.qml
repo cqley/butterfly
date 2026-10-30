@@ -153,8 +153,11 @@ Item {
                         category: stage.aCategory
                         opacity: swap.value
                         visible: opacity > 0.001
+                        z: stage.aFront ? 1 : 0
                         enabled: stage.aFront
                         x: Math.round((1 - swap.value) * Theme.settingsSwapSlide)
+
+                        onVisibleChanged: if (!visible) stage.aCategory = null
                     }
 
                     SettingsPageView {
@@ -165,8 +168,11 @@ Item {
                         category: stage.bCategory
                         opacity: 1 - swap.value
                         visible: opacity > 0.001
+                        z: stage.aFront ? 0 : 1
                         enabled: !stage.aFront
                         x: Math.round(-swap.value * Theme.settingsSwapSlide)
+
+                        onVisibleChanged: if (!visible) stage.bCategory = null
                     }
                 }
 

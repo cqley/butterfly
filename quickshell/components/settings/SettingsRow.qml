@@ -55,8 +55,9 @@ Item {
     Item {
         id: hit
         anchors.fill: parent
-        activeFocusOnTab: root.interactive
+        activeFocusOnTab: true
         enabled: root.interactive
+        visible: root.interactive
 
         Keys.onPressed: e => {
             Settings.keyNav = true
