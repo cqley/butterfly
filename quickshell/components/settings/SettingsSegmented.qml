@@ -7,12 +7,37 @@ Rectangle {
     property int current: 0
     signal picked(int index)
 
-    readonly property real segW: options.length ? width / options.length : 0
+    readonly property int n: options.length
+    readonly property real segW: n ? width / n : 0
 
-    height: Theme.settingsRowH - 10
-    radius: Theme.settingsCardRadius - 4
-    color: Theme.bg
+    function step(d) {
+        if (root.n <= 0)
+            return
+        root.picked(((root.current + d) % root.n + root.n) % root.n)
+    }
+
+    width: Theme.settingsSegW
+    height: Theme.settingsSegH
+    radius: Theme.settingsSegRadius
+    color: Theme.settingsSegBg
     antialiasing: true
+    activeFocusOnTab: true
+
+    Keys.onPressed: e => {
+        Settings.keyNav = true
+        if (e.key === Qt.Key_Left) {
+            root.step(-1)
+            e.accepted = true
+        } else if (e.key === Qt.Key_Right) {
+            root.step(1)
+            e.accepted = true
+        }
+    }
+
+    SettingsFocus {
+        radius: root.radius + Theme.settingsFocusPad
+        focused: root.activeFocus
+    }
 
     Rectangle {
         x: root.segW * root.current
@@ -34,25 +59,31 @@ Rectangle {
             model: root.options
 
             Item {
+                id: seg
                 required property string modelData
                 required property int index
+
                 width: root.segW
                 height: root.height
 
                 Txt {
                     anchors.centerIn: parent
-                    text: parent.modelData
+                    width: parent.width - Theme.settingsSegPadX
+                    text: seg.modelData
                     font.pixelSize: Theme.settingsLabelPx
-                    font.weight: root.current === index ? Font.DemiBold : Font.Normal
+                    font.weight: root.current === seg.index ? Font.DemiBold : Font.Normal
                     color: Theme.fg
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
                 }
 
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        root.current = index
-                        root.picked(index)
+                        Settings.keyNav = false
+            root.forceActiveFocus()
+                        root.picked(seg.index)
                     }
                 }
             }

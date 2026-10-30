@@ -7,22 +7,81 @@ Item {
     default property alias content: slot.data
     property string label: ""
     property string value: ""
+    property string note: ""
+    property string token: ""
     property bool showArrow: false
     property bool last: true
     property bool interactive: showArrow
-    signal activated()
+    readonly property bool modified: root.token !== "" && Cfg.has(root.token)
+    signal activated
+
+    function reset() {
+        if (root.token !== "")
+            Cfg.clear(root.token)
+    }
 
     width: parent ? parent.width : 0
-    height: Theme.settingsRowH
+    height: Theme.settingsRowH + (root.note !== "" ? Theme.settingsNoteH : 0)
 
-    Txt {
+    Keys.onPressed: e => {
+        Settings.keyNav = true
+        if (root.modified && (e.key === Qt.Key_Delete || e.key === Qt.Key_Backspace)) {
+            root.reset()
+            e.accepted = true
+        }
+    }
+
+    Column {
         anchors.left: parent.left
         anchors.leftMargin: Theme.settingsRowPadX
+        anchors.right: dot.left
+        anchors.rightMargin: Theme.settingsModGap
         anchors.verticalCenter: parent.verticalCenter
-        text: root.label
-        font.pixelSize: Theme.settingsLabelPx
-        font.weight: Font.Medium
-        color: Theme.fg
+        spacing: Theme.settingsNoteDrop
+
+        Txt {
+            width: parent.width
+            text: root.label
+            font.pixelSize: Theme.settingsLabelPx
+            font.weight: Font.Medium
+            color: Theme.fg
+            elide: Text.ElideRight
+        }
+
+        Txt {
+            visible: root.note !== ""
+            width: parent.width
+            text: root.note
+            font.pixelSize: Theme.settingsNotePx
+            font.weight: Font.Normal
+            color: Theme.settingsNoteInk
+            elide: Text.ElideRight
+        }
+    }
+
+    Item {
+        id: dot
+        width: root.modified ? Theme.settingsModHit : 0
+        height: Theme.settingsModHit
+        anchors.right: slot.left
+        anchors.rightMargin: root.modified ? Theme.settingsModGap : 0
+        anchors.verticalCenter: parent.verticalCenter
+        visible: root.modified
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: Theme.settingsModDot
+            height: Theme.settingsModDot
+            radius: width / 2
+            color: Theme.accent
+            antialiasing: true
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.reset()
+        }
     }
 
     Row {
@@ -80,11 +139,36 @@ Item {
         color: Theme.settingsDivider
     }
 
-    MouseArea {
+    Item {
+        id: hit
         anchors.fill: parent
-        enabled: root.interactive
-        hoverEnabled: root.interactive
-        cursorShape: root.interactive ? Qt.PointingHandCursor : Qt.ArrowCursor
-        onClicked: root.activated()
+        activeFocusOnTab: root.interactive
+        visible: root.interactive
+
+        Keys.onPressed: e => {
+            Settings.keyNav = true
+            if (e.key === Qt.Key_Space || e.key === Qt.Key_Return || e.key === Qt.Key_Enter) {
+                root.activated()
+                e.accepted = true
+            }
+        }
+
+        SettingsFocus {
+            anchors.fill: parent
+            anchors.margins: Theme.settingsFocusPad
+            radius: Theme.settingsCardRadius
+            focused: hit.activeFocus
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                Settings.keyNav = false
+                hit.forceActiveFocus()
+                root.activated()
+            }
+        }
     }
 }

@@ -26,8 +26,9 @@ Singleton {
     }
 
     onRealChanged: root.sync()
+    onConfigTextChanged: config.setText(root.configText)
 
-    function configText() {
+    readonly property string configText: {
         return "[general]\nbars = " + Theme.visBars + "\nframerate = " + Theme.visFps
             + "\nautosens = 1\nsensitivity = 100\nchannels = mono\n\n[input]\nmethod = pulse\nsource = auto"
             + "\n\n[output]\nmethod = raw\nraw_target = /dev/stdout\ndata_format = ascii\nascii_max_range = 100"
@@ -78,7 +79,7 @@ Singleton {
 
     Component.onCompleted: {
         Quickshell.execDetached(["mkdir", "-p", Quickshell.stateDir])
-        config.setText(root.configText())
+        config.setText(root.configText)
         detect.running = true
     }
 

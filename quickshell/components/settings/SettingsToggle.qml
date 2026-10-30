@@ -13,9 +13,29 @@ Rectangle {
     radius: height / 2
     color: root.checked ? Theme.accent : Theme.settingsTrack
     antialiasing: true
+    activeFocusOnTab: true
+
+    Keys.onPressed: e => {
+        Settings.keyNav = true
+        if (e.key === Qt.Key_Space || e.key === Qt.Key_Return || e.key === Qt.Key_Enter) {
+            root.toggled(!root.checked)
+            e.accepted = true
+        } else if (e.key === Qt.Key_Left && root.checked) {
+            root.toggled(false)
+            e.accepted = true
+        } else if (e.key === Qt.Key_Right && !root.checked) {
+            root.toggled(true)
+            e.accepted = true
+        }
+    }
 
     Behavior on color {
         ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
+    }
+
+    SettingsFocus {
+        radius: root.radius + Theme.settingsFocusPad
+        focused: root.activeFocus
     }
 
     Rectangle {
@@ -36,8 +56,9 @@ Rectangle {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         onClicked: {
-            root.checked = !root.checked
-            root.toggled(root.checked)
+            Settings.keyNav = false
+            root.forceActiveFocus()
+            root.toggled(!root.checked)
         }
     }
 }

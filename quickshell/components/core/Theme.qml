@@ -7,9 +7,9 @@ Singleton {
     id: root
 
     // core
-    readonly property string screen: "HDMI-A-1"
+    readonly property string screen: cfg("screen", "HDMI-A-1")
     readonly property string font: "Inter"
-    readonly property real fontScale: 1
+    readonly property real fontScale: cfg("fontScale", 1)
     readonly property var tabular: ({ "tnum": 1 })
     readonly property int fsXXS: fs(9)
     readonly property int fsXS: fs(10)
@@ -20,6 +20,12 @@ Singleton {
 
     function fs(px) {
         return Math.max(1, Math.round(px * fontScale))
+    }
+
+    function cfg(key, fallback) {
+        const store = Cfg.v
+        const x = store ? store[key] : undefined
+        return x === undefined || x === null ? fallback : x
     }
 
     readonly property var terminal: ["sh", "-c", 'for t in "$TERMINAL" alacritty kitty foot ghostty wezterm xterm; do command -v "$t" >/dev/null 2>&1 || continue; case $t in kitty) exec kitty "$@";; wezterm) exec wezterm start -- "$@";; *) exec "$t" -e "$@";; esac; done', "sh"]
@@ -61,7 +67,13 @@ Singleton {
     readonly property color fg: pal && pal.special ? pal.special.foreground : "#ffffff"
     readonly property color chip: mix(bg, fg, 0.11)
     readonly property color tile: mix(bg, fg, 0.172)
-    readonly property color accent: pal && pal.special && pal.special.accent ? pal.special.accent : "#f2b8e2"
+    readonly property color accentAuto: pal && pal.special && pal.special.accent ? pal.special.accent : "#f2b8e2"
+    readonly property string accentOverride: cfg("accent", "")
+    readonly property color accent: isHex(accentOverride) ? accentOverride : accentAuto
+
+    function isHex(s) {
+        return /^#[0-9a-fA-F]{6}$/.test(String(s || ""))
+    }
     readonly property color white: "#ffffff"
     readonly property color red: "#e5534b"
     readonly property color redSoft: mix(red, white, 0.35)
@@ -89,7 +101,7 @@ Singleton {
     }
 
     // motion
-    readonly property int speed: 300
+    readonly property int speed: cfg("speed", 300)
     readonly property int fade: 60
     readonly property int rise: speed
     readonly property int fall: fade
@@ -100,18 +112,18 @@ Singleton {
     readonly property bool holdPill: false
     readonly property bool holdPanels: true
     readonly property bool blockSwap: false
-    readonly property int glide: 240
+    readonly property int glide: cfg("glide", 240)
     readonly property int fast: 60
     readonly property int feedbackDuration: 120
     readonly property real feedbackHoverScale: 1.03
     readonly property real feedbackPressScale: 0.97
     readonly property real feedbackFocusBorder: 1
     readonly property int ease: Easing.OutCubic
-    readonly property string motionStyle: "spring"
-    readonly property bool motionReduce: false
+    readonly property string motionStyle: cfg("motionStyle", "spring")
+    readonly property bool motionReduce: cfg("motionReduce", false)
     readonly property int motionReduceDuration: fast
-    readonly property real springResponse: 0.26
-    readonly property real springDamping: 1
+    readonly property real springResponse: cfg("springResponse", 0.26)
+    readonly property real springDamping: cfg("springDamping", 1)
     readonly property real springEps: 0.1
     readonly property real springStop: 3
     readonly property real springUnitEps: 0.002
@@ -158,13 +170,13 @@ Singleton {
     readonly property int emptyPad: 8
 
     // pill
-    readonly property int gap: 6
-    readonly property int pad: 16
-    readonly property int w: 64
-    readonly property int h: 28
+    readonly property int gap: cfg("gap", 6)
+    readonly property int pad: cfg("pad", 16)
+    readonly property int w: cfg("w", 64)
+    readonly property int h: cfg("h", 28)
     readonly property int openW: 252
     readonly property int openH: 80
-    readonly property int radius: 28
+    readonly property int radius: cfg("radius", 28)
     readonly property int pillBorderWidth: 1
     readonly property real pillBorderOpacity: 0.08
     readonly property int pillHaloWidth: 1
@@ -174,7 +186,8 @@ Singleton {
     readonly property int zone: gap + h
 
     // idle row
-    readonly property int clockPx: fs(14)
+    readonly property int clockPx: fs(cfg("clockPx", 14))
+    readonly property string clockFormat: cfg("clockFormat", "HH:mm")
     readonly property int idleOffsetX: 0
     readonly property int idleOffsetY: 0
     readonly property int idleTopOffsetY: 0
@@ -188,7 +201,7 @@ Singleton {
     readonly property int micOffsetY: 0
     readonly property int recordOffsetX: 0
     readonly property int recordOffsetY: 0
-    readonly property int clockGap: 4
+    readonly property int clockGap: cfg("clockGap", 4)
     readonly property int idlePopDuration: speed
     readonly property real idlePopResponse: springResponse
     readonly property real idlePopDamping: springDamping
@@ -225,10 +238,10 @@ Singleton {
     readonly property color batOutline: "#ffffff"
     readonly property color batBoltColor: "#ffffff"
     readonly property color batBoltOutline: "#000000"
-    readonly property real batRedAt: 0.15
-    readonly property real batYellowAt: 0.25
-    readonly property bool batRingEnabled: true
-    readonly property real batRingWidth: 2.0
+    readonly property real batRedAt: cfg("batRedAt", 0.15)
+    readonly property real batYellowAt: cfg("batYellowAt", 0.25)
+    readonly property bool batRingEnabled: cfg("batRingEnabled", true)
+    readonly property real batRingWidth: cfg("batRingWidth", 2.0)
     readonly property int batRingGap: 0
     readonly property color batRingTrack: Qt.rgba(accent.r, accent.g, accent.b, 0.22)
     readonly property int batRingRise: idleRise
@@ -239,7 +252,7 @@ Singleton {
     }
 
     // notifications
-    readonly property int noteW: 264
+    readonly property int noteW: cfg("noteW", 264)
     readonly property int noteH: 48
     readonly property int noteOpenW: 300
     readonly property int noteTop: (noteH - noteIcon) / 2
@@ -248,7 +261,7 @@ Singleton {
     readonly property int noteIconX: 10
     readonly property int noteTextGap: 10
     readonly property int noteTextRight: 14
-    readonly property int noteBodyLines: 1
+    readonly property int noteBodyLines: cfg("noteBodyLines", 1)
     readonly property int noteOpenBodyLines: 3
     readonly property int noteLineGap: 1
     readonly property real noteSigScale: 0.8
@@ -260,13 +273,13 @@ Singleton {
     readonly property int noteMoonGlyph: 15
     readonly property int noteShotGlyph: 16
     readonly property int noteRecGlyph: 18
-    readonly property int dwell: 5000
-    readonly property int dwellCritical: 10000
+    readonly property int dwell: cfg("dwell", 5000)
+    readonly property int dwellCritical: cfg("dwellCritical", 10000)
     readonly property int dwellMax: 15000
     readonly property int dwellMin: 500
     readonly property int dwellNever: 5000
     readonly property int notificationQueueMax: 32
-    readonly property int notificationHistoryMax: 50
+    readonly property int notificationHistoryMax: cfg("notificationHistoryMax", 50)
 
     // notification center
     readonly property int centerW: 320
@@ -276,7 +289,7 @@ Singleton {
     readonly property int centerBtnGap: 8
     readonly property int centerGlyph: 15
     readonly property int centerRowH: 56
-    readonly property int centerRows: 3
+    readonly property int centerRows: cfg("centerRows", 3)
     readonly property int centerAxis: selInset + (centerRowH - selGap) / 2
     readonly property int centerIconX: centerAxis - noteIcon / 2
     readonly property int centerHeadInset: centerAxis - centerBtn / 2
@@ -300,11 +313,11 @@ Singleton {
     readonly property color dndGlyph: white
 
     // launcher
-    readonly property int launchW: 340
+    readonly property int launchW: cfg("launchW", 340)
     readonly property int launchRadius: 24
     readonly property int lpad: 8
-    readonly property int rowH: 38
-    readonly property int rows: 5
+    readonly property int rowH: cfg("rowH", 38)
+    readonly property int rows: cfg("rows", 5)
     readonly property int searchH: 32
     readonly property real launchSearchOpacity: 0.22
     readonly property real launchSearchFocusOpacity: 0.42
@@ -323,7 +336,7 @@ Singleton {
     readonly property int launchSearchTextRight: 12
     readonly property int launchIconX: 10
     readonly property int launchIconBox: 24
-    readonly property int launchIconSize: 16
+    readonly property int launchIconSize: cfg("launchIconSize", 16)
     readonly property int launchIconSourceSize: 32
     readonly property int launchIconRadius: 10
     readonly property int launchIconBorderWidth: surfaceBorderWidth
@@ -409,10 +422,10 @@ Singleton {
     readonly property string passChar: "∙"
 
     // media
-    readonly property int mediaPillW: 324
+    readonly property int mediaPillW: cfg("mediaPillW", 324)
     readonly property int mediaW: mediaPillW - 2 * pad
     readonly property int mediaGap: 12
-    readonly property int artS: 88
+    readonly property int artS: cfg("artS", 88)
     readonly property int ctlS: 30
     readonly property int playS: 30
     readonly property int glyphS: 20
@@ -530,7 +543,7 @@ Singleton {
     readonly property int mixerPad: 16
     readonly property int mixerColW: 54
     readonly property int mixerColGap: 16
-    readonly property int mixerTrackH: 96
+    readonly property int mixerTrackH: cfg("mixerTrackH", 96)
     readonly property int mixerTrackW: 3
     readonly property real mixerKnobDim: 0.85
     readonly property int mixerHandleW: 12
@@ -540,10 +553,10 @@ Singleton {
     readonly property int mixerGap: 10
     readonly property int mixerPctH: fsS + 2
     readonly property int mixerLabelH: fsXXS + 2
-    readonly property bool mixerPct: false
-    readonly property bool mixerApps: false
-    readonly property bool mixerLabels: Quickshell.screens.length > 1
-    readonly property int mixerStep: 5
+    readonly property bool mixerPct: cfg("mixerPct", false)
+    readonly property bool mixerApps: cfg("mixerApps", false)
+    readonly property bool mixerLabels: cfg("mixerLabels", Quickshell.screens.length > 1)
+    readonly property int mixerStep: cfg("mixerStep", 5)
     readonly property int mixerFineStep: 1
     readonly property int mixerBigStep: 10
     readonly property real mixerResponse: springResponse
@@ -590,7 +603,7 @@ Singleton {
     readonly property string recDotPath: "M12 4A8 8 0 1 0 12 20A8 8 0 1 0 12 4Z"
 
     // calendar
-    readonly property int weekCells: 9
+    readonly property int weekCells: cfg("weekCells", 9)
     readonly property int weekLead: 1
     readonly property int weekDays: 7
     readonly property int weekGap: 4
@@ -598,8 +611,8 @@ Singleton {
     readonly property real weekFadeMin: 0.12
     readonly property real weekFadeSpan: 4.7
     readonly property real weekFadeCurve: 1
-    readonly property real todayFill: 0.15
-    readonly property real outMonth: 0.25
+    readonly property real todayFill: cfg("todayFill", 0.15)
+    readonly property real outMonth: cfg("outMonth", 0.25)
     readonly property int calSlide: 10
     readonly property int calGap: 6
     readonly property int calTitleX: 4
@@ -611,7 +624,7 @@ Singleton {
     readonly property int gridW: cellW * 7
 
     // island
-    readonly property string islandMode: "popout"
+    readonly property string islandMode: cfg("islandMode", "popout")
     readonly property int islandDuration: 200
     readonly property int islandEase: Easing.OutQuad
     readonly property real islandResponse: springResponse
@@ -620,14 +633,14 @@ Singleton {
     readonly property real islandDropDamping: islandDamping
     readonly property real islandContentResponse: islandResponse
     readonly property real islandContentDamping: springDamping
-    readonly property int islandPopW: 12
-    readonly property int islandPopH: 6
-    readonly property int islandPopDrop: 5
-    readonly property int islandHitGrow: 4
+    readonly property int islandPopW: cfg("islandPopW", 12)
+    readonly property int islandPopH: cfg("islandPopH", 6)
+    readonly property int islandPopDrop: cfg("islandPopDrop", 5)
+    readonly property int islandHitGrow: cfg("islandHitGrow", 4)
     readonly property int islandContentSlide: 6
     readonly property int islandContentStage: 40
     readonly property int islandWeekCells: weekCells
-    readonly property int islandWeekLead: 0
+    readonly property int islandWeekLead: cfg("islandWeekLead", 0)
     readonly property real islandWeekFadeSpan: 5.4
     readonly property real islandWeekFadeMin: 0.08
     readonly property real islandWeekFadeCurve: 2
@@ -643,11 +656,11 @@ Singleton {
     readonly property int islandMediaH: artS + 2 * islandMediaPad
 
     // visualizer
-    readonly property int visBars: 6
-    readonly property int visBarW: 3
+    readonly property int visBars: cfg("visBars", 6)
+    readonly property int visBarW: cfg("visBarW", 3)
     readonly property int visGap: 3
     readonly property int visMinH: 4
-    readonly property int visMaxH: 14
+    readonly property int visMaxH: cfg("visMaxH", 14)
     readonly property int visIdleH: 4
     readonly property int visCycle: 900
     readonly property real visFreqStep: 0.35
@@ -663,18 +676,18 @@ Singleton {
     readonly property real visDim: 0.3
     readonly property int visTint: speed
     readonly property int visOffDelay: 8000
-    readonly property int visFps: 60
+    readonly property int visFps: cfg("visFps", 60)
     readonly property int visNoiseReduction: 77
     readonly property real visLerp: 0.3
 
     // shadow
-    readonly property bool shadowOn: true
+    readonly property bool shadowOn: cfg("shadowOn", true)
     readonly property color shadowColor: "#000000"
-    readonly property real shadowOpacity: 0.5
-    readonly property int shadowBlur: 60
+    readonly property real shadowOpacity: cfg("shadowOpacity", 0.5)
+    readonly property int shadowBlur: cfg("shadowBlur", 60)
     readonly property int shadowSpread: 4
     readonly property int shadowOffsetX: 0
-    readonly property int shadowOffsetY: 14
+    readonly property int shadowOffsetY: cfg("shadowOffsetY", 14)
 
     // settings
     readonly property int settingsW: 630
@@ -686,7 +699,7 @@ Singleton {
     readonly property int settingsGap: 28
     readonly property int settingsBorderWidth: pillBorderWidth
     readonly property real settingsBorderOpacity: pillBorderOpacity
-    readonly property real settingsDarken: 0.45
+    readonly property real settingsDarken: cfg("settingsDarken", 0.45)
     readonly property color settingsBg: Qt.rgba(bg.r * (1 - settingsDarken), bg.g * (1 - settingsDarken), bg.b * (1 - settingsDarken), 1)
     readonly property real settingsBgOpacity: 1
     readonly property color settingsCard: mix(settingsBg, fg, 0.07)
@@ -728,7 +741,13 @@ Singleton {
     readonly property int settingsArrowSize: 13
     readonly property color settingsArrowInk: settingsValueInk
     readonly property string settingsArrowPath: "M5 12H19M13 6L19 12L13 18"
-    readonly property string settingsGeneralPath: "M21 4H14M10 4H3M21 12H12M8 12H3M21 20H16M12 20H3M14 2V6M8 10V14M16 18V22"
+    readonly property string settingsSlidersPath: "M21 4H14M10 4H3M21 12H12M8 12H3M21 20H16M12 20H3M14 2V6M8 10V14M16 18V22"
+    readonly property string settingsIslandPath: "M7.5 7H16.5A5 5 0 0 1 16.5 17H7.5A5 5 0 0 1 7.5 7Z"
+    readonly property string settingsClockPath: "M12 3A9 9 0 1 1 12 21A9 9 0 1 1 12 3ZM12 7.5V12L15.5 14.5"
+    readonly property string settingsMediaPath: "M8 5L19 12L8 19Z"
+    readonly property string settingsLauncherPath: "M4 4H10.5V10.5H4ZM13.5 4H20V10.5H13.5ZM4 13.5H10.5V20H4ZM13.5 13.5H20V20H13.5Z"
+    readonly property string settingsBellPath: "M18 8.5A6 6 0 0 0 6 8.5C6 15 3 17 3 17H21S18 15 18 8.5ZM13.7 20.5A2 2 0 0 1 10.3 20.5"
+    readonly property string settingsSystemPath: "M3 5H21V16H3ZM8.5 20H15.5M12 16V20"
     readonly property string settingsStylePath: "M9.06 11.9L17.13 3.84A2.85 2.85 0 1 1 21.16 7.87L13.1 15.95M7.07 14.94C5.41 14.94 4.07 16.29 4.07 17.96C4.07 19.29 1.57 19.48 2.07 19.98C3.15 21.08 4.56 22 6.07 22C8.27 22 10.07 20.2 10.07 17.96A3.01 3.01 0 0 0 7.07 14.94Z"
     readonly property string settingsMotionPath: "M3 12C5 6 7 6 9 12C11 18 13 18 15 12C17 6 19 6 21 12"
     readonly property real settingsScaleFrom: 0.94
@@ -749,4 +768,23 @@ Singleton {
     readonly property int settingsFieldH: 26
     readonly property int settingsFieldW: 140
     readonly property color settingsFieldBg: mix(settingsBg, fg, 0.13)
+    readonly property int settingsSliderW: 120
+    readonly property int settingsSegW: 190
+    readonly property int settingsSegH: settingsRowH - 10
+    readonly property int settingsSegRadius: settingsCardRadius - 4
+    readonly property int settingsSegPadX: 10
+    readonly property color settingsSegBg: mix(settingsBg, fg, 0.04)
+    readonly property real settingsFocusWidth: 1.5
+    readonly property int settingsFocusPad: 3
+    readonly property int settingsFocusRadius: 7
+    readonly property color settingsFocusInk: accent
+    readonly property int settingsModDot: 5
+    readonly property int settingsModHit: 16
+    readonly property int settingsModGap: 8
+    readonly property int settingsNoteH: 13
+    readonly property int settingsNotePx: fs(10)
+    readonly property color settingsNoteInk: settingsSectionInk
+    readonly property int settingsNoteDrop: 2
+    readonly property real settingsStepTiny: 0.01
+    readonly property real settingsStepKey: 0.05
 }

@@ -7,10 +7,27 @@ Item {
     property bool selected: false
     property string icon: ""
     property string label: ""
-    signal activated()
+    signal activated
+    signal stepped(int delta)
 
     width: parent ? parent.width : 0
     height: Theme.settingsSidebarItemH
+    activeFocusOnTab: true
+
+    Keys.onPressed: e => {
+        Settings.keyNav = true
+        const k = e.key
+        if (k === Qt.Key_Down || k === Qt.Key_J) {
+            root.stepped(1)
+            e.accepted = true
+        } else if (k === Qt.Key_Up || k === Qt.Key_K) {
+            root.stepped(-1)
+            e.accepted = true
+        } else if (k === Qt.Key_Space || k === Qt.Key_Return || k === Qt.Key_Enter) {
+            root.activated()
+            e.accepted = true
+        }
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -69,6 +86,10 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.activated()
+        onClicked: {
+            Settings.keyNav = false
+            root.forceActiveFocus()
+            root.activated()
+        }
     }
 }
