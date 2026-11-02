@@ -87,7 +87,7 @@ Rectangle {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         Settings.keyNav = false
-            root.forceActiveFocus()
+                        root.forceActiveFocus()
                         root.picked(seg.index)
                     }
                 }

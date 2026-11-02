@@ -29,6 +29,32 @@ Item {
         }
     }
 
+    MouseArea {
+        id: touch
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: {
+            Settings.keyNav = false
+            root.forceActiveFocus()
+            root.activated()
+        }
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        radius: Theme.settingsSidebarItemRadius
+        color: Theme.settingsHover
+        border.width: Theme.surfaceBorderWidth
+        border.color: Theme.surfaceBorderHover
+        opacity: touch.containsMouse && !root.selected ? 1 : 0
+        antialiasing: true
+
+        Behavior on opacity {
+            NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+        }
+    }
+
     Rectangle {
         id: iconBg
         x: Theme.settingsSidebarPadX
@@ -37,10 +63,15 @@ Item {
         height: Theme.settingsSidebarIconD
         radius: width / 2
         color: root.selected ? Theme.settingsIconOnBg : Theme.settingsIconOffBg
+        scale: touch.pressed ? Theme.feedbackPressScale : (touch.containsMouse ? Theme.feedbackHoverScale : 1)
         antialiasing: true
 
         Behavior on color {
             ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+        }
+
+        Behavior on scale {
+            NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
         }
 
         Shape {
@@ -69,16 +100,5 @@ Item {
         text: root.label
         font.pixelSize: Theme.settingsSidebarPx
         color: Theme.fg
-    }
-
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            Settings.keyNav = false
-            root.forceActiveFocus()
-            root.activated()
-        }
     }
 }

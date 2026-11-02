@@ -33,7 +33,6 @@ FocusScope {
     }
 
     SettingsFocus {
-        radius: Theme.settingsFocusRadius + Theme.settingsFocusPad
         focused: root.activeFocus
     }
 
@@ -88,7 +87,7 @@ FocusScope {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         Settings.keyNav = false
-            root.forceActiveFocus()
+                        root.forceActiveFocus()
                         root.picked(dot.index)
                     }
                 }

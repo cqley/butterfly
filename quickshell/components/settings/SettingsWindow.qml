@@ -6,9 +6,11 @@ Item {
     id: popup
     property bool shown: Settings.open
     readonly property bool alive: pop.value > 0.001 || popup.shown
+    readonly property int sidebarContentH: Settings.categories.length * Theme.settingsSidebarItemH
+        + Math.max(0, Settings.categories.length - 1) * Theme.settingsSidebarGap
 
     width: Theme.settingsW
-    height: Theme.settingsH
+    height: popup.sidebarContentH + Theme.settingsPad + Theme.settingsPadBottom
     x: parent ? Math.round((parent.width - width) / 2) : 0
     y: parent ? Math.round((parent.height - height) / 2) : 0
     visible: popup.alive
@@ -30,11 +32,6 @@ Item {
     }
 
     onShownChanged: if (shown) keys.forceActiveFocus()
-
-    Shadow {
-        anchors.fill: shell
-        radius: Theme.settingsRadius
-    }
 
     ClippingRectangle {
         id: shell
@@ -62,7 +59,7 @@ Item {
                 x: Theme.settingsPad
                 y: Theme.settingsPad
                 width: Theme.settingsSidebarW
-                height: parent.height - 2 * Theme.settingsPad
+                height: parent.height - Theme.settingsPad - Theme.settingsPadBottom
                 focus: true
 
                 Rectangle {
@@ -71,6 +68,8 @@ Item {
                     y: Math.round(mark.value)
                     radius: Theme.settingsSidebarItemRadius
                     color: Theme.settingsSelected
+                    border.width: Theme.surfaceBorderWidth
+                    border.color: Theme.surfaceBorder
                     antialiasing: true
 
                     Spring {
@@ -109,7 +108,7 @@ Item {
                 x: sidebar.x + sidebar.width + Theme.settingsGap
                 y: Theme.settingsPad
                 width: parent.width - x - Theme.settingsPad
-                height: parent.height - 2 * Theme.settingsPad
+                height: parent.height - Theme.settingsPad - Theme.settingsPadBottom
                 clip: true
 
                 Item {
@@ -117,73 +116,51 @@ Item {
                     anchors.fill: parent
                     anchors.rightMargin: Theme.settingsScrollPad
 
-                    property bool aFront: true
-                    property var aCategory: null
-                    property var bCategory: null
-                    readonly property var activeFlick: aFront ? viewA : viewB
-
-                    Component.onCompleted: stage.aCategory = Settings.categories[Settings.selected]
-
-                    Spring {
-                        id: swap
-                        target: stage.aFront ? 1 : 0
-                        response: Theme.settingsSwapResponse
-                        damping: Theme.settingsSwapDamping
-                        epsilon: Theme.springUnitEps
-                        rest: Theme.springUnitStop
-                    }
+                    property int shownIndex: Settings.selected
+                    property bool churn: false
+                    readonly property alias scrollRatio: view.scrollRatio
+                    readonly property alias scrollH: view.height
 
                     Connections {
                         target: Settings
                         function onSelectedChanged() {
-                            const cat = Settings.categories[Settings.selected]
-                            if (stage.aFront)
-                                stage.bCategory = cat
-                            else
-                                stage.aCategory = cat
-                            stage.aFront = !stage.aFront
+                            stage.churn = true
+                            swapTimer.restart()
+                        }
+                    }
+
+                    Timer {
+                        id: swapTimer
+                        interval: Theme.fall
+                        onTriggered: {
+                            stage.shownIndex = Settings.selected
+                            stage.churn = false
                         }
                     }
 
                     SettingsPageView {
-                        id: viewA
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        width: parent.width
-                        category: stage.aCategory
-                        opacity: swap.value
-                        visible: opacity > 0.001
-                        z: stage.aFront ? 1 : 0
-                        enabled: stage.aFront
-                        x: Math.round((1 - swap.value) * Theme.settingsSwapSlide)
+                        id: view
+                        anchors.fill: parent
+                        category: Settings.categories[stage.shownIndex]
+                        opacity: stage.churn ? 0 : 1
 
-                        onVisibleChanged: if (!visible) stage.aCategory = null
-                    }
-
-                    SettingsPageView {
-                        id: viewB
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        width: parent.width
-                        category: stage.bCategory
-                        opacity: 1 - swap.value
-                        visible: opacity > 0.001
-                        z: stage.aFront ? 0 : 1
-                        enabled: !stage.aFront
-                        x: Math.round(-swap.value * Theme.settingsSwapSlide)
-
-                        onVisibleChanged: if (!visible) stage.bCategory = null
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: stage.churn ? Theme.fall : Theme.rise
+                                easing.type: Theme.ease
+                            }
+                        }
                     }
                 }
 
                 Rectangle {
                     anchors.right: parent.right
-                    y: Math.round(stage.activeFlick.visibleArea.yPosition * stage.activeFlick.height)
+                    y: Math.round(stage.scrollRatio.yPosition * stage.scrollH)
                     width: Theme.settingsScrollW
-                    height: Math.round(stage.activeFlick.visibleArea.heightRatio * stage.activeFlick.height)
+                    height: Math.round(stage.scrollRatio.heightRatio * stage.scrollH)
                     radius: width / 2
                     color: Theme.settingsScroll
-                    visible: stage.activeFlick.visibleArea.heightRatio < 1
+                    visible: stage.scrollRatio.heightRatio < 1
                     antialiasing: true
                 }
             }

@@ -26,8 +26,6 @@ Column {
         }
     }
 
-    SettingsSection { text: "battery" }
-
     SettingsGroup {
         SettingsRow {
             label: "charge ring"
@@ -87,8 +85,6 @@ Column {
             }
         }
     }
-
-    SettingsSection { text: "reset" }
 
     SettingsGroup {
         SettingsRow {

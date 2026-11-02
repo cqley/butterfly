@@ -68,8 +68,6 @@ Column {
         }
     }
 
-    SettingsSection { text: "centre" }
-
     SettingsGroup {
         SettingsRow {
             label: "rows shown"

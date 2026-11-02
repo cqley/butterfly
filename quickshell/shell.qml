@@ -10,10 +10,7 @@ Scope {
     readonly property bool probing: Probe.on
 
     Variants {
-        model: {
-            const m = Quickshell.screens.filter(s => s.name === Theme.screen)
-            return m.length ? m : Quickshell.screens.slice(0, 1)
-        }
+        model: Theme.shellScreens
 
         Scope {
             required property var modelData
@@ -56,7 +53,7 @@ Scope {
     }
 
     Variants {
-        model: Quickshell.screens.filter(s => s.name === Settings.screenName)
+        model: Theme.shellScreens
 
         Scope {
             required property var modelData

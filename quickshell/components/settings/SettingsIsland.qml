@@ -71,8 +71,6 @@ Column {
         }
     }
 
-    SettingsSection { text: "hover pop-out" }
-
     SettingsGroup {
         SettingsRow {
             label: "pop-out width"
@@ -124,6 +122,7 @@ Column {
 
         SettingsRow {
             label: "hover target growth"
+            note: root.popNote
             token: "islandHitGrow"
             value: Theme.islandHitGrow + " px"
 

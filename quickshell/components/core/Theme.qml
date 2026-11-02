@@ -8,6 +8,11 @@ Singleton {
 
     // core
     readonly property string screen: cfg("screen", "HDMI-A-1")
+    readonly property var shellScreens: {
+        const m = Quickshell.screens.filter(s => s.name === root.screen)
+        return m.length ? m : Quickshell.screens.slice(0, 1)
+    }
+    readonly property string shellScreen: shellScreens.length ? shellScreens[0].name : ""
     readonly property string font: "Inter"
     readonly property real fontScale: cfg("fontScale", 1)
     readonly property var tabular: ({ "tnum": 1 })
@@ -674,51 +679,35 @@ Singleton {
     readonly property int visNoiseReduction: 77
     readonly property real visLerp: 0.3
 
-    // shadow
-    readonly property bool shadowOn: cfg("shadowOn", true)
-    readonly property color shadowColor: "#000000"
-    readonly property real shadowOpacity: cfg("shadowOpacity", 0.5)
-    readonly property int shadowBlur: cfg("shadowBlur", 60)
-    readonly property int shadowSpread: 4
-    readonly property int shadowOffsetX: 0
-    readonly property int shadowOffsetY: cfg("shadowOffsetY", 14)
-
     // settings
-    readonly property int settingsW: 630
-    readonly property int settingsH: 430
-    readonly property int settingsRadius: 18
+    readonly property int settingsW: 860
+    readonly property int settingsRadius: launchRadius
     readonly property int settingsPad: 6
+    readonly property int settingsPadBottom: 120
     readonly property int settingsCardRadius: settingsRadius - settingsPad
     readonly property int settingsSidebarW: 156
-    readonly property int settingsGap: 28
+    readonly property int settingsGap: 14
     readonly property int settingsBorderWidth: pillBorderWidth
     readonly property real settingsBorderOpacity: pillBorderOpacity
-    readonly property real settingsDarken: cfg("settingsDarken", 0.45)
+    readonly property real settingsDarken: cfg("settingsDarken", 0)
     readonly property color settingsBg: Qt.rgba(bg.r * (1 - settingsDarken), bg.g * (1 - settingsDarken), bg.b * (1 - settingsDarken), 1)
     readonly property real settingsBgOpacity: 1
     readonly property color settingsCard: mix(settingsBg, fg, 0.07)
     readonly property color settingsSelected: mix(settingsBg, fg, 0.2)
+    readonly property color settingsHover: mix(settingsBg, fg, 0.1)
     readonly property color settingsScroll: mix(settingsBg, fg, 0.18)
     readonly property color settingsTrack: mix(settingsBg, fg, 0.2)
     readonly property color settingsDivider: Qt.rgba(1, 1, 1, 0.07)
     readonly property color settingsRowHover: Qt.rgba(1, 1, 1, 0.045)
     readonly property color settingsValueInk: mix(fg, settingsBg, 0.45)
-    readonly property color settingsSectionInk: mix(fg, settingsBg, 0.5)
     readonly property int settingsRowH: 35
     readonly property int settingsRowPadX: 12
     readonly property int settingsValueGap: 6
     readonly property int settingsGroupGap: 9
-    readonly property int settingsSectionH: 10
     readonly property int settingsSidebarItemH: 34
-    readonly property int settingsSidebarItemRadius: 10
+    readonly property int settingsSidebarItemRadius: settingsSidebarItemH / 2
     readonly property int settingsSidebarPadX: 7
     readonly property int settingsSidebarGap: 0
-    readonly property int settingsHeaderPad: 15
-    readonly property int settingsHeaderGap: 10
-    readonly property int settingsHeaderSubGap: 4
-    readonly property int settingsTitlePx: fs(16)
-    readonly property int settingsSubtitlePx: fs(11)
-    readonly property int settingsSectionPx: fs(10)
     readonly property int settingsLabelPx: fs(12)
     readonly property int settingsValuePx: fs(12)
     readonly property int settingsSidebarPx: fs(12)
@@ -726,8 +715,6 @@ Singleton {
     readonly property int settingsScrollPad: 12
     readonly property int settingsSidebarIconD: 22
     readonly property int settingsSidebarIcon: 13
-    readonly property int settingsHeaderIconD: 45
-    readonly property int settingsHeaderIcon: 24
     readonly property real settingsIconStroke: 1.7
     readonly property color settingsIconOnBg: accent
     readonly property color settingsIconOnInk: settingsBg
@@ -751,9 +738,6 @@ Singleton {
     readonly property real settingsPopDamping: springDamping
     readonly property real settingsMoveResponse: 0.2
     readonly property real settingsMoveDamping: springDamping
-    readonly property real settingsSwapResponse: 0.3
-    readonly property real settingsSwapDamping: springDamping
-    readonly property int settingsSwapSlide: 14
     readonly property int settingsToggleW: 34
     readonly property int settingsToggleH: 20
     readonly property int settingsToggleKnob: 16
@@ -780,7 +764,7 @@ Singleton {
     readonly property int settingsModGap: 8
     readonly property int settingsNoteH: 13
     readonly property int settingsNotePx: fs(10)
-    readonly property color settingsNoteInk: settingsSectionInk
+    readonly property color settingsNoteInk: mix(fg, settingsBg, 0.5)
     readonly property int settingsNoteDrop: 2
     readonly property real settingsStepTiny: 0.01
     readonly property real settingsStepKey: 0.05

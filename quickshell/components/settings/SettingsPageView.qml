@@ -8,13 +8,14 @@ Flickable {
     boundsBehavior: Flickable.StopAtBounds
     clip: true
     contentWidth: width
-    contentHeight: page.height
+    contentHeight: loader.height
 
     onCategoryChanged: contentY = 0
 
-    SettingsPage {
-        id: page
+    Loader {
+        id: loader
         width: root.width
-        category: root.category
+        height: item ? item.implicitHeight : 0
+        source: root.category ? root.category.page : ""
     }
 }

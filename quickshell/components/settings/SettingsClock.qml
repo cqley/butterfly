@@ -26,7 +26,7 @@ Column {
         SettingsRow {
             label: "clock size"
             token: "clockPx"
-            value: Theme.clockPx + " px"
+            value: Cfg.get("clockPx", 14) + " px"
 
             SettingsSlider {
                 from: 10
@@ -53,8 +53,6 @@ Column {
             }
         }
     }
-
-    SettingsSection { text: "week strip" }
 
     SettingsGroup {
         SettingsRow {
@@ -88,8 +86,6 @@ Column {
             }
         }
     }
-
-    SettingsSection { text: "calendar" }
 
     SettingsGroup {
         SettingsRow {

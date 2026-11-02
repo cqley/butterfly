@@ -1,7 +1,6 @@
 pragma Singleton
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 
 Singleton {
     id: root
@@ -9,16 +8,6 @@ Singleton {
     readonly property bool isHyprland: Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") !== ""
     readonly property bool isNiri: !isHyprland && Quickshell.env("NIRI_SOCKET") !== ""
     readonly property string backend: isHyprland ? "hyprland" : isNiri ? "niri" : ""
-
-    function focusedScreenName() {
-        if (isHyprland && Hyprland.focusedMonitor && Hyprland.focusedMonitor.name)
-            return Hyprland.focusedMonitor.name
-        return Quickshell.screens.length ? Quickshell.screens[0].name : ""
-    }
-
-    function hasScreen(name) {
-        return Quickshell.screens.some(s => s.name === name)
-    }
 
     readonly property bool supportsWindowTargets: isHyprland
     readonly property bool supportsCursorSeed: isHyprland

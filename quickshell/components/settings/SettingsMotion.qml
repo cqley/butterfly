@@ -31,8 +31,6 @@ Column {
         }
     }
 
-    SettingsSection { text: "spring" }
-
     SettingsGroup {
         SettingsRow {
             label: "response"
@@ -64,8 +62,6 @@ Column {
             }
         }
     }
-
-    SettingsSection { text: "timing" }
 
     SettingsGroup {
         SettingsRow {

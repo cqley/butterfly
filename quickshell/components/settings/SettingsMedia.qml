@@ -37,8 +37,6 @@ Column {
         }
     }
 
-    SettingsSection { text: "visualizer" }
-
     SettingsGroup {
         SettingsRow {
             label: "bars"

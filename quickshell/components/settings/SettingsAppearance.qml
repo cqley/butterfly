@@ -11,8 +11,6 @@ Column {
     width: parent ? parent.width : 0
     spacing: Theme.settingsGroupGap
 
-    SettingsSection { text: "accent" }
-
     SettingsGroup {
         SettingsRow {
             label: "accent colour"
@@ -53,8 +51,6 @@ Column {
         }
     }
 
-    SettingsSection { text: "wallpaper" }
-
     SettingsGroup {
         SettingsRow {
             label: "choose a wallpaper"
@@ -63,8 +59,6 @@ Column {
             onActivated: Wallpaper.open = true
         }
     }
-
-    SettingsSection { text: "surfaces" }
 
     SettingsGroup {
         SettingsRow {
@@ -108,68 +102,6 @@ Column {
                 step: 0.05
                 value: Theme.settingsDarken
                 onMoved: v => Cfg.set("settingsDarken", Math.round(v * 100) / 100)
-                onCommitted: Cfg.flush()
-            }
-        }
-    }
-
-    SettingsSection { text: "shadow" }
-
-    SettingsGroup {
-        SettingsRow {
-            label: "drop shadow"
-            token: "shadowOn"
-
-            SettingsToggle {
-                checked: Theme.shadowOn
-                onToggled: on => {
-                    Cfg.set("shadowOn", on)
-                    Cfg.flush()
-                }
-            }
-        }
-
-        SettingsRow {
-            label: "strength"
-            token: "shadowOpacity"
-            value: Math.round(Theme.shadowOpacity * 100) + "%"
-
-            SettingsSlider {
-                from: 0
-                to: 1
-                step: 0.05
-                value: Theme.shadowOpacity
-                onMoved: v => Cfg.set("shadowOpacity", Math.round(v * 100) / 100)
-                onCommitted: Cfg.flush()
-            }
-        }
-
-        SettingsRow {
-            label: "blur"
-            token: "shadowBlur"
-            value: Theme.shadowBlur + " px"
-
-            SettingsSlider {
-                from: 0
-                to: 140
-                step: 1
-                value: Theme.shadowBlur
-                onMoved: v => Cfg.set("shadowBlur", Math.round(v))
-                onCommitted: Cfg.flush()
-            }
-        }
-
-        SettingsRow {
-            label: "vertical offset"
-            token: "shadowOffsetY"
-            value: Theme.shadowOffsetY + " px"
-
-            SettingsSlider {
-                from: -40
-                to: 40
-                step: 1
-                value: Theme.shadowOffsetY
-                onMoved: v => Cfg.set("shadowOffsetY", Math.round(v))
                 onCommitted: Cfg.flush()
             }
         }
