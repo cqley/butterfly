@@ -261,8 +261,8 @@ Item {
     Spring {
         id: dropMotion
         target: islandPop.popped ? Theme.islandPopH / 2 : 0
-        response: Theme.islandResponse
-        damping: Theme.islandDamping
+        response: Theme.islandDropResponse
+        damping: Theme.islandDropDamping
         epsilon: Theme.settleEps
     }
 

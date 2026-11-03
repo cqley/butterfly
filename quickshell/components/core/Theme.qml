@@ -624,8 +624,8 @@ Singleton {
     readonly property int islandDuration: 200
     readonly property real islandResponse: springResponse
     readonly property real islandDamping: springDamping
-    readonly property real islandDropResponse: islandResponse
-    readonly property real islandDropDamping: islandDamping
+    readonly property real islandDropResponse: 0.24
+    readonly property real islandDropDamping: 0.92
     readonly property real islandContentResponse: islandResponse
     readonly property real islandContentDamping: springDamping
     readonly property int islandPopW: cfg("islandPopW", 12)
