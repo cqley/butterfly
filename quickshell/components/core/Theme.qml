@@ -651,8 +651,9 @@ Singleton {
     readonly property int islandCalPad: 16
     readonly property int islandCalW: islandCalCellW * weekDays + 2 * islandCalPad
     readonly property int islandMediaPad: 16
+    readonly property int islandMediaTopPad: idleTopOffsetY + islandPopH / 2 + h + rowGap
     readonly property int islandMediaW: mediaW + 2 * islandMediaPad
-    readonly property int islandMediaH: artS + 2 * islandMediaPad
+    readonly property int islandMediaH: islandMediaTopPad + artS + islandMediaPad
 
     // visualizer
     readonly property int visBars: cfg("visBars", 6)

@@ -53,7 +53,9 @@ Item {
     readonly property bool engaged: root.popout ? islandPop.popped : root.hot
     readonly property bool mediaHover: root.classicHot && !root.full && root.calm && root.media
     readonly property bool mediaPeek: root.popout && islandPop.popped && !islandPop.open && root.media
-    readonly property bool showVisualizer: Visualizer.on || root.mediaHover || root.mediaPeek
+    readonly property bool mediaPanelShown: root.popout && islandPop.mediaShown
+    readonly property bool showVisualizer: Visualizer.on || root.mediaHover || root.mediaPeek || root.mediaPanelShown
+    readonly property bool idleSlotVisible: !root.panelOpen || root.mediaPanelShown
     readonly property bool hideIdleIcons: root.mediaHover || root.panelOpen
     readonly property bool ringGeometryBase: root.calm && !root.hot && !root.hideIdleIcons
     readonly property bool ringBase: root.ringGeometryBase && Theme.batRingEnabled && Battery.ringShown && Battery.available
@@ -338,11 +340,10 @@ Item {
         MediaPanel {
             id: tune
             x: root.centerX(width)
-            y: root.popout ? Theme.islandMediaPad : Theme.body
-            slide: root.popout ? Theme.islandContentSlide : 0
+            y: root.popout ? Theme.islandMediaTopPad : Theme.body
             shown: root.popout ? islandPop.mediaShown : (root.classicHot && !root.full && root.calm && root.media)
-            ready: root.popout ? root.islandReady : root.panelReveal
-            rise: root.popout ? Theme.islandDuration : root.panelRise
+            ready: root.panelReveal
+            rise: root.panelRise
             focus: root.popout && shown
             onShownChanged: if (root.popout && shown) tune.forceActiveFocus()
             Keys.onEscapePressed: Modal.dismiss()
@@ -514,7 +515,7 @@ Item {
                     anchors.alignWhenCentered: Theme.idleAlignWhenCentered
                     width: clockText.implicitWidth
                     height: parent.height
-                    shown: !root.showVisualizer && !root.panelOpen
+                    shown: !root.showVisualizer && root.idleSlotVisible
                     scale: Theme.slotScale + (1 - Theme.slotScale) * clockScale.value
 
                     Spring {
@@ -547,7 +548,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: vbars.width
                     height: parent.height
-                    shown: root.showVisualizer && !root.panelOpen
+                    shown: root.showVisualizer && root.idleSlotVisible
                     ready: root.panelReveal
                     rise: root.panelRise
                     scale: Theme.slotScale + (1 - Theme.slotScale) * visScale.value
