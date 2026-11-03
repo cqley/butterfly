@@ -33,6 +33,11 @@ Item {
 
     onShownChanged: if (shown) keys.forceActiveFocus()
 
+    Shadow {
+        anchors.fill: shell
+        radius: shell.radius
+    }
+
     ClippingRectangle {
         id: shell
         anchors.fill: parent

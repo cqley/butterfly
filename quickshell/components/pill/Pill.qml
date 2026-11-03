@@ -274,6 +274,11 @@ Item {
         height: root.hAnim
     }
 
+    Shadow {
+        anchors.fill: skin
+        radius: body.radius
+    }
+
     Rectangle {
         anchors.fill: skin
         radius: body.radius

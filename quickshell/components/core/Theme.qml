@@ -184,6 +184,14 @@ Singleton {
     readonly property int pillHaloSpread: 1
     readonly property int zone: gap + h
 
+    // shadow
+    readonly property bool shadowOn: cfg("shadowOn", true)
+    readonly property color shadowColor: "#000000"
+    readonly property real shadowOpacity: cfg("shadowOpacity", 0.42)
+    readonly property int shadowBlur: cfg("shadowBlur", 30)
+    readonly property real shadowSpread: cfg("shadowSpread", 0.05)
+    readonly property int shadowOffsetY: 0
+
     // idle row
     readonly property int clockPx: fs(cfg("clockPx", 14))
     readonly property string clockFormat: cfg("clockFormat", "HH:mm")

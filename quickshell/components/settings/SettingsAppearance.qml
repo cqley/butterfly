@@ -104,4 +104,64 @@ Column {
             }
         }
     }
+
+    SettingsGroup {
+        SettingsRow {
+            label: "drop shadow"
+            token: "shadowOn"
+
+            SettingsToggle {
+                checked: Theme.shadowOn
+                onToggled: on => {
+                    Cfg.set("shadowOn", on)
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
+            label: "shadow strength"
+            token: "shadowOpacity"
+            value: Math.round(Theme.shadowOpacity * 100) + "%"
+
+            SettingsSlider {
+                from: 0
+                to: 1
+                step: 0.02
+                value: Theme.shadowOpacity
+                onMoved: v => Cfg.set("shadowOpacity", Math.round(v * 100) / 100)
+                onCommitted: Cfg.flush()
+            }
+        }
+
+        SettingsRow {
+            label: "shadow blur"
+            token: "shadowBlur"
+            value: Theme.shadowBlur + " px"
+
+            SettingsSlider {
+                from: 8
+                to: 60
+                step: 1
+                value: Theme.shadowBlur
+                onMoved: v => Cfg.set("shadowBlur", Math.round(v))
+                onCommitted: Cfg.flush()
+            }
+        }
+
+        SettingsRow {
+            label: "shadow spread"
+            token: "shadowSpread"
+            value: Math.round(Theme.shadowSpread * 100) + "%"
+
+            SettingsSlider {
+                from: 0
+                to: 0.3
+                step: 0.01
+                value: Theme.shadowSpread
+                onMoved: v => Cfg.set("shadowSpread", Math.round(v * 100) / 100)
+                onCommitted: Cfg.flush()
+            }
+        }
+    }
 }
