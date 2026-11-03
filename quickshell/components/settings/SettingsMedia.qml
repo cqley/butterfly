@@ -85,7 +85,6 @@ Column {
 
         SettingsRow {
             label: "frame rate"
-            note: "applies the next time the visualizer starts"
             token: "visFps"
             value: Theme.visFps + " fps"
 

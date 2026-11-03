@@ -680,13 +680,13 @@ Singleton {
     readonly property real visLerp: 0.3
 
     // settings
-    readonly property int settingsW: 860
+    readonly property int settingsW: 640
     readonly property int settingsRadius: launchRadius
     readonly property int settingsPad: 6
     readonly property int settingsPadBottom: 120
     readonly property int settingsCardRadius: settingsRadius - settingsPad
     readonly property int settingsSidebarW: 156
-    readonly property int settingsGap: 14
+    readonly property int settingsGap: settingsPad
     readonly property int settingsBorderWidth: pillBorderWidth
     readonly property real settingsBorderOpacity: pillBorderOpacity
     readonly property real settingsDarken: cfg("settingsDarken", 0)
@@ -712,7 +712,7 @@ Singleton {
     readonly property int settingsValuePx: fs(12)
     readonly property int settingsSidebarPx: fs(12)
     readonly property int settingsScrollW: 4
-    readonly property int settingsScrollPad: 12
+    readonly property int settingsScrollPad: 0
     readonly property int settingsSidebarIconD: 22
     readonly property int settingsSidebarIcon: 13
     readonly property real settingsIconStroke: 1.7
@@ -762,10 +762,6 @@ Singleton {
     readonly property int settingsModDot: 5
     readonly property int settingsModHit: 16
     readonly property int settingsModGap: 8
-    readonly property int settingsNoteH: 13
-    readonly property int settingsNotePx: fs(10)
-    readonly property color settingsNoteInk: mix(fg, settingsBg, 0.5)
-    readonly property int settingsNoteDrop: 2
     readonly property real settingsStepTiny: 0.01
     readonly property real settingsStepKey: 0.05
 }

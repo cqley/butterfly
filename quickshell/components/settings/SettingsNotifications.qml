@@ -23,7 +23,6 @@ Column {
 
         SettingsRow {
             label: "body lines"
-            note: "collapsed popup; hover still expands it"
             token: "noteBodyLines"
             value: Theme.noteBodyLines + ""
 

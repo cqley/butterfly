@@ -34,7 +34,6 @@ Column {
 
         SettingsRow {
             label: "show device labels"
-            note: "defaults to on when more than one monitor is connected"
             token: "mixerLabels"
 
             SettingsToggle {

@@ -11,7 +11,6 @@ Column {
     SettingsGroup {
         SettingsRow {
             label: "island interaction"
-            note: "click to open a panel, or open on hover"
             token: "islandMode"
 
             SettingsSegmented {
@@ -26,7 +25,6 @@ Column {
 
         SettingsRow {
             label: "menu crossfade"
-            note: "not implemented in this shell yet"
             value: "—"
         }
     }
@@ -66,7 +64,6 @@ Column {
     SettingsGroup {
         SettingsRow {
             label: "transition"
-            note: "panel and window transitions"
             token: "speed"
             value: Theme.speed + " ms"
 
@@ -82,7 +79,6 @@ Column {
 
         SettingsRow {
             label: "micro-transition"
-            note: "toggles, selections and colour changes"
             token: "glide"
             value: Theme.glide + " ms"
 

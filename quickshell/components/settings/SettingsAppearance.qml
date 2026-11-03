@@ -33,7 +33,6 @@ Column {
 
         SettingsRow {
             label: "custom colour"
-            note: "six-digit hex, empty follows the wallpaper"
 
             SettingsField {
                 placeholder: "#rrggbb"
@@ -54,7 +53,6 @@ Column {
     SettingsGroup {
         SettingsRow {
             label: "choose a wallpaper"
-            note: "every other colour derives from it; there is no theme list"
             showArrow: true
             onActivated: Wallpaper.open = true
         }

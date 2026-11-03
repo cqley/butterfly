@@ -7,7 +7,6 @@ Item {
     default property alias content: slot.data
     property string label: ""
     property string value: ""
-    property string note: ""
     property string token: ""
     property bool showArrow: false
     property bool last: true
@@ -40,7 +39,7 @@ Item {
     }
 
     width: parent ? parent.width : 0
-    height: Theme.settingsRowH + (root.note !== "" ? Theme.settingsNoteH : 0)
+    height: Theme.settingsRowH
 
     Component.onCompleted: root.hasActor = root.actor() !== null
 
@@ -99,32 +98,17 @@ Item {
         }
     }
 
-    Column {
+    Txt {
         anchors.left: parent.left
         anchors.leftMargin: Theme.settingsRowPadX
         anchors.right: dot.left
         anchors.rightMargin: Theme.settingsModGap
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.settingsNoteDrop
-
-        Txt {
-            width: parent.width
-            text: root.label
-            font.pixelSize: Theme.settingsLabelPx
-            font.weight: Font.Medium
-            color: Theme.fg
-            elide: Text.ElideRight
-        }
-
-        Txt {
-            visible: root.note !== ""
-            width: parent.width
-            text: root.note
-            font.pixelSize: Theme.settingsNotePx
-            font.weight: Font.Normal
-            color: Theme.settingsNoteInk
-            elide: Text.ElideRight
-        }
+        text: root.label
+        font.pixelSize: Theme.settingsLabelPx
+        font.weight: Font.Medium
+        color: Theme.fg
+        elide: Text.ElideRight
     }
 
     Item {

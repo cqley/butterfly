@@ -3,7 +3,7 @@ import QtQuick
 
 Column {
     id: root
-    readonly property var formats: ["HH:mm", "hh:mm AP"]
+    readonly property var formats: ["HH:mm", "hh:mm"]
 
     width: parent ? parent.width : 0
     spacing: Theme.settingsGroupGap
@@ -72,7 +72,6 @@ Column {
 
         SettingsRow {
             label: "days before today"
-            note: "pop-out strip only"
             token: "islandWeekLead"
             value: Theme.islandWeekLead + ""
 

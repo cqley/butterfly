@@ -3,8 +3,6 @@ import QtQuick
 
 Column {
     id: root
-    readonly property bool popout: Theme.islandMode === "popout"
-    readonly property string popNote: root.popout ? "" : "pop-out mode only — the island is in classic mode"
 
     width: parent ? parent.width : 0
     spacing: Theme.settingsGroupGap
@@ -74,7 +72,6 @@ Column {
     SettingsGroup {
         SettingsRow {
             label: "pop-out width"
-            note: root.popNote
             token: "islandPopW"
             value: Theme.islandPopW + " px"
 
@@ -90,7 +87,6 @@ Column {
 
         SettingsRow {
             label: "pop-out height"
-            note: root.popNote
             token: "islandPopH"
             value: Theme.islandPopH + " px"
 
@@ -106,7 +102,6 @@ Column {
 
         SettingsRow {
             label: "pop-out drop"
-            note: root.popNote
             token: "islandPopDrop"
             value: Theme.islandPopDrop + " px"
 
@@ -122,7 +117,6 @@ Column {
 
         SettingsRow {
             label: "hover target growth"
-            note: root.popNote
             token: "islandHitGrow"
             value: Theme.islandHitGrow + " px"
 
