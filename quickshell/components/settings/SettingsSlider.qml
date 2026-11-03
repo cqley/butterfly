@@ -103,6 +103,8 @@ Item {
     MouseArea {
         id: drag
         anchors.fill: parent
+        anchors.topMargin: -Theme.settingsSliderHitPad
+        anchors.bottomMargin: -Theme.settingsSliderHitPad
 
         onPressed: mouse => {
             Settings.keyNav = false

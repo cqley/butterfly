@@ -16,64 +16,55 @@ Singleton {
             id: "island",
             label: "island",
             icon: Theme.settingsIslandPath,
-            page: "SettingsIsland.qml",
-            title: "island"
+            page: "SettingsIsland.qml"
         },
         {
             id: "appearance",
             label: "appearance",
             icon: Theme.settingsStylePath,
-            page: "SettingsAppearance.qml",
-            title: "appearance"
+            page: "SettingsAppearance.qml"
         },
         {
             id: "motion",
             label: "motion",
             icon: Theme.settingsMotionPath,
-            page: "SettingsMotion.qml",
-            title: "motion"
+            page: "SettingsMotion.qml"
         },
         {
             id: "clock",
             label: "clock & calendar",
             icon: Theme.settingsClockPath,
-            page: "SettingsClock.qml",
-            title: "clock & calendar"
+            page: "SettingsClock.qml"
         },
         {
             id: "media",
             label: "media",
             icon: Theme.settingsMediaPath,
-            page: "SettingsMedia.qml",
-            title: "media"
+            page: "SettingsMedia.qml"
         },
         {
             id: "mixer",
             label: "mixer",
             icon: Theme.settingsSlidersPath,
-            page: "SettingsMixer.qml",
-            title: "mixer"
+            page: "SettingsMixer.qml"
         },
         {
             id: "launcher",
             label: "launcher",
             icon: Theme.settingsLauncherPath,
-            page: "SettingsLauncher.qml",
-            title: "launcher"
+            page: "SettingsLauncher.qml"
         },
         {
             id: "notifications",
             label: "notifications",
             icon: Theme.settingsBellPath,
-            page: "SettingsNotifications.qml",
-            title: "notifications"
+            page: "SettingsNotifications.qml"
         },
         {
             id: "system",
             label: "system",
             icon: Theme.settingsSystemPath,
-            page: "SettingsSystem.qml",
-            title: "system"
+            page: "SettingsSystem.qml"
         }
     ]
 

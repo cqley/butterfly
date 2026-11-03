@@ -51,8 +51,9 @@ Item {
     readonly property bool mediaPeek: islandPop.popped && !islandPop.open && root.media
     readonly property bool mediaPanelShown: islandPop.mediaShown
     readonly property bool showVisualizer: Visualizer.on || root.mediaPeek || root.mediaPanelShown
-    readonly property bool idleSlotVisible: !root.panelOpen || root.mediaPanelShown
-    readonly property bool hideIdleIcons: root.panelOpen
+    readonly property bool idleRowActive: root.calm || root.islandOwn
+    readonly property bool idleSlotVisible: root.idleRowActive && (!root.panelOpen || root.mediaPanelShown)
+    readonly property bool hideIdleIcons: !root.idleRowActive || root.panelOpen
     readonly property bool ringGeometryBase: root.calm && !root.hot && !root.hideIdleIcons
     readonly property bool ringBase: root.ringGeometryBase && Theme.batRingEnabled && Battery.ringShown && Battery.available
     readonly property bool resizing:
@@ -467,7 +468,7 @@ Item {
         anchors.topMargin: Theme.idleTopOffsetY + root.idleCenterDrop
         width: row.width
         height: Theme.h
-        shown: root.calm || root.islandOwn
+        shown: root.idleRowActive
         ready: !wake.running
         rise: Theme.idleRise
         fall: Theme.idleFall

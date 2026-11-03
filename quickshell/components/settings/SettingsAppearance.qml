@@ -1,5 +1,4 @@
 import "../core"
-import "../wallpaper"
 import QtQuick
 
 Column {
@@ -47,14 +46,6 @@ Column {
                     Cfg.flush()
                 }
             }
-        }
-    }
-
-    SettingsGroup {
-        SettingsRow {
-            label: "choose a wallpaper"
-            showArrow: true
-            onActivated: Wallpaper.open = true
         }
     }
 

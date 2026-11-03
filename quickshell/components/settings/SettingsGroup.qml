@@ -9,6 +9,8 @@ Rectangle {
     height: col.height
     radius: Theme.settingsCardRadius
     color: Theme.settingsCard
+    border.width: Theme.settingsBorderWidth
+    border.color: Theme.surfaceBorder
     antialiasing: true
 
     Column {

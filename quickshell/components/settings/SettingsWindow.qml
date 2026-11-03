@@ -8,6 +8,8 @@ Item {
     readonly property bool alive: pop.value > 0.001 || popup.shown
     readonly property int sidebarContentH: Settings.categories.length * Theme.settingsSidebarItemH
         + Math.max(0, Settings.categories.length - 1) * Theme.settingsSidebarGap
+    readonly property real contentProgress: Math.max(0, Math.min(1,
+        (pop.value - Theme.settingsContentDelay) / (1 - Theme.settingsContentDelay)))
 
     width: Theme.settingsW
     height: popup.sidebarContentH + Theme.settingsPad + Theme.settingsPadBottom
@@ -16,7 +18,7 @@ Item {
     visible: popup.alive
     transformOrigin: Item.Center
     scale: Theme.settingsScaleFrom + (1 - Theme.settingsScaleFrom) * pop.value
-    opacity: Math.max(0, Math.min(1, pop.value))
+    opacity: Math.max(0, Math.min(1, pop.value / Theme.settingsBoxFadeIn))
 
     transform: Translate {
         y: (1 - pop.value) * Theme.settingsRiseOffset
@@ -50,12 +52,25 @@ Item {
             id: keys
             anchors.fill: parent
             focus: popup.shown
+            opacity: popup.contentProgress
+            scale: Theme.settingsContentScaleFrom + (1 - Theme.settingsContentScaleFrom) * popup.contentProgress
+
+            transform: Translate {
+                y: (1 - popup.contentProgress) * Theme.settingsContentRise
+            }
 
             Keys.onPressed: e => {
                 Settings.keyNav = true
                 if (e.key === Qt.Key_Escape) {
                     Settings.open = false
                     e.accepted = true
+                } else if (e.key === Qt.Key_PageDown || e.key === Qt.Key_PageUp) {
+                    e.accepted = true
+                    if (e.isAutoRepeat)
+                        return
+                    const dir = e.key === Qt.Key_PageDown ? 1 : -1
+                    const maxY = Math.max(0, view.contentHeight - view.height)
+                    view.contentY = Math.max(0, Math.min(maxY, view.contentY + dir * view.height))
                 }
             }
 
@@ -72,9 +87,9 @@ Item {
                     height: Theme.settingsSidebarItemH
                     y: Math.round(mark.value)
                     radius: Theme.settingsSidebarItemRadius
-                    color: Theme.settingsSelected
+                    color: Theme.settingsHover
                     border.width: Theme.surfaceBorderWidth
-                    border.color: Theme.surfaceBorder
+                    border.color: Theme.surfaceBorderHover
                     antialiasing: true
 
                     Spring {
@@ -108,6 +123,14 @@ Item {
                 }
             }
 
+            Rectangle {
+                x: Math.round(sidebar.x + sidebar.width + (Theme.settingsGap - width) / 2)
+                y: Theme.settingsPad
+                width: 1
+                height: parent.height - Theme.settingsPad - Theme.settingsPadBottom
+                color: Theme.settingsDivider
+            }
+
             Item {
                 id: contentArea
                 x: sidebar.x + sidebar.width + Theme.settingsGap
@@ -119,12 +142,9 @@ Item {
                 Item {
                     id: stage
                     anchors.fill: parent
-                    anchors.rightMargin: Theme.settingsScrollPad
 
                     property int shownIndex: Settings.selected
                     property bool churn: false
-                    readonly property alias scrollRatio: view.scrollRatio
-                    readonly property alias scrollH: view.height
 
                     Connections {
                         target: Settings
@@ -156,17 +176,6 @@ Item {
                             }
                         }
                     }
-                }
-
-                Rectangle {
-                    anchors.right: parent.right
-                    y: Math.round(stage.scrollRatio.yPosition * stage.scrollH)
-                    width: Theme.settingsScrollW
-                    height: Math.round(stage.scrollRatio.heightRatio * stage.scrollH)
-                    radius: width / 2
-                    color: Theme.settingsScroll
-                    visible: stage.scrollRatio.heightRatio < 1
-                    antialiasing: true
                 }
             }
         }

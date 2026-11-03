@@ -15,12 +15,16 @@ Item {
     activeFocusOnTab: true
 
     Keys.onPressed: e => {
+        if (e.isAutoRepeat) {
+            e.accepted = true
+            return
+        }
         Settings.keyNav = true
         const k = e.key
-        if (k === Qt.Key_Down || k === Qt.Key_J) {
+        if (k === Qt.Key_Down || k === Qt.Key_J || k === Qt.Key_L || k === Qt.Key_Tab) {
             root.stepped(1)
             e.accepted = true
-        } else if (k === Qt.Key_Up || k === Qt.Key_K) {
+        } else if (k === Qt.Key_Up || k === Qt.Key_K || k === Qt.Key_H || k === Qt.Key_Backtab) {
             root.stepped(-1)
             e.accepted = true
         } else if (k === Qt.Key_Space || k === Qt.Key_Return || k === Qt.Key_Enter) {
@@ -44,9 +48,9 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Theme.settingsSidebarItemRadius
-        color: Theme.settingsHover
+        color: Theme.settingsRowHover
         border.width: Theme.surfaceBorderWidth
-        border.color: Theme.surfaceBorderHover
+        border.color: Theme.surfaceBorder
         opacity: touch.containsMouse && !root.selected ? 1 : 0
         antialiasing: true
 

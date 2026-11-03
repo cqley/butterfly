@@ -687,20 +687,18 @@ Singleton {
     // settings
     readonly property int settingsW: 640
     readonly property int settingsRadius: launchRadius
-    readonly property int settingsPad: 6
-    readonly property int settingsPadBottom: 120
-    readonly property int settingsCardRadius: settingsRadius - settingsPad
+    readonly property int settingsPad: 14
+    readonly property int settingsPadBottom: 16
+    readonly property int settingsCardRadius: settingsRadius - 6
     readonly property int settingsSidebarW: 156
-    readonly property int settingsGap: settingsPad
+    readonly property int settingsGap: 24
     readonly property int settingsBorderWidth: pillBorderWidth
     readonly property real settingsBorderOpacity: pillBorderOpacity
     readonly property real settingsDarken: cfg("settingsDarken", 0)
     readonly property color settingsBg: Qt.rgba(bg.r * (1 - settingsDarken), bg.g * (1 - settingsDarken), bg.b * (1 - settingsDarken), 1)
     readonly property real settingsBgOpacity: 1
     readonly property color settingsCard: mix(settingsBg, fg, 0.07)
-    readonly property color settingsSelected: mix(settingsBg, fg, 0.2)
-    readonly property color settingsHover: mix(settingsBg, fg, 0.1)
-    readonly property color settingsScroll: mix(settingsBg, fg, 0.18)
+    readonly property color settingsHover: mix(settingsBg, fg, 0.13)
     readonly property color settingsTrack: mix(settingsBg, fg, 0.2)
     readonly property color settingsDivider: Qt.rgba(1, 1, 1, 0.07)
     readonly property color settingsRowHover: Qt.rgba(1, 1, 1, 0.045)
@@ -712,12 +710,10 @@ Singleton {
     readonly property int settingsSidebarItemH: 34
     readonly property int settingsSidebarItemRadius: settingsSidebarItemH / 2
     readonly property int settingsSidebarPadX: 7
-    readonly property int settingsSidebarGap: 0
+    readonly property int settingsSidebarGap: 3
     readonly property int settingsLabelPx: fs(12)
     readonly property int settingsValuePx: fs(12)
     readonly property int settingsSidebarPx: fs(12)
-    readonly property int settingsScrollW: 4
-    readonly property int settingsScrollPad: 0
     readonly property int settingsSidebarIconD: 22
     readonly property int settingsSidebarIcon: 13
     readonly property real settingsIconStroke: 1.7
@@ -737,10 +733,14 @@ Singleton {
     readonly property string settingsSystemPath: "M3 5H21V16H3ZM8.5 20H15.5M12 16V20"
     readonly property string settingsStylePath: "M9.06 11.9L17.13 3.84A2.85 2.85 0 1 1 21.16 7.87L13.1 15.95M7.07 14.94C5.41 14.94 4.07 16.29 4.07 17.96C4.07 19.29 1.57 19.48 2.07 19.98C3.15 21.08 4.56 22 6.07 22C8.27 22 10.07 20.2 10.07 17.96A3.01 3.01 0 0 0 7.07 14.94Z"
     readonly property string settingsMotionPath: "M3 12C5 6 7 6 9 12C11 18 13 18 15 12C17 6 19 6 21 12"
-    readonly property real settingsScaleFrom: 0.94
-    readonly property int settingsRiseOffset: 10
-    readonly property real settingsPopResponse: springResponse
-    readonly property real settingsPopDamping: springDamping
+    readonly property real settingsScaleFrom: 0.9
+    readonly property int settingsRiseOffset: 14
+    readonly property real settingsPopResponse: 0.3
+    readonly property real settingsPopDamping: 0.82
+    readonly property real settingsBoxFadeIn: 0.3
+    readonly property real settingsContentDelay: 0.35
+    readonly property int settingsContentRise: 6
+    readonly property real settingsContentScaleFrom: 0.97
     readonly property real settingsMoveResponse: 0.2
     readonly property real settingsMoveDamping: springDamping
     readonly property int settingsToggleW: 34
@@ -750,7 +750,8 @@ Singleton {
     readonly property int settingsDotGap: 10
     readonly property int settingsDotRingPad: 3
     readonly property int settingsSliderH: 4
-    readonly property int settingsSliderKnobD: 14
+    readonly property int settingsSliderKnobD: 9
+    readonly property int settingsSliderHitPad: 8
     readonly property int settingsFieldH: 26
     readonly property int settingsFieldW: 140
     readonly property color settingsFieldBg: mix(settingsBg, fg, 0.13)
@@ -767,6 +768,5 @@ Singleton {
     readonly property int settingsModDot: 5
     readonly property int settingsModHit: 16
     readonly property int settingsModGap: 8
-    readonly property real settingsStepTiny: 0.01
     readonly property real settingsStepKey: 0.05
 }
