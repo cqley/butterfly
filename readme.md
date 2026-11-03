@@ -18,6 +18,7 @@
 | `visualizer` | `toggle` `status` |
 | `notifications` | `toggle` `clear` `status` |
 | `dnd` | `toggle` `status` |
+| `settings` | `toggle` `open` `close` `status` |
 
 ```
 quickshell ipc call <target> <action>
