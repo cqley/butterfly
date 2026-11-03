@@ -19,6 +19,7 @@
 | `notifications` | `toggle` `clear` `status` |
 | `dnd` | `toggle` `status` |
 | `settings` | `toggle` `open` `close` `status` |
+| `tray` | `toggle` `status` |
 
 ```
 quickshell ipc call <target> <action>

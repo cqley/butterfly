@@ -15,6 +15,7 @@ import "../power"
 import "../recording"
 import "../screenshot"
 import "../battery"
+import "../tray"
 import "../wallpaper"
 
 Item {
@@ -118,6 +119,7 @@ Item {
         Modal.register("net", Net)
         Modal.register("mixer", Mixer)
         Modal.register("bluetooth", Bt)
+        Modal.register("tray", Tray)
         Modal.register("notifs", Notifs)
     }
 
@@ -200,6 +202,8 @@ Item {
         { cond: () => Net.open, w: () => Theme.netW, h: () => net.y + net.height + Theme.netPad },
         { cond: () => Mixer.open, w: () => mixer.width + 2 * Theme.mixerPad, h: () => mixer.y + mixer.height + Theme.mixerPad },
         { cond: () => Bt.open, w: () => Theme.btW, h: () => bt.y + bt.height + Theme.btPad },
+        { cond: () => Tray.open && Tray.menuItem, w: () => Theme.trayMenuW, h: () => trayCtx.y + trayCtx.height + Theme.trayMenuPad },
+        { cond: () => Tray.open, w: () => tray.width + 2 * Theme.trayPad, h: () => tray.y + tray.height + Theme.trayPad },
         { cond: () => Notifs.open, w: () => Theme.centerW, h: () => center.y + center.height + Theme.centerPad },
         { cond: () => islandPop.calendarShown, w: () => Theme.islandCalW, h: () => cal.y + cal.height + Theme.islandCalPad },
         { cond: () => islandPop.weekShown, w: () => Theme.islandWeekW, h: () => Theme.islandWeekH },
@@ -307,6 +311,14 @@ Item {
                     Notifs.dismiss()
                 else if (!root.modal || Modal.which === "island")
                     islandPop.click()
+            }
+        }
+
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            onTapped: {
+                if (!root.alert && !root.modal)
+                    Tray.toggle()
             }
         }
 
@@ -439,6 +451,24 @@ Item {
             y: Theme.btPad
             shown: Bt.open
             ready: root.panelReveal
+            rise: root.panelRise
+        }
+
+        TrayMenu {
+            id: tray
+            x: root.centerX(width)
+            y: Theme.trayPad
+            shown: Tray.open && !Tray.menuItem
+            ready: root.panelReveal
+            rise: root.panelRise
+        }
+
+        TrayContextMenu {
+            id: trayCtx
+            x: root.centerX(width)
+            y: Theme.trayMenuPad
+            shown: Tray.open && !!Tray.menuItem
+            ready: root.panelReveal && trayCtx.settled
             rise: root.panelRise
         }
 

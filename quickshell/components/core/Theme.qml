@@ -523,6 +523,26 @@ Singleton {
     readonly property int btBatteryWait: 1200
     readonly property int btPowerSettle: 4000
 
+    // tray
+    readonly property int trayPad: 6
+    readonly property int trayChipD: 22
+    readonly property int trayGlyphD: 14
+    readonly property int traySelD: 30
+    readonly property int trayRowPad: 2
+    readonly property int trayCellW: traySelD + 2 * trayPad
+    readonly property int trayRowH: traySelD + 2 * trayRowPad
+    readonly property int trayRows: netRows
+    readonly property int trayEmptyW: 110
+    readonly property int trayAttentionD: 6
+    readonly property int trayMenuW: 240
+    readonly property int trayMenuPad: netPad
+    readonly property int trayMenuRowH: netRowH
+    readonly property int trayMenuRows: netRows
+    readonly property int trayMenuMarkD: 6
+    readonly property int trayMenuChevronGap: 10
+    readonly property int trayMenuSepW: 172
+    readonly property int trayMenuSettle: 200
+
     // brightness
     readonly property int brightMin: 1
     readonly property int brightSettle: 1200
