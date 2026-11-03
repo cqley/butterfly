@@ -176,15 +176,12 @@ Singleton {
     readonly property int pad: cfg("pad", 16)
     readonly property int w: cfg("w", 64)
     readonly property int h: cfg("h", 28)
-    readonly property int openW: 252
-    readonly property int openH: 80
     readonly property int radius: cfg("radius", 28)
     readonly property int pillBorderWidth: 1
     readonly property real pillBorderOpacity: 0.08
     readonly property int pillHaloWidth: 1
     readonly property real pillHaloOpacity: 0.18
     readonly property int pillHaloSpread: 1
-    readonly property int body: h + 2
     readonly property int zone: gap + h
 
     // idle row
@@ -624,7 +621,6 @@ Singleton {
     readonly property int gridW: cellW * 7
 
     // island
-    readonly property string islandMode: cfg("islandMode", "popout")
     readonly property int islandDuration: 200
     readonly property real islandResponse: springResponse
     readonly property real islandDamping: springDamping

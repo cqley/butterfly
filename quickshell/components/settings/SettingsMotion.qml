@@ -3,31 +3,9 @@ import QtQuick
 
 Column {
     id: root
-    readonly property var modes: ["popout", "classic"]
 
     width: parent ? parent.width : 0
     spacing: Theme.settingsGroupGap
-
-    SettingsGroup {
-        SettingsRow {
-            label: "island interaction"
-            token: "islandMode"
-
-            SettingsSegmented {
-                options: ["pop-out", "classic"]
-                current: Math.max(0, root.modes.indexOf(Theme.islandMode))
-                onPicked: i => {
-                    Cfg.set("islandMode", root.modes[i])
-                    Cfg.flush()
-                }
-            }
-        }
-
-        SettingsRow {
-            label: "menu crossfade"
-            value: "—"
-        }
-    }
 
     SettingsGroup {
         SettingsRow {

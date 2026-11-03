@@ -41,22 +41,18 @@ Item {
         interval: Theme.speed
     }
 
-    property bool full: false
     readonly property bool hot: hover.hovered
     readonly property bool modal: Modal.any
     readonly property bool alert: Notifs.current !== null && !modal
     readonly property bool calm: !alert && !modal
-    readonly property bool popout: Theme.islandMode === "popout"
-    readonly property bool classicHot: root.hot && !root.popout
-    readonly property bool panelOpen: root.popout ? islandPop.open : root.full
-    readonly property bool islandOwn: root.popout && Modal.which === "island"
-    readonly property bool engaged: root.popout ? islandPop.popped : root.hot
-    readonly property bool mediaHover: root.classicHot && !root.full && root.calm && root.media
-    readonly property bool mediaPeek: root.popout && islandPop.popped && !islandPop.open && root.media
-    readonly property bool mediaPanelShown: root.popout && islandPop.mediaShown
-    readonly property bool showVisualizer: Visualizer.on || root.mediaHover || root.mediaPeek || root.mediaPanelShown
+    readonly property bool panelOpen: islandPop.open
+    readonly property bool islandOwn: Modal.which === "island"
+    readonly property bool engaged: islandPop.popped
+    readonly property bool mediaPeek: islandPop.popped && !islandPop.open && root.media
+    readonly property bool mediaPanelShown: islandPop.mediaShown
+    readonly property bool showVisualizer: Visualizer.on || root.mediaPeek || root.mediaPanelShown
     readonly property bool idleSlotVisible: !root.panelOpen || root.mediaPanelShown
-    readonly property bool hideIdleIcons: root.mediaHover || root.panelOpen
+    readonly property bool hideIdleIcons: root.panelOpen
     readonly property bool ringGeometryBase: root.calm && !root.hot && !root.hideIdleIcons
     readonly property bool ringBase: root.ringGeometryBase && Theme.batRingEnabled && Battery.ringShown && Battery.available
     readonly property bool resizing:
@@ -75,9 +71,8 @@ Item {
     readonly property real wAnim: wMotion.value
     readonly property real hAnim: hMotion.value
 
-    onModalChanged: full = false
-    onAlertChanged: if (!alert) full = false
     onEngagedChanged: sync()
+    onShowVisualizerChanged: swapGate.restart()
     onFaceChanged: {
         swapped = root.wasMenu && Modal.any
         wasMenu = Modal.any
@@ -104,9 +99,8 @@ Item {
 
     IslandPop {
         id: islandPop
-        enabled: root.popout
         media: root.media
-        onDepthChanged: if (root.popout) stage.restart()
+        onDepthChanged: stage.restart()
     }
 
     readonly property bool islandReady: !stage.running
@@ -152,8 +146,8 @@ Item {
         readonly property real popH: Theme.islandPopDrop + Theme.h + Theme.islandPopH + Theme.islandHitGrow
         x: (root.width - width) / 2
         y: Theme.gap
-        width: root.popout ? Math.max(body.width, popW) : body.width
-        height: root.popout ? Math.max(body.y - Theme.gap + body.height, popH) : body.height
+        width: Math.max(body.width, popW)
+        height: Math.max(body.y - Theme.gap + body.height, popH)
 
         HoverHandler { id: halo }
     }
@@ -161,7 +155,7 @@ Item {
     Binding {
         target: islandPop
         property: "hovered"
-        value: root.popout && (hover.hovered || halo.hovered) && !root.alert && (!root.modal || Modal.which === "island")
+        value: (hover.hovered || halo.hovered) && !root.alert && (!root.modal || Modal.which === "island")
     }
 
     TapHandler {
@@ -206,10 +200,10 @@ Item {
         { cond: () => Mixer.open, w: () => mixer.width + 2 * Theme.mixerPad, h: () => mixer.y + mixer.height + Theme.mixerPad },
         { cond: () => Bt.open, w: () => Theme.btW, h: () => bt.y + bt.height + Theme.btPad },
         { cond: () => Notifs.open, w: () => Theme.centerW, h: () => center.y + center.height + Theme.centerPad },
-        { cond: () => root.popout && islandPop.calendarShown, w: () => Theme.islandCalW, h: () => cal.y + cal.height + Theme.islandCalPad },
-        { cond: () => root.popout && islandPop.weekShown, w: () => Theme.islandWeekW, h: () => Theme.islandWeekH },
-        { cond: () => root.popout && islandPop.mediaShown, w: () => Theme.islandMediaW, h: () => Theme.islandMediaH },
-        { cond: () => root.popout && islandPop.popped, w: () => root.idleTargetW + Theme.islandPopW, h: () => Theme.h + Theme.islandPopH }
+        { cond: () => islandPop.calendarShown, w: () => Theme.islandCalW, h: () => cal.y + cal.height + Theme.islandCalPad },
+        { cond: () => islandPop.weekShown, w: () => Theme.islandWeekW, h: () => Theme.islandWeekH },
+        { cond: () => islandPop.mediaShown, w: () => Theme.islandMediaW, h: () => Theme.islandMediaH },
+        { cond: () => islandPop.popped, w: () => root.idleTargetW + Theme.islandPopW, h: () => Theme.h + Theme.islandPopH }
     ]
 
     function activePanel() {
@@ -227,21 +221,18 @@ Item {
         const p = root.activePanel()
         if (p)
             return p.w()
-        return root.classicHot ? (root.media && !root.full ? Theme.mediaPillW : Theme.openW)
-            : root.calm ? root.idleTargetW : Theme.w
+        return root.calm ? root.idleTargetW : Theme.w
     }
 
     readonly property real wantH: {
         const p = root.activePanel()
         if (p)
             return p.h()
-        if (root.full)
-            return cal.y + cal.height + Theme.pad
-        return root.classicHot ? (root.media ? tune.y + tune.height + Theme.pad : Theme.openH) : Theme.h
+        return Theme.h
     }
 
     readonly property real idleCenterDrop: dropMotion.value
-    readonly property real bodyDrop: Theme.gap + (root.popout && islandPop.popped ? Theme.islandPopDrop : 0)
+    readonly property real bodyDrop: Theme.gap + (islandPop.popped ? Theme.islandPopDrop : 0)
 
     Spring {
         id: wMotion
@@ -269,7 +260,7 @@ Item {
 
     Spring {
         id: dropMotion
-        target: root.popout && islandPop.popped ? Theme.islandPopH / 2 : 0
+        target: islandPop.popped ? Theme.islandPopH / 2 : 0
         response: Theme.islandResponse
         damping: Theme.islandDamping
         epsilon: Theme.settleEps
@@ -302,67 +293,63 @@ Item {
 
         HoverHandler {
             id: hover
-            onHoveredChanged: if (!root.popout && !hovered) root.full = false
         }
 
         TapHandler {
             onTapped: {
                 if (root.alert)
                     Notifs.dismiss()
-                else if (root.popout) {
-                    if (!root.modal || Modal.which === "island")
-                        islandPop.click()
-                } else if (!root.modal && root.hot)
-                    root.full = !root.full
+                else if (!root.modal || Modal.which === "island")
+                    islandPop.click()
             }
         }
 
         Week {
             id: strip
             x: root.centerX(width)
-            y: root.popout ? Theme.islandWeekPad : Theme.body
+            y: Theme.islandWeekPad
             now: clock.date
-            width: root.popout ? Theme.islandWeekW : Theme.gridW
-            cells: root.popout ? Theme.islandWeekCells : Theme.weekCells
-            lead: root.popout ? Theme.islandWeekLead : Theme.weekLead
-            fadeSpan: root.popout ? Theme.islandWeekFadeSpan : Theme.weekFadeSpan
-            fadeMin: root.popout ? Theme.islandWeekFadeMin : Theme.weekFadeMin
-            fadeCurve: root.popout ? Theme.islandWeekFadeCurve : Theme.weekFadeCurve
-            slide: root.popout ? Theme.islandContentSlide : 0
-            shown: root.popout ? islandPop.weekShown : (root.classicHot && !root.full && root.calm && !root.media)
-            ready: root.popout ? root.islandReady : root.panelReveal
-            rise: root.popout ? Theme.islandDuration : root.panelRise
-            focus: root.popout && shown
-            onShownChanged: if (root.popout && shown) strip.forceActiveFocus()
+            width: Theme.islandWeekW
+            cells: Theme.islandWeekCells
+            lead: Theme.islandWeekLead
+            fadeSpan: Theme.islandWeekFadeSpan
+            fadeMin: Theme.islandWeekFadeMin
+            fadeCurve: Theme.islandWeekFadeCurve
+            slide: Theme.islandContentSlide
+            shown: islandPop.weekShown
+            ready: root.islandReady
+            rise: Theme.islandDuration
+            focus: shown
+            onShownChanged: if (shown) strip.forceActiveFocus()
             Keys.onEscapePressed: Modal.dismiss()
         }
 
         MediaPanel {
             id: tune
             x: root.centerX(width)
-            y: root.popout ? Theme.islandMediaTopPad : Theme.body
-            shown: root.popout ? islandPop.mediaShown : (root.classicHot && !root.full && root.calm && root.media)
+            y: Theme.islandMediaTopPad
+            shown: islandPop.mediaShown
             ready: root.panelReveal
             rise: root.panelRise
-            focus: root.popout && shown
-            onShownChanged: if (root.popout && shown) tune.forceActiveFocus()
+            focus: shown
+            onShownChanged: if (shown) tune.forceActiveFocus()
             Keys.onEscapePressed: Modal.dismiss()
         }
 
         Calendar {
             id: cal
             x: root.centerX(width)
-            y: root.popout ? Theme.islandCalPad : Theme.pad
+            y: Theme.islandCalPad
             now: clock.date
-            cw: root.popout ? Theme.islandCalCellW : Theme.cellW
-            ch: root.popout ? Theme.islandCalCellH : Theme.cellH
-            px: root.popout ? Theme.fsL : Theme.fsM
-            slide: root.popout ? Theme.islandContentSlide : 0
-            shown: root.popout ? islandPop.calendarShown : (root.hot && root.full && root.calm)
-            ready: root.popout ? root.islandReady : root.panelReveal
-            rise: root.popout ? Theme.islandDuration : root.panelRise
+            cw: Theme.islandCalCellW
+            ch: Theme.islandCalCellH
+            px: Theme.fsL
+            slide: Theme.islandContentSlide
+            shown: islandPop.calendarShown
+            ready: root.islandReady
+            rise: Theme.islandDuration
             focus: shown
-            onShownChanged: if (root.popout && shown) cal.forceActiveFocus()
+            onShownChanged: if (shown) cal.forceActiveFocus()
             Keys.onEscapePressed: Modal.dismiss()
         }
 
@@ -507,6 +494,11 @@ Item {
                 width: Math.ceil(Math.max(clockText.implicitWidth, vbars.width))
                 height: parent.height
 
+                Timer {
+                    id: swapGate
+                    interval: Theme.fall
+                }
+
                 Fade {
                     id: clockFade
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -516,6 +508,7 @@ Item {
                     width: clockText.implicitWidth
                     height: parent.height
                     shown: !root.showVisualizer && root.idleSlotVisible
+                    ready: !swapGate.running
                     scale: Theme.slotScale + (1 - Theme.slotScale) * clockScale.value
 
                     Spring {
@@ -549,7 +542,7 @@ Item {
                     width: vbars.width
                     height: parent.height
                     shown: root.showVisualizer && root.idleSlotVisible
-                    ready: root.panelReveal
+                    ready: root.panelReveal && !swapGate.running
                     rise: root.panelRise
                     scale: Theme.slotScale + (1 - Theme.slotScale) * visScale.value
 
@@ -691,4 +684,3 @@ Item {
         z: 5
     }
 }
-
