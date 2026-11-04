@@ -152,12 +152,12 @@ Item {
 
     Item {
         id: hit
-        readonly property real popW: root.idleTargetW + Theme.islandPopW + 2 * Theme.islandHitGrow
-        readonly property real popH: Theme.islandPopDrop + Theme.h + Theme.islandPopH + Theme.islandHitGrow
+        readonly property real restW: root.idleTargetW + 2 * Theme.islandHitGrow
+        readonly property real restH: Theme.h + Theme.islandHitGrow
         x: (root.width - width) / 2
         y: Theme.gap
-        width: Math.max(body.width, popW)
-        height: Math.max(body.y - Theme.gap + body.height, popH)
+        width: Math.max(body.width, restW)
+        height: Math.max(body.y - Theme.gap + body.height, restH)
 
         HoverHandler { id: halo }
     }
