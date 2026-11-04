@@ -65,6 +65,7 @@ Item {
     readonly property bool panelReady: !root.moving
     readonly property bool panelReveal: !Theme.holdPanels || root.panelReady
     readonly property int panelRise: root.swapped ? Theme.swapRise : Theme.rise
+    property bool launchRevealed: false
     property bool wasMenu: false
     property bool swapped: false
     property real holdW: Theme.w
@@ -72,6 +73,13 @@ Item {
     property bool media: false
     readonly property real wAnim: wMotion.value
     readonly property real hAnim: hMotion.value
+
+    onPanelRevealChanged: if (Launcher.open && root.panelReveal) root.launchRevealed = true
+
+    Connections {
+        target: Launcher
+        function onOpenChanged() { if (!Launcher.open) root.launchRevealed = false }
+    }
 
     onEngagedChanged: sync()
     onShowVisualizerChanged: swapGate.restart()
@@ -387,7 +395,7 @@ Item {
             x: root.centerX(width)
             y: Theme.lpad
             shown: Launcher.open
-            ready: root.panelReveal && launch.settled
+            ready: root.launchRevealed || root.panelReveal
             rise: root.panelRise
         }
 

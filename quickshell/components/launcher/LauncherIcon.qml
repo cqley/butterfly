@@ -9,6 +9,7 @@ Item {
     property bool selected: false
     property bool hovered: false
     property bool pressed: false
+    property bool snap: false
 
     width: Theme.launchIconBox
     height: Theme.launchIconBox
@@ -23,9 +24,9 @@ Item {
         transformOrigin: Item.Center
         scale: root.pressed ? Theme.feedbackPressScale : root.selected ? Theme.launchIconSelectedScale : root.hovered ? Theme.feedbackHoverScale : 1
 
-        Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
-        Behavior on color { ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
-        Behavior on border.color { ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
+        Behavior on scale { NumberAnimation { duration: root.snap ? 0 : Theme.feedbackDuration; easing.type: Theme.ease } }
+        Behavior on color { ColorAnimation { duration: root.snap ? 0 : Theme.feedbackDuration; easing.type: Theme.ease } }
+        Behavior on border.color { ColorAnimation { duration: root.snap ? 0 : Theme.feedbackDuration; easing.type: Theme.ease } }
     }
 
     StableImage {

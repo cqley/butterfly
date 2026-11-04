@@ -1,5 +1,6 @@
 import "../core"
 import QtQuick
+import QtQuick.Shapes
 
 Item {
     readonly property real u: Theme.micS / 12
@@ -27,12 +28,19 @@ Item {
         antialiasing: true
     }
 
-    Rectangle {
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: 10 * parent.u - 1
-        width: 1.5 * parent.u
-        height: 2 * parent.u
-        color: Theme.red
+    Shape {
+        width: 12
+        height: 12
+        scale: parent.u
+        transformOrigin: Item.TopLeft
+        preferredRendererType: Shape.CurveRenderer
+
+        ShapePath {
+            strokeWidth: -1
+            fillColor: Theme.red
+
+            PathSvg { path: "M4.5 9H6.5V11H4.5Z" }
+        }
     }
 
     Rectangle {

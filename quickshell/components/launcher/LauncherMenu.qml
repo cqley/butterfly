@@ -16,6 +16,7 @@ Pick {
     }))
     readonly property var raw: find(input.text)
     property var results: raw
+    readonly property string selId: view[sel] ? view[sel].id : ""
     view: results
 
     n: view.length
@@ -263,7 +264,7 @@ Pick {
                         width: list.width
                         height: Theme.rowH
 
-                        readonly property bool selected: root.sel === row.index
+                        readonly property bool selected: root.selId !== "" && root.selId === row.modelData.id
                         readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
 
                         Rectangle {
@@ -280,7 +281,7 @@ Pick {
                             opacity: row.selected ? 1 : 0
                             antialiasing: true
 
-                            Behavior on opacity { NumberAnimation { duration: Theme.selDuration; easing.type: Theme.ease } }
+                            Behavior on opacity { NumberAnimation { duration: root.snap ? 0 : Theme.selDuration; easing.type: Theme.ease } }
                         }
 
                         LauncherIcon {
@@ -292,6 +293,7 @@ Pick {
                             selected: row.selected
                             hovered: area.containsMouse
                             pressed: area.pressed
+                            snap: root.snap
                         }
 
                         Column {

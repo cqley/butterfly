@@ -35,8 +35,8 @@ quickshell ipc call <target> <action>
 | recording | `gpu-screen-recorder`, `wf-recorder` or `wl-screenrec` |
 | screenshot | `grim` + `wl-copy` |
 | colors | `magick`, `gawk`, `awww` |
-| lock | `hyprlock` |
-| visualizer (real, optional) | `cava` fallback if absent|
+| lock | `hyprlock` (optional) |
+| visualizer | `cava` (optional) fallback if absent|
 
 ## install
 
