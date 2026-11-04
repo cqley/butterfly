@@ -18,6 +18,8 @@ Item {
     property bool dragging: false
     readonly property real travel: Theme.mixerTrackH - Theme.mixerHandleH
     readonly property real base: Theme.mixerHandleH / 2
+    readonly property int trackX: Math.round((Theme.mixerColW - Theme.mixerTrackW) / 2)
+    readonly property real axis: root.trackX + Theme.mixerTrackW / 2
     readonly property int waveTier: !waves || muted || !ready || value <= 0 ? 0
         : value < Theme.audioWaveLowAt ? 1
         : value < Theme.audioWaveHighAt ? 2
@@ -68,7 +70,7 @@ Item {
             height: Theme.mixerTrackH
 
             Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
+                x: root.trackX
                 anchors.top: parent.top
                 width: Theme.mixerTrackW
                 height: parent.height
@@ -79,7 +81,7 @@ Item {
             }
 
             Rectangle {
-                anchors.horizontalCenter: parent.horizontalCenter
+                x: root.trackX
                 anchors.bottom: parent.bottom
                 width: Theme.mixerTrackW
                 height: root.level > 0 ? root.base + root.level * root.travel : 0
@@ -95,7 +97,7 @@ Item {
 
             Rectangle {
                 id: handle
-                anchors.horizontalCenter: parent.horizontalCenter
+                x: root.axis - width / 2
                 y: (1 - root.level) * root.travel
                 width: Theme.mixerHandleW
                 height: Theme.mixerHandleH
@@ -156,7 +158,8 @@ Item {
             height: Theme.mixerIconBox
 
             StableImage {
-                anchors.centerIn: parent
+                x: root.axis - width / 2
+                anchors.verticalCenter: parent.verticalCenter
                 width: Theme.mixerAppIcon
                 height: Theme.mixerAppIcon
                 visible: root.icon !== ""
@@ -166,7 +169,7 @@ Item {
             }
 
             Shape {
-                x: Math.round((iconBox.width - Theme.mixerIcon) / 2)
+                x: root.axis - Theme.mixerIcon / 2
                 y: Math.round((iconBox.height - Theme.mixerIcon) / 2)
                 width: Theme.iconGrid
                 height: Theme.iconGrid
@@ -234,11 +237,13 @@ Item {
             }
 
             Shape {
-                anchors.centerIn: parent
+                x: root.axis - Theme.mixerIcon / 2
+                y: Math.round((iconBox.height - Theme.mixerIcon) / 2)
                 width: Theme.iconGrid
                 height: Theme.iconGrid
                 scale: Theme.mixerIcon / Theme.iconGrid
                 visible: root.icon !== "" && root.muted
+                transformOrigin: Item.TopLeft
                 preferredRendererType: Shape.CurveRenderer
 
                 ShapePath {

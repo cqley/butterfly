@@ -71,7 +71,7 @@ Pick {
 
     function commit(vals) {
         const l = build(vals)
-        if (same(l.items, layout.items))
+        if (same(l.items, layout.items) && same(l.seps, layout.seps))
             return
         if (!shown) {
             apply(l)

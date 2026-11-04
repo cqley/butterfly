@@ -626,7 +626,6 @@ Item {
                 shown: Mic.muted && !root.hideIdleIcons
                 leadingGap: Theme.clockGap + (Theme.rowGap - Theme.clockGap) * battery.enter
                 settledGap: battery.active ? Theme.rowGap : Theme.clockGap
-                onClicked: Mic.toggle()
 
                 transform: Translate {
                     x: Theme.micOffsetX
@@ -644,7 +643,6 @@ Item {
                 shown: Record.active && !root.hideIdleIcons
                 leadingGap: Theme.clockGap + (Theme.rowGap - Theme.clockGap) * Math.max(battery.enter, mic.enter)
                 settledGap: (battery.active || mic.shown) ? Theme.rowGap : Theme.clockGap
-                onClicked: Record.stop()
 
                 transform: Translate {
                     x: Theme.recordOffsetX

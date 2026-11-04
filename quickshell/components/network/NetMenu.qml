@@ -291,6 +291,7 @@ Pick {
                         readonly property real sig: modelData ? modelData.signal : 0
                         readonly property bool locked: !!modelData && !!modelData.locked
                         readonly property bool selected: !root.ask && root.sel === row.index
+                        readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
 
                         y: row.index * Theme.netRowH
                         width: list.width
@@ -371,7 +372,8 @@ Pick {
 
                         MouseArea {
                             anchors.fill: parent
-                            hoverEnabled: true
+                            enabled: row.onscreen
+                            hoverEnabled: row.onscreen
                             cursorShape: Qt.PointingHandCursor
                             onPositionChanged: m => {
                                 if (!root.ask)

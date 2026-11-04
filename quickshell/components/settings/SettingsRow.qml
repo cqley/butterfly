@@ -28,6 +28,12 @@ Item {
         return null
     }
 
+    function centerSlot() {
+        const kids = slot.children
+        for (let i = 0; i < kids.length; i++)
+            kids[i].anchors.verticalCenter = slot.verticalCenter
+    }
+
     function activate() {
         if (root.showArrow) {
             root.activated()
@@ -147,6 +153,9 @@ Item {
         anchors.rightMargin: arrow.visible ? Theme.settingsValueGap : Theme.settingsRowPadX
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.settingsValueGap
+
+        onChildrenChanged: root.centerSlot()
+        Component.onCompleted: root.centerSlot()
 
         Txt {
             visible: root.value !== ""

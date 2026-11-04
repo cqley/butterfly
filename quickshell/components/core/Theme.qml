@@ -211,7 +211,6 @@ Singleton {
     readonly property int clockGap: cfg("clockGap", 4)
     readonly property real idlePopResponse: springResponse
     readonly property real idlePopDamping: springDamping
-    readonly property int slotHit: 6
     readonly property real slotScale: 0.7
 
     // battery
@@ -571,7 +570,7 @@ Singleton {
     readonly property int mixerTrackH: cfg("mixerTrackH", 96)
     readonly property int mixerTrackW: 3
     readonly property real mixerKnobDim: 0.85
-    readonly property int mixerHandleW: 12
+    readonly property int mixerHandleW: 13
     readonly property int mixerHandleH: 3
     readonly property int mixerIconBox: 24
     readonly property int mixerIcon: 16
@@ -770,7 +769,7 @@ Singleton {
     readonly property int settingsDotGap: 10
     readonly property int settingsDotRingPad: 3
     readonly property int settingsSliderH: 4
-    readonly property int settingsSliderKnobD: 9
+    readonly property int settingsSliderKnobD: 10
     readonly property int settingsSliderHitPad: 8
     readonly property int settingsFieldH: 26
     readonly property int settingsFieldW: 140

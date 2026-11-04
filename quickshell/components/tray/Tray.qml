@@ -49,6 +49,8 @@ Singleton {
         const result = Theme.stableReorder([...SystemTray.items.values], order, i => i.id, cmp)
         order = result.order
         items = result.items
+        if (menuItem && items.indexOf(menuItem) < 0)
+            closeMenu()
     }
 
     Component.onCompleted: rebuild()

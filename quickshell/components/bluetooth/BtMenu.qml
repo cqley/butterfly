@@ -255,6 +255,7 @@ Pick {
                         readonly property string status: Bt.statusOf(modelData)
                         readonly property bool busy: status !== ""
                         readonly property bool selected: root.sel === row.index
+                        readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
 
                         y: row.index * Theme.btRowH
                         width: list.width
@@ -323,7 +324,8 @@ Pick {
 
                         MouseArea {
                             anchors.fill: parent
-                            hoverEnabled: true
+                            enabled: row.onscreen
+                            hoverEnabled: row.onscreen
                             cursorShape: Qt.PointingHandCursor
                             onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
                             onClicked: {

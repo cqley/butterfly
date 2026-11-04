@@ -12,6 +12,8 @@ Item {
 
     readonly property real span: root.to - root.from
     readonly property real ratio: root.span > 0 ? Math.max(0, Math.min(1, (root.value - root.from) / root.span)) : 0
+    readonly property int trackY: Math.round((root.height - Theme.settingsSliderH) / 2)
+    readonly property real axis: root.trackY + Theme.settingsSliderH / 2
 
     width: Theme.settingsSliderW
     height: Theme.settingsSliderKnobD
@@ -69,7 +71,7 @@ Item {
     }
 
     Rectangle {
-        anchors.verticalCenter: parent.verticalCenter
+        y: root.trackY
         width: parent.width
         height: Theme.settingsSliderH
         radius: height / 2
@@ -87,7 +89,7 @@ Item {
 
     Rectangle {
         x: pos.value * (root.width - width)
-        anchors.verticalCenter: parent.verticalCenter
+        y: root.axis - height / 2
         width: Theme.settingsSliderKnobD
         height: Theme.settingsSliderKnobD
         radius: width / 2

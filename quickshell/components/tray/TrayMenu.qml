@@ -17,7 +17,7 @@ Pick {
     property string selId: ""
 
     function run() {
-        if (n)
+        if (items[sel])
             items[sel].activate()
     }
 
@@ -58,7 +58,7 @@ Pick {
     onVisibleChanged: {
         if (visible)
             forceActiveFocus()
-        else
+        else if (!Tray.open)
             fresh()
     }
 
@@ -144,6 +144,7 @@ Pick {
                     required property var modelData
                     required property int index
                     readonly property bool selected: root.sel === cell.index
+                    readonly property bool onscreen: cell.index >= root.start && cell.index < root.start + root.rows
                     readonly property bool attention: cell.modelData && cell.modelData.status === Status.NeedsAttention
                     readonly property bool passive: cell.modelData && cell.modelData.status === Status.Passive
 
@@ -151,52 +152,59 @@ Pick {
                     width: Theme.trayCellW
                     height: parent.height
 
-                    ClippingRectangle {
-                        id: chip
-                        anchors.centerIn: parent
-                        width: Theme.trayChipD
-                        height: Theme.trayChipD
-                        radius: width / 2
-                        color: Theme.chip
-                        opacity: cell.passive && !cell.selected ? Theme.dimMid : 1
+                    Item {
+                        anchors.fill: parent
                         transformOrigin: Item.Center
                         scale: area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1
-                        antialiasing: true
-
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
-                        }
 
                         Behavior on scale {
                             NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
                         }
 
-                        IconImage {
+                        ClippingRectangle {
+                            id: chip
                             anchors.centerIn: parent
-                            implicitSize: Theme.trayGlyphD
-                            source: cell.modelData ? cell.modelData.icon : ""
-                        }
-                    }
+                            width: Theme.trayChipD
+                            height: Theme.trayChipD
+                            radius: width / 2
+                            color: Theme.chip
+                            opacity: cell.passive && !cell.selected ? Theme.dimMid : 1
+                            antialiasing: true
 
-                    Rectangle {
-                        width: Theme.trayAttentionD
-                        height: Theme.trayAttentionD
-                        radius: width / 2
-                        color: Theme.red
-                        x: chip.x + chip.width - width / 2
-                        y: chip.y - height / 2
-                        visible: cell.attention
-                        antialiasing: true
+                            Behavior on opacity {
+                                NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                            }
+
+                            IconImage {
+                                anchors.centerIn: parent
+                                implicitSize: Theme.trayGlyphD
+                                source: cell.modelData ? cell.modelData.icon : ""
+                            }
+                        }
+
+                        Rectangle {
+                            width: Theme.trayAttentionD
+                            height: Theme.trayAttentionD
+                            radius: width / 2
+                            color: Theme.red
+                            x: chip.x + chip.width - width / 2
+                            y: chip.y - height / 2
+                            visible: cell.attention
+                            antialiasing: true
+                        }
                     }
 
                     MouseArea {
                         id: area
                         anchors.fill: parent
-                        hoverEnabled: true
+                        enabled: cell.onscreen
+                        hoverEnabled: cell.onscreen
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                         onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), cell.index)
                         onClicked: mouse => {
+                            if (!cell.modelData)
+                                return
                             root.sel = cell.index
                             if (mouse.button === Qt.RightButton)
                                 Tray.openMenu(cell.modelData)
@@ -205,7 +213,10 @@ Pick {
                             else
                                 root.run()
                         }
-                        onWheel: wheel => cell.modelData.scroll(wheel.angleDelta.y, false)
+                        onWheel: wheel => {
+                            if (cell.modelData)
+                                cell.modelData.scroll(wheel.angleDelta.y, false)
+                        }
                     }
                 }
             }
