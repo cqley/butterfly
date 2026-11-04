@@ -195,6 +195,14 @@ Singleton {
     // idle row
     readonly property int clockPx: fs(cfg("clockPx", 14))
     readonly property string clockFormat: cfg("clockFormat", "HH:mm")
+
+    function clockText(date) {
+        if (clockFormat !== "hh:mm")
+            return Qt.formatDateTime(date, clockFormat)
+        const h = date.getHours() % 12 || 12
+        const m = date.getMinutes()
+        return h + ":" + (m < 10 ? "0" + m : m)
+    }
     readonly property int idleOffsetX: 0
     readonly property int idleOffsetY: 0
     readonly property int idleTopOffsetY: 0

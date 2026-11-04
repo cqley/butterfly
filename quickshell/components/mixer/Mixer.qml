@@ -11,10 +11,20 @@ Singleton {
     property bool open: false
 
     onOpenChanged: {
-        Audio.watch = root.open
         Brightness.refresh()
-        if (root.open)
+        if (root.open) {
+            closeHold.stop()
+            Audio.watch = true
             Modal.claim("mixer")
+        } else {
+            closeHold.restart()
+        }
+    }
+
+    Timer {
+        id: closeHold
+        interval: Theme.fall
+        onTriggered: Audio.watch = false
     }
 
     IpcHandler {

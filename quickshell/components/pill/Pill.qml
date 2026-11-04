@@ -568,7 +568,7 @@ Item {
                         anchors.fill: parent
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        text: Qt.formatDateTime(clock.date, Theme.clockFormat)
+                        text: Theme.clockText(clock.date)
                         font.pixelSize: Theme.clockPx
                         font.features: Theme.tabular
 
