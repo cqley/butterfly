@@ -74,13 +74,6 @@ Item {
     readonly property real wAnim: wMotion.value
     readonly property real hAnim: hMotion.value
 
-    onPanelRevealChanged: if (Launcher.open && root.panelReveal) root.launchRevealed = true
-
-    Connections {
-        target: Launcher
-        function onOpenChanged() { if (!Launcher.open) root.launchRevealed = false }
-    }
-
     onEngagedChanged: sync()
     onShowVisualizerChanged: swapGate.restart()
     onFaceChanged: {
@@ -90,6 +83,12 @@ Item {
     onPanelReadyChanged: if (Theme.blockSwap && root.panelReady && Modal.any) grow.restart()
     onCalmChanged: if (calm && Theme.idleWait > 0) wake.restart()
     onRingGeometryBaseChanged: ringSettle.restart()
+    onPanelRevealChanged: if (Launcher.open && root.panelReveal) root.launchRevealed = true
+
+    Connections {
+        target: Launcher
+        function onOpenChanged() { if (!Launcher.open) root.launchRevealed = false }
+    }
     onWantWChanged: root.brake()
     onWantHChanged: root.brake()
 
