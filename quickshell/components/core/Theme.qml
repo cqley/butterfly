@@ -189,7 +189,7 @@ Singleton {
     readonly property color shadowColor: "#000000"
     readonly property real shadowOpacity: cfg("shadowOpacity", 0.42)
     readonly property int shadowBlur: cfg("shadowBlur", 30)
-    readonly property real shadowSpread: cfg("shadowSpread", 0.05)
+    readonly property int shadowSpread: cfg("shadowSpread", 0)
     readonly property int shadowOffsetY: 0
 
     // idle row

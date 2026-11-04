@@ -143,14 +143,14 @@ Column {
         SettingsRow {
             label: "shadow spread"
             token: "shadowSpread"
-            value: Math.round(Theme.shadowSpread * 100) + "%"
+            value: Theme.shadowSpread + " px"
 
             SettingsSlider {
                 from: 0
-                to: 0.3
-                step: 0.01
+                to: 20
+                step: 1
                 value: Theme.shadowSpread
-                onMoved: v => Cfg.set("shadowSpread", Math.round(v * 100) / 100)
+                onMoved: v => Cfg.set("shadowSpread", Math.round(v))
                 onCommitted: Cfg.flush()
             }
         }
