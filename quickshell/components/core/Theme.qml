@@ -68,13 +68,21 @@ Singleton {
 
     // colors
     property var pal: null
-    readonly property color bg: pal && pal.special ? pal.special.background : "#000000"
+    readonly property color bgAuto: pal && pal.special ? pal.special.background : "#000000"
+    readonly property string primaryOverride: cfg("primary", "")
+    readonly property color bg: isHex(primaryOverride) ? primaryOverride : bgAuto
     readonly property color fg: pal && pal.special ? pal.special.foreground : "#ffffff"
     readonly property color chip: mix(bg, fg, 0.11)
     readonly property color tile: mix(bg, fg, 0.172)
     readonly property color accentAuto: pal && pal.special && pal.special.accent ? pal.special.accent : "#f2b8e2"
     readonly property string accentOverride: cfg("accent", "")
     readonly property color accent: isHex(accentOverride) ? accentOverride : accentAuto
+    readonly property var primarySwatches: [bgAuto, "#000000", "#0d0d0f", "#17171a", "#202024", "#141a22", "#1c1526", "#101c17"]
+    readonly property var accentSwatches: [accentAuto, "#e5534b", "#f2994a", "#f2c94c", "#6fcf97", "#56ccd0", "#5b8def", "#bb6bd9"]
+
+    function onTone(c) {
+        return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b > 0.5 ? "#000000" : "#ffffff"
+    }
 
     function isHex(s) {
         return /^#[0-9a-fA-F]{6}$/.test(String(s || ""))
@@ -240,7 +248,7 @@ Singleton {
     readonly property real slotScale: 0.7
 
     // workspaces
-    readonly property bool wsOn: cfg("wsOn", true)
+    readonly property bool wsOn: cfg("wsOn", false)
     readonly property string wsPlace: cfg("wsPlace", "left")
     readonly property bool wsVertical: cfg("wsVertical", false)
     readonly property bool wsAccent: cfg("wsAccent", false)
@@ -261,7 +269,7 @@ Singleton {
     readonly property real wsResponse: springResponse
     readonly property real wsDamping: springDamping
     readonly property real wsSpread: cfg("wsSpread", 0.3)
-    readonly property int wsSwap: cfg("wsSwap", 120)
+    readonly property int wsSwap: cfg("wsSwap", 150)
     readonly property int wsOffsetX: 0
     readonly property int wsOffsetY: 0
     readonly property string batPlace: cfg("batPlace", "right")
@@ -277,7 +285,6 @@ Singleton {
     readonly property int batNubH: 5
     readonly property int batNubGap: 1
     readonly property color batNubColor: batOutline
-    readonly property int batGap: clockGap
     readonly property int batRadius: 4
     readonly property int batFillRadius: 3
     readonly property int batFillMin: 2
@@ -287,7 +294,6 @@ Singleton {
     readonly property real batGlyphStroke: 1.4
     readonly property real batGlyphSoften: 0.9
     readonly property real batBoltYOffset: 0.1
-    readonly property real batPopScale: slotScale
     readonly property real batBoltScale: 0.75
     readonly property real batBoltResponse: springResponse
     readonly property real batBoltDamping: springDamping
@@ -768,8 +774,7 @@ Singleton {
     readonly property int settingsGap: 24
     readonly property int settingsBorderWidth: pillBorderWidth
     readonly property real settingsBorderOpacity: pillBorderOpacity
-    readonly property real settingsDarken: cfg("settingsDarken", 0)
-    readonly property color settingsBg: Qt.rgba(bg.r * (1 - settingsDarken), bg.g * (1 - settingsDarken), bg.b * (1 - settingsDarken), 1)
+    readonly property color settingsBg: bg
     readonly property real settingsBgOpacity: 1
     readonly property color settingsCard: mix(settingsBg, fg, 0.07)
     readonly property color settingsHover: mix(settingsBg, fg, 0.13)
@@ -778,6 +783,9 @@ Singleton {
     readonly property color settingsRowHover: Qt.rgba(1, 1, 1, 0.045)
     readonly property color settingsValueInk: mix(fg, settingsBg, 0.45)
     readonly property int settingsRowH: 35
+    readonly property int settingsSectionH: 10
+    readonly property int settingsSectionPx: fs(10)
+    readonly property color settingsSectionInk: mix(fg, settingsBg, 0.5)
     readonly property int settingsRowPadX: 12
     readonly property int settingsValueGap: 6
     readonly property int settingsGroupGap: 9

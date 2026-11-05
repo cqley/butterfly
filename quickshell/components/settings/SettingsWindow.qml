@@ -146,20 +146,40 @@ Item {
                     property int shownIndex: Settings.selected
                     property bool churn: false
 
+                    function retarget(to, ms) {
+                        pageFade.stop()
+                        pageFade.duration = ms
+                        pageFade.to = to
+                        pageFade.start()
+                    }
+
+                    function reveal() {
+                        if (!stage.churn && view.ready && view.opacity < 1)
+                            stage.retarget(1, Theme.rise)
+                    }
+
+                    Component.onCompleted: stage.reveal()
+
                     Connections {
                         target: Settings
                         function onSelectedChanged() {
                             stage.churn = true
-                            swapTimer.restart()
+                            stage.retarget(0, Theme.fall)
                         }
                     }
 
-                    Timer {
-                        id: swapTimer
-                        interval: Theme.fall
-                        onTriggered: {
+                    NumberAnimation {
+                        id: pageFade
+                        target: view
+                        property: "opacity"
+                        easing.type: Theme.ease
+
+                        onFinished: {
+                            if (!stage.churn)
+                                return
                             stage.shownIndex = Settings.selected
                             stage.churn = false
+                            stage.reveal()
                         }
                     }
 
@@ -167,14 +187,9 @@ Item {
                         id: view
                         anchors.fill: parent
                         category: Settings.categories[stage.shownIndex]
-                        opacity: stage.churn ? 0 : 1
+                        opacity: 0
 
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: stage.churn ? Theme.fall : Theme.rise
-                                easing.type: Theme.ease
-                            }
-                        }
+                        onReadyChanged: stage.reveal()
                     }
                 }
             }

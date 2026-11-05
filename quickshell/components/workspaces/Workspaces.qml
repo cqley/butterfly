@@ -8,11 +8,13 @@ import Quickshell.Hyprland
 Singleton {
     id: root
 
-    readonly property bool available: Compositor.isHyprland && Hyprland.workspaces.values.length > 0 && Cfg.ready
+    readonly property bool wired: Compositor.isHyprland && Hyprland.workspaces.values.length > 0 && Cfg.ready
+    property bool synced: false
+    readonly property bool available: root.wired && root.synced
     readonly property int count: Math.max(1, Theme.wsCount)
 
     readonly property var monitor: {
-        if (!root.available)
+        if (!root.wired)
             return null
         const want = Theme.shellScreen
         const list = Hyprland.monitors.values
@@ -23,7 +25,7 @@ Singleton {
     }
 
     readonly property int liveId: {
-        if (!root.available)
+        if (!root.wired)
             return 0
         const ws = Hyprland.focusedWorkspace
         if (ws)
@@ -49,27 +51,39 @@ Singleton {
         const out = []
         for (let i = 0; i < root.count; i++)
             out.push(false)
-        if (!root.available)
+        if (!root.wired)
             return out
         const list = Hyprland.workspaces.values
+        const tracked = Hyprland.toplevels.values.length > 0
         for (let i = 0; i < list.length; i++) {
             const ws = list[i]
             const slot = ws.id - root.first
             if (slot < 0 || slot >= root.count)
                 continue
             const raw = ws.lastIpcObject
-            const n = raw && raw.windows !== undefined ? raw.windows : ws.toplevels.values.length
+            const n = tracked ? ws.toplevels.values.length
+                              : (raw && raw.windows !== undefined ? raw.windows : 0)
             out[slot] = n > 0
         }
         return out
     }
 
     function adopt() {
-        if (root.liveId >= 1)
-            root.current = root.liveId
+        if (root.liveId < 1)
+            return
+        root.current = root.liveId
+        root.synced = true
     }
 
     onLiveIdChanged: root.adopt()
+
+    onWiredChanged: if (root.wired) reveal.restart()
+
+    Timer {
+        id: reveal
+        interval: 0
+        onTriggered: root.synced = true
+    }
 
     Component.onCompleted: root.adopt()
 

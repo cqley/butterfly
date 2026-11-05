@@ -272,7 +272,7 @@ Column {
         }
 
         SettingsRow {
-            label: "page change fade"
+            label: "page change"
             token: "wsSwap"
             value: Theme.wsSwap + " ms"
 

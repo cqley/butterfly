@@ -44,7 +44,7 @@ Item {
     }
 
     readonly property bool hot: hover.hovered
-    readonly property bool modal: Modal.any
+    readonly property bool modal: Modal.any && Modal.which !== "settings"
     readonly property bool alert: Notifs.current !== null && !modal
     readonly property bool calm: !alert && !modal
     readonly property bool panelOpen: islandPop.open
@@ -65,7 +65,7 @@ Item {
     readonly property bool resizing:
         Math.abs(root.wAnim - root.targetW) > Theme.settleEps ||
         Math.abs(root.hAnim - root.targetH) > Theme.settleEps
-    readonly property string face: Modal.any ? Modal.which : root.alert ? "note" : "idle"
+    readonly property string face: root.modal ? Modal.which : root.alert ? "note" : "idle"
     readonly property bool moving: hold.running || root.resizing
     readonly property bool panelReady: !root.moving
     readonly property bool panelReveal: !Theme.holdPanels || root.panelReady
@@ -83,10 +83,10 @@ Item {
     onShowVisualizerChanged: swapGate.restart()
     onWsOnlyChanged: swapGate.restart()
     onFaceChanged: {
-        swapped = root.wasMenu && Modal.any
-        wasMenu = Modal.any
+        swapped = root.wasMenu && root.modal
+        wasMenu = root.modal
     }
-    onPanelReadyChanged: if (Theme.blockSwap && root.panelReady && Modal.any) grow.restart()
+    onPanelReadyChanged: if (Theme.blockSwap && root.panelReady && root.modal) grow.restart()
     onCalmChanged: if (calm && Theme.idleWait > 0) wake.restart()
     onRingGeometryBaseChanged: ringSettle.restart()
     onPanelRevealChanged: if (Launcher.open && root.panelReveal) root.launchRevealed = true
@@ -200,7 +200,7 @@ Item {
 
     readonly property var leftModules: [
         {
-            key: "ws", clip: false, component: wsLeftContent,
+            key: "ws", component: wsLeftContent,
             shownFn: () => root.wsLeft && !root.hideIdleIcons,
             sizeFn: () => Theme.h, contentWidthFn: () => Workspaces.span,
             clockGapFn: () => Theme.wsClockGap,
@@ -228,17 +228,10 @@ Item {
 
     readonly property var rightModules: [
         {
-            key: "ws", clip: false, component: wsRightContent,
-            shownFn: () => root.wsRight && !root.hideIdleIcons,
-            sizeFn: () => Theme.h, contentWidthFn: () => Workspaces.span,
-            clockGapFn: () => Theme.wsClockGap,
-            offsetXFn: () => Theme.wsOffsetX, offsetYFn: () => Theme.wsOffsetY
-        },
-        {
-            key: "battery", component: batteryContent,
-            shownFn: () => Battery.shown && Battery.available && Theme.batPlace === "right" && !root.hideIdleIcons,
-            sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
-            offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
+            key: "record", component: recordContent,
+            shownFn: () => Record.active && Theme.recPlace === "right" && !root.hideIdleIcons,
+            sizeFn: () => Theme.recordDot,
+            offsetXFn: () => Theme.recordOffsetX, offsetYFn: () => Theme.recordOffsetY
         },
         {
             key: "mic", component: micContent,
@@ -247,10 +240,17 @@ Item {
             offsetXFn: () => Theme.micOffsetX, offsetYFn: () => Theme.micOffsetY
         },
         {
-            key: "record", component: recordContent,
-            shownFn: () => Record.active && Theme.recPlace === "right" && !root.hideIdleIcons,
-            sizeFn: () => Theme.recordDot,
-            offsetXFn: () => Theme.recordOffsetX, offsetYFn: () => Theme.recordOffsetY
+            key: "battery", component: batteryContent,
+            shownFn: () => Battery.shown && Battery.available && Theme.batPlace === "right" && !root.hideIdleIcons,
+            sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
+            offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
+        },
+        {
+            key: "ws", component: wsRightContent,
+            shownFn: () => root.wsRight && !root.hideIdleIcons,
+            sizeFn: () => Theme.h, contentWidthFn: () => Workspaces.span,
+            clockGapFn: () => Theme.wsClockGap,
+            offsetXFn: () => Theme.wsOffsetX, offsetYFn: () => Theme.wsOffsetY
         }
     ]
 
@@ -259,18 +259,11 @@ Item {
         WorkspaceStrip {
             x: Math.round((parent.width - width) / 2)
             y: Math.round((parent.height - height) / 2)
-            opacity: (root.wsLeft && !root.hideIdleIcons) ? 1 : 0
+            live: root.wsLeft && !root.hideIdleIcons
             index: Workspaces.index
             count: Workspaces.count
             page: Workspaces.page
             filled: Workspaces.filled
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: (root.wsLeft && !root.hideIdleIcons) ? 0 : Theme.fall
-                    easing.type: Theme.ease
-                }
-            }
         }
     }
 
@@ -279,18 +272,11 @@ Item {
         WorkspaceStrip {
             x: Math.round((parent.width - width) / 2)
             y: Math.round((parent.height - height) / 2)
-            opacity: (root.wsRight && !root.hideIdleIcons) ? 1 : 0
+            live: root.wsRight && !root.hideIdleIcons
             index: Workspaces.index
             count: Workspaces.count
             page: Workspaces.page
             filled: Workspaces.filled
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: (root.wsRight && !root.hideIdleIcons) ? 0 : Theme.fall
-                    easing.type: Theme.ease
-                }
-            }
         }
     }
 
@@ -621,11 +607,12 @@ Item {
 
     Fade {
         id: idle
-        x: root.idleX
+        x: body.x
         anchors.top: body.top
         anchors.topMargin: Theme.idleTopOffsetY + root.idleCenterDrop
-        width: row.width
+        width: body.width
         height: Theme.h
+        clip: true
         shown: root.idleRowActive
         ready: !wake.running
         rise: Theme.idleRise
@@ -649,6 +636,7 @@ Item {
 
         Row {
             id: row
+            x: root.idleX - body.x
             width: leftRow.width + clockSlot.width + rightRow.width
             height: parent.height
             spacing: 0
@@ -661,12 +649,16 @@ Item {
 
             Item {
                 id: clockSlot
-                width: Math.ceil(Math.max(root.wsOnly ? wsOnlyStrip.span : clockText.implicitWidth, vbars.width))
+                property bool wsFace: false
+                width: Math.ceil(Math.max(clockSlot.wsFace ? wsOnlyStrip.span : clockText.implicitWidth, vbars.width))
                 height: parent.height
+
+                Component.onCompleted: clockSlot.wsFace = root.wsOnly
 
                 Timer {
                     id: swapGate
                     interval: Theme.fall
+                    onTriggered: clockSlot.wsFace = root.wsOnly
                 }
 
                 Fade {
@@ -739,6 +731,7 @@ Item {
                     WorkspaceStrip {
                         id: wsOnlyStrip
                         anchors.centerIn: parent
+                        live: wsOnlyFade.shown
                         index: Workspaces.index
                         count: Workspaces.count
                         page: Workspaces.page

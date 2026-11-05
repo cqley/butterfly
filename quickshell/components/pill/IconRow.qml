@@ -56,10 +56,10 @@ Item {
                 required property int index
                 required property var modelData
                 readonly property real ownGap: modelData.clockGapFn ? modelData.clockGapFn() : Theme.clockGap
+                pinEnd: !root.clockEnd
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: Theme.moduleOffsetY + (modelData.offsetYFn ? modelData.offsetYFn() : 0)
                 anchors.alignWhenCentered: Theme.idleAlignWhenCentered
-                clipContent: modelData.clip !== undefined ? modelData.clip : true
                 size: modelData.sizeFn ? modelData.sizeFn() : Theme.h
                 contentWidth: modelData.contentWidthFn ? modelData.contentWidthFn() : size
                 shown: modelData.shownFn()

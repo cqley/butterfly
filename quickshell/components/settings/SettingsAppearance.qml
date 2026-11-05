@@ -3,30 +3,35 @@ import QtQuick
 
 Column {
     id: root
-    readonly property var swatches: [Theme.accentAuto, "#e5534b", "#f2994a", "#f2c94c", "#6fcf97", "#56ccd0", "#5b8def", "#bb6bd9"]
-    readonly property string hex: Theme.isHex(Theme.accentOverride) ? Theme.accentOverride.toLowerCase() : ""
-    readonly property int swatch: root.hex === "" ? 0 : root.swatches.findIndex((c, i) => i > 0 && String(c).toLowerCase() === root.hex)
+    readonly property string primaryHex: Theme.isHex(Theme.primaryOverride) ? Theme.primaryOverride.toLowerCase() : ""
+    readonly property string accentHex: Theme.isHex(Theme.accentOverride) ? Theme.accentOverride.toLowerCase() : ""
+
+    function swatchOf(list, hex) {
+        return hex === "" ? 0 : list.findIndex((c, i) => i > 0 && String(c).toLowerCase() === hex)
+    }
+
+    function store(key, value) {
+        if (value === "")
+            Cfg.clear(key)
+        else
+            Cfg.set(key, value)
+        Cfg.flush()
+    }
 
     width: parent ? parent.width : 0
     spacing: Theme.settingsGroupGap
 
     SettingsGroup {
         SettingsRow {
-            label: "accent colour"
-            token: "accent"
-            value: root.hex === "" ? "auto" : root.hex
+            label: "primary colour"
+            token: "primary"
+            value: root.primaryHex === "" ? "auto" : root.primaryHex
 
             SettingsColorDots {
-                colors: root.swatches
+                colors: Theme.primarySwatches
                 autoIndex: 0
-                current: root.swatch
-                onPicked: i => {
-                    if (i === 0)
-                        Cfg.clear("accent")
-                    else
-                        Cfg.set("accent", String(root.swatches[i]).toLowerCase())
-                    Cfg.flush()
-                }
+                current: root.swatchOf(Theme.primarySwatches, root.primaryHex)
+                onPicked: i => root.store("primary", i === 0 ? "" : String(Theme.primarySwatches[i]).toLowerCase())
             }
         }
 
@@ -36,14 +41,41 @@ Column {
             SettingsField {
                 placeholder: "#rrggbb"
                 limit: 7
-                text: root.hex
+                text: root.primaryHex
                 onCommitted: t => {
                     const v = t.trim().toLowerCase()
-                    if (v === "")
-                        Cfg.clear("accent")
-                    else if (Theme.isHex(v))
-                        Cfg.set("accent", v)
-                    Cfg.flush()
+                    if (v === "" || Theme.isHex(v))
+                        root.store("primary", v)
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
+        SettingsRow {
+            label: "accent colour"
+            token: "accent"
+            value: root.accentHex === "" ? "auto" : root.accentHex
+
+            SettingsColorDots {
+                colors: Theme.accentSwatches
+                autoIndex: 0
+                current: root.swatchOf(Theme.accentSwatches, root.accentHex)
+                onPicked: i => root.store("accent", i === 0 ? "" : String(Theme.accentSwatches[i]).toLowerCase())
+            }
+        }
+
+        SettingsRow {
+            label: "custom colour"
+
+            SettingsField {
+                placeholder: "#rrggbb"
+                limit: 7
+                text: root.accentHex
+                onCommitted: t => {
+                    const v = t.trim().toLowerCase()
+                    if (v === "" || Theme.isHex(v))
+                        root.store("accent", v)
                 }
             }
         }
@@ -80,20 +112,6 @@ Column {
             }
         }
 
-        SettingsRow {
-            label: "settings window darkness"
-            token: "settingsDarken"
-            value: Math.round(Theme.settingsDarken * 100) + "%"
-
-            SettingsSlider {
-                from: 0
-                to: 1
-                step: 0.05
-                value: Theme.settingsDarken
-                onMoved: v => Cfg.set("settingsDarken", Math.round(v * 100) / 100)
-                onCommitted: Cfg.flush()
-            }
-        }
     }
 
     SettingsGroup {

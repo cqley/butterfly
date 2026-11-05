@@ -9,6 +9,8 @@ Column {
     width: parent ? parent.width : 0
     spacing: Theme.settingsGroupGap
 
+    SettingsSection { text: "display" }
+
     SettingsGroup {
         SettingsRow {
             label: "monitor"
@@ -25,6 +27,8 @@ Column {
         }
     }
 
+    SettingsSection { text: "battery" }
+
     SettingsGroup {
         SettingsRow {
             label: "charge ring"
@@ -39,6 +43,8 @@ Column {
             }
         }
     }
+
+    SettingsSection { text: "reset" }
 
     SettingsGroup {
         SettingsRow {

@@ -57,6 +57,8 @@ FocusScope {
                     height: Theme.settingsDotD
                     radius: width / 2
                     color: dot.modelData
+                    border.width: Theme.surfaceBorderWidth
+                    border.color: Theme.surfaceBorder
                     antialiasing: true
 
                     Rectangle {
@@ -67,8 +69,9 @@ FocusScope {
                         radius: width / 2
                         color: "transparent"
                         border.width: Theme.surfaceBorderWidth
-                        border.color: Theme.settingsBg
+                        border.color: Theme.onTone(dot.modelData)
                         antialiasing: true
+                        opacity: Theme.dimMid
                     }
                 }
 

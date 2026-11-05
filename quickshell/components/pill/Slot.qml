@@ -10,7 +10,7 @@ Item {
     property real trailingGap: 0
     property int settledGap: Math.round(leadingGap)
     property int settledTrailingGap: Math.round(trailingGap)
-    property bool clipContent: true
+    property bool pinEnd: false
     readonly property int targetWidth: shown ? settledGap + contentWidth + settledTrailingGap : 0
     readonly property real enter: enterMotion.value
     default property alias content: holder.data
@@ -18,7 +18,7 @@ Item {
     width: (leadingGap + contentWidth + trailingGap) * enter
     height: Theme.h
     visible: enter > 0
-    clip: root.clipContent
+    clip: true
 
     Spring {
         id: enterMotion
@@ -31,7 +31,7 @@ Item {
 
     Item {
         id: holder
-        x: Math.round(root.leadingGap)
+        x: root.pinEnd ? root.width - root.trailingGap - root.contentWidth : Math.round(root.leadingGap)
         y: Math.round((root.height - root.size) / 2)
         width: root.contentWidth
         height: root.size
