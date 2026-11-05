@@ -173,4 +173,18 @@ Column {
             }
         }
     }
+
+    SettingsGroup {
+        SettingsRow {
+            label: "wallpaper folder"
+            token: "wallPath"
+
+            SettingsField {
+                width: Theme.settingsPathW
+                placeholder: "~/pictures/wallpapers"
+                text: Theme.wallPathShort
+                onCommitted: t => root.store("wallPath", t.trim())
+            }
+        }
+    }
 }

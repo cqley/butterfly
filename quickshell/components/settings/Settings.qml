@@ -73,6 +73,12 @@ Singleton {
             page: "SettingsNotifications.qml"
         },
         {
+            id: "recording",
+            label: "recording",
+            icon: Theme.settingsRecordPath,
+            page: "SettingsRecording.qml"
+        },
+        {
             id: "system",
             label: "system",
             icon: Theme.settingsSystemPath,

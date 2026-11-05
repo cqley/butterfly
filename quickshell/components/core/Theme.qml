@@ -66,6 +66,18 @@ Singleton {
         return "file://" + value.split("/").map(encodeURIComponent).join("/")
     }
 
+    function dir(path, fallback) {
+        const value = String(path || "").trim()
+        if (value === "")
+            return fallback
+        const abs = value.charAt(0) === "~" ? Quickshell.env("HOME") + value.slice(1) : value
+        return abs.length > 1 && abs.charAt(abs.length - 1) === "/" ? abs.slice(0, -1) : abs
+    }
+
+    function tilde(path) {
+        return String(path || "").replace(Quickshell.env("HOME"), "~")
+    }
+
     // colors
     property var pal: null
     readonly property color bgAuto: pal && pal.special ? pal.special.background : "#000000"
@@ -427,7 +439,9 @@ Singleton {
     readonly property string pwOffPath: "M18.36 6.64a9 9 0 1 1-12.73 0M12 2L12 12"
 
     // wallpaper
-    readonly property string wallDir: url(Quickshell.env("HOME") + "/pictures/wallpapers")
+    readonly property string wallPath: dir(cfg("wallPath", ""), Quickshell.env("HOME") + "/pictures/wallpapers")
+    readonly property string wallPathShort: tilde(wallPath)
+    readonly property string wallDir: url(wallPath)
     readonly property var wallCmd: [Quickshell.shellPath("components/core/scripts/colors.sh")]
     readonly property int wallPad: 16
     readonly property int thumbW: 132
@@ -674,10 +688,14 @@ Singleton {
     readonly property real monitorNumAxis: 12
 
     // recording
-    readonly property string recordDir: Quickshell.env("HOME") + "/videos/records"
+    readonly property string recordDir: dir(cfg("recordDir", ""), Quickshell.env("HOME") + "/videos/records")
+    readonly property string recordDirShort: tilde(recordDir)
     readonly property string recordBin: ""
     readonly property string recordBackend: ""
-    readonly property int recordFps: 60
+    readonly property int recordFps: cfg("recordFps", 60)
+    readonly property bool recordDesktopAudio: cfg("recordDesktopAudio", true)
+    readonly property bool recordMic: cfg("recordMic", false)
+    readonly property bool recordCursor: cfg("recordCursor", true)
     readonly property int recordDot: 8
     readonly property int recordBadge: 6
     readonly property int recordBadgeInset: 7
@@ -817,6 +835,7 @@ Singleton {
     readonly property string settingsIconsPath: "M4 4H10.5V20H4ZM13.5 4H20V20H13.5Z"
     readonly property string settingsStylePath: "M9.06 11.9L17.13 3.84A2.85 2.85 0 1 1 21.16 7.87L13.1 15.95M7.07 14.94C5.41 14.94 4.07 16.29 4.07 17.96C4.07 19.29 1.57 19.48 2.07 19.98C3.15 21.08 4.56 22 6.07 22C8.27 22 10.07 20.2 10.07 17.96A3.01 3.01 0 0 0 7.07 14.94Z"
     readonly property string settingsMotionPath: "M3 12C5 6 7 6 9 12C11 18 13 18 15 12C17 6 19 6 21 12"
+    readonly property string settingsRecordPath: "M6 6H13A3 3 0 0 1 16 9V15A3 3 0 0 1 13 18H6A3 3 0 0 1 3 15V9A3 3 0 0 1 6 6Z M16 11L21 8V16L16 13"
     readonly property real settingsScaleFrom: 0.9
     readonly property int settingsRiseOffset: 14
     readonly property real settingsPopResponse: 0.3
@@ -838,6 +857,7 @@ Singleton {
     readonly property int settingsSliderHitPad: 8
     readonly property int settingsFieldH: 26
     readonly property int settingsFieldW: 140
+    readonly property int settingsPathW: 200
     readonly property color settingsFieldBg: mix(settingsBg, fg, 0.13)
     readonly property int settingsSliderW: 120
     readonly property int settingsSegW: 190

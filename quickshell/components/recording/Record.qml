@@ -20,6 +20,28 @@ Singleton {
     property var items: []
     property var pending: null
     property bool intentional: false
+    readonly property bool canMic: backend !== ""
+    readonly property bool canDesktopAudio: backend === "gsr"
+    readonly property bool canCursor: backend === "gsr" || backend === "wl"
+    readonly property bool canFps: backend === "gsr"
+    readonly property string backendLabel: {
+        if (backend === "gsr")
+            return "gpu-screen-recorder"
+        if (backend === "wf")
+            return "wf-recorder"
+        if (backend === "wl")
+            return "wl-screenrec"
+        return "not found"
+    }
+    readonly property string optsLabel: {
+        const a = []
+        if (canDesktopAudio && Theme.recordDesktopAudio)
+            a.push("desktop")
+        if (canMic && Theme.recordMic)
+            a.push("mic")
+        const cur = canCursor ? (Theme.recordCursor ? "yes" : "no") : "n/a"
+        return "audio:" + (a.length ? a.join("+") : "none") + " cursor:" + cur
+    }
     readonly property string clock: {
         const m = Math.floor(elapsedSec / 60)
         const s = elapsedSec % 60
@@ -86,6 +108,39 @@ Singleton {
         start(item)
     }
 
+    function gsrCmd(target, out) {
+        const a = [bin, "-w", target, "-f", String(Theme.recordFps)]
+        const srcs = []
+        if (Theme.recordDesktopAudio)
+            srcs.push("default_output")
+        if (Theme.recordMic)
+            srcs.push("default_input")
+        if (srcs.length)
+            a.push("-a", srcs.join("|"))
+        if (!Theme.recordCursor)
+            a.push("-cursor", "no")
+        if (target === "portal")
+            a.push("-restore-portal-session", "yes")
+        return a.concat(["-o", out])
+    }
+
+    function cmd(item, mon, out) {
+        if (backend === "gsr")
+            return gsrCmd(item.kind === "portal" ? "portal" : mon, out)
+        if (backend === "wl") {
+            const a = [bin, "-o", mon, "-f", out]
+            if (Theme.recordMic)
+                a.push("--audio")
+            if (!Theme.recordCursor)
+                a.push("--no-cursor")
+            return a
+        }
+        const a = [bin, "-y", "-f", out, "-o", mon]
+        if (Theme.recordMic)
+            a.push("-a")
+        return a
+    }
+
     function start(item) {
         if (!item)
             return
@@ -110,20 +165,17 @@ Singleton {
         targetLabel = item.label
         startedAt = Date.now()
         elapsedSec = 0
-        if (backend === "gsr" && item.kind === "portal")
-            proc.exec([bin, "-w", "portal", "-f", String(Theme.recordFps), "-a", "default_output", "-restore-portal-session", "yes", "-o", out])
-        else if (backend === "gsr")
-            proc.exec([bin, "-w", mon, "-f", String(Theme.recordFps), "-a", "default_output", "-o", out])
-        else if (backend === "wl")
-            proc.exec([bin, "-o", mon, "-f", out])
-        else
-            proc.exec([bin, "-a", "-y", "-f", out, "-o", mon])
+        proc.exec(cmd(item, mon, out))
     }
 
     function resume() {
         const item = pending
         pending = null
         start(item)
+    }
+
+    function ensureDir() {
+        Quickshell.execDetached(["mkdir", "-p", Theme.recordDir])
     }
 
     function verify(file) {
@@ -204,8 +256,15 @@ Singleton {
         }
     }
 
+    Connections {
+        target: Theme
+        function onRecordDirChanged() {
+            root.ensureDir()
+        }
+    }
+
     Component.onCompleted: {
-        Quickshell.execDetached(["mkdir", "-p", Theme.recordDir])
+        root.ensureDir()
         if (Theme.recordBin !== "") {
             root.bin = Theme.recordBin
             root.backend = Theme.recordBackend
@@ -224,10 +283,10 @@ Singleton {
             if (root.pending)
                 return "switching"
             if (root.active)
-                return "recording " + root.backend + " " + root.clock + " " + root.targetLabel + " " + root.lastFile
+                return "recording " + root.backend + " " + root.clock + " " + root.targetLabel + " " + root.optsLabel + " " + root.lastFile
             if (root.lastError !== "")
                 return "idle " + root.backend + " " + root.bin + " err:" + root.lastError
-            return "idle " + (root.bin !== "" ? root.backend + " " + root.bin : "no-backend")
+            return "idle " + (root.bin !== "" ? root.backend + " " + root.optsLabel + " " + root.bin : "no-backend")
         }
     }
 }
