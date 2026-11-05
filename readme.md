@@ -19,6 +19,7 @@
 | `notifications` | `toggle` `clear` `status` |
 | `dnd` | `toggle` `status` |
 | `settings` | `toggle` `open` `close` `status` |
+| `island` | `week` `calendar` `media` `status` |
 | `tray` | `toggle` `status` |
 | `workspaces` | `toggle` `place <left\|right\|only>` `style <dots\|bars>` `status` |
 | `modal` | `dismiss` `status` |

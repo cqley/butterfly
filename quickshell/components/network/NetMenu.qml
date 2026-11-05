@@ -14,6 +14,7 @@ Pick {
     focus: shown
 
     property string selSsid: ""
+    readonly property string selKey: items && items[sel] ? String(items[sel].ssid) : ""
 
     function fresh() {
         reset()
@@ -290,7 +291,7 @@ Pick {
                         readonly property string status: root.statusOf(modelData)
                         readonly property real sig: modelData ? modelData.signal : 0
                         readonly property bool locked: !!modelData && !!modelData.locked
-                        readonly property bool selected: !root.ask && root.sel === row.index
+                        readonly property bool selected: !root.ask && root.selKey !== "" && !!modelData && root.selKey === modelData.ssid
                         readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
 
                         y: row.index * Theme.netRowH
@@ -320,7 +321,7 @@ Pick {
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Theme.glide
+                                    duration: root.snap ? 0 : Theme.glide
                                     easing.type: Theme.ease
                                 }
                             }

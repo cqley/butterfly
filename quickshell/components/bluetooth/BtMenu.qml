@@ -13,6 +13,7 @@ Pick {
     focus: shown
 
     property string selAddr: ""
+    readonly property string selKey: items[sel] ? String(items[sel].address) : ""
 
     function run() {
         if (n)
@@ -254,7 +255,7 @@ Pick {
                         readonly property bool on: !!modelData && !!modelData.connected
                         readonly property string status: Bt.statusOf(modelData)
                         readonly property bool busy: status !== ""
-                        readonly property bool selected: root.sel === row.index
+                        readonly property bool selected: root.selKey !== "" && !!modelData && root.selKey === modelData.address
                         readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
 
                         y: row.index * Theme.btRowH
@@ -276,7 +277,7 @@ Pick {
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Theme.glide
+                                    duration: root.snap ? 0 : Theme.glide
                                     easing.type: Theme.ease
                                 }
                             }

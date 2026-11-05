@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Widgets
+import Quickshell.Io
 import "../audio"
 import "../bluetooth"
 import "../calendar"
@@ -70,7 +71,7 @@ Item {
     readonly property bool panelReady: !root.moving
     readonly property bool panelReveal: !Theme.holdPanels || root.panelReady
     readonly property int panelRise: root.swapped ? Theme.swapRise : Theme.rise
-    property bool launchRevealed: false
+    property string revealedFace: ""
     property bool wasMenu: false
     property bool swapped: false
     property real holdW: Theme.w
@@ -85,18 +86,26 @@ Item {
     onFaceChanged: {
         swapped = root.wasMenu && root.modal
         wasMenu = root.modal
+        revealedFace = ""
     }
     onPanelReadyChanged: if (Theme.blockSwap && root.panelReady && root.modal) grow.restart()
     onCalmChanged: if (calm && Theme.idleWait > 0) wake.restart()
     onRingGeometryBaseChanged: ringSettle.restart()
-    onPanelRevealChanged: if (Launcher.open && root.panelReveal) root.launchRevealed = true
-
-    Connections {
-        target: Launcher
-        function onOpenChanged() { if (!Launcher.open) root.launchRevealed = false }
-    }
+    onPanelRevealChanged: if (root.panelReveal) root.revealedFace = root.face
     onWantWChanged: root.brake()
     onWantHChanged: root.brake()
+
+    function faceReady(name) {
+        return root.revealedFace === name || root.panelReveal
+    }
+
+    function pop(mode) {
+        if (root.alert)
+            return
+        if (root.modal && !root.islandOwn)
+            return
+        islandPop.show(mode)
+    }
 
     function brake() {
         if (!Theme.holdPill || hold.running || root.resizing)
@@ -115,7 +124,16 @@ Item {
     IslandPop {
         id: islandPop
         media: root.media
-        onDepthChanged: stage.restart()
+        onFaceChanged: stage.restart()
+    }
+
+    IpcHandler {
+        target: "island"
+
+        function week(): string { return islandPop.toggleFace("week") }
+        function calendar(): string { return islandPop.toggleFace("calendar") }
+        function media(): string { return islandPop.toggleFace("media") }
+        function status(): string { return islandPop.report }
     }
 
     readonly property bool islandReady: !stage.running
@@ -423,9 +441,14 @@ Item {
             onTapped: {
                 if (root.alert)
                     Notifs.dismiss()
-                else if (!root.modal || Modal.which === "island")
-                    islandPop.click()
+                else
+                    root.pop(islandPop.primary)
             }
+        }
+
+        TapHandler {
+            acceptedButtons: Qt.MiddleButton
+            onTapped: root.pop("dates")
         }
 
         TapHandler {
@@ -501,7 +524,7 @@ Item {
             x: root.centerX(width)
             y: Theme.lpad
             shown: Launcher.open
-            ready: root.launchRevealed || root.panelReveal
+            ready: root.faceReady("launcher")
             rise: root.panelRise
         }
 
@@ -546,7 +569,7 @@ Item {
             x: root.centerX(width)
             y: Theme.netPad
             shown: Net.open
-            ready: root.panelReveal
+            ready: root.faceReady("net")
             rise: root.panelRise
         }
 
@@ -564,7 +587,7 @@ Item {
             x: root.centerX(width)
             y: Theme.btPad
             shown: Bt.open
-            ready: root.panelReveal
+            ready: root.faceReady("bluetooth")
             rise: root.panelRise
         }
 
