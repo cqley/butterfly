@@ -10,6 +10,7 @@ Singleton {
     readonly property string shortPath: "~/.config/quickshell/settings.json"
     readonly property int settleMs: 400
     property var v: ({})
+    property bool ready: false
     property string mine: ""
     readonly property int count: Object.keys(v).length
 
@@ -79,8 +80,12 @@ Singleton {
         printErrors: false
 
         onFileChanged: reload()
-        onLoadFailed: root.v = ({})
-        onLoaded: if (!settle.running && text() !== root.mine) root.adopt(text())
+        onLoadFailed: { root.v = ({}); root.ready = true }
+        onLoaded: {
+            if (!settle.running && text() !== root.mine)
+                root.adopt(text())
+            root.ready = true
+        }
     }
 
 }

@@ -5,16 +5,20 @@ Item {
     id: root
     property bool shown: false
     property int size: Theme.micS
+    property int contentWidth: size
     property real leadingGap: Theme.rowGap
+    property real trailingGap: 0
     property int settledGap: Math.round(leadingGap)
-    readonly property int targetWidth: shown ? settledGap + size : 0
+    property int settledTrailingGap: Math.round(trailingGap)
+    property bool clipContent: true
+    readonly property int targetWidth: shown ? settledGap + contentWidth + settledTrailingGap : 0
     readonly property real enter: enterMotion.value
     default property alias content: holder.data
 
-    width: (leadingGap + size) * enter
+    width: (leadingGap + contentWidth + trailingGap) * enter
     height: Theme.h
     visible: enter > 0
-    clip: true
+    clip: root.clipContent
 
     Spring {
         id: enterMotion
@@ -29,7 +33,7 @@ Item {
         id: holder
         x: Math.round(root.leadingGap)
         y: Math.round((root.height - root.size) / 2)
-        width: root.size
+        width: root.contentWidth
         height: root.size
         transformOrigin: Item.Center
         scale: Theme.slotScale + (1 - Theme.slotScale) * root.enter

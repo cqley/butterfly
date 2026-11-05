@@ -17,6 +17,7 @@ import "../screenshot"
 import "../battery"
 import "../tray"
 import "../wallpaper"
+import "../workspaces"
 
 Item {
     id: root
@@ -52,6 +53,10 @@ Item {
     readonly property bool mediaPeek: islandPop.popped && !islandPop.open && root.media
     readonly property bool mediaPanelShown: islandPop.mediaShown
     readonly property bool showVisualizer: Visualizer.on || root.mediaPeek || root.mediaPanelShown
+    readonly property bool wsAvailable: Theme.wsOn && Workspaces.available
+    readonly property bool wsOnly: root.wsAvailable && Theme.wsPlace === "only"
+    readonly property bool wsLeft: root.wsAvailable && Theme.wsPlace !== "only" && Theme.wsPlace !== "right"
+    readonly property bool wsRight: root.wsAvailable && Theme.wsPlace === "right"
     readonly property bool idleRowActive: root.calm || root.islandOwn
     readonly property bool idleSlotVisible: root.idleRowActive && (!root.panelOpen || root.mediaPanelShown)
     readonly property bool hideIdleIcons: !root.idleRowActive || root.panelOpen
@@ -76,6 +81,7 @@ Item {
 
     onEngagedChanged: sync()
     onShowVisualizerChanged: swapGate.restart()
+    onWsOnlyChanged: swapGate.restart()
     onFaceChanged: {
         swapped = root.wasMenu && Modal.any
         wasMenu = Modal.any
@@ -190,8 +196,123 @@ Item {
         precision: SystemClock.Minutes
     }
 
-    readonly property real idleRowW: clockSlot.width + battery.targetWidth + mic.targetWidth + record.targetWidth
-    readonly property real idleTargetW: Math.max(Theme.w, root.idleRowW + Theme.pad)
+    readonly property real idleRowW: leftRow.targetWidth + clockSlot.width + rightRow.targetWidth
+
+    readonly property var leftModules: [
+        {
+            key: "ws", clip: false, component: wsLeftContent,
+            shownFn: () => root.wsLeft && !root.hideIdleIcons,
+            sizeFn: () => Theme.h, contentWidthFn: () => Workspaces.span,
+            clockGapFn: () => Theme.wsClockGap,
+            offsetXFn: () => Theme.wsOffsetX, offsetYFn: () => Theme.wsOffsetY
+        },
+        {
+            key: "battery", component: batteryContent,
+            shownFn: () => Battery.shown && Battery.available && Theme.batPlace === "left" && !root.hideIdleIcons,
+            sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
+            offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
+        },
+        {
+            key: "mic", component: micContent,
+            shownFn: () => Mic.muted && Theme.micPlace === "left" && !root.hideIdleIcons,
+            sizeFn: () => Theme.micS,
+            offsetXFn: () => Theme.micOffsetX, offsetYFn: () => Theme.micOffsetY
+        },
+        {
+            key: "record", component: recordContent,
+            shownFn: () => Record.active && Theme.recPlace === "left" && !root.hideIdleIcons,
+            sizeFn: () => Theme.recordDot,
+            offsetXFn: () => Theme.recordOffsetX, offsetYFn: () => Theme.recordOffsetY
+        }
+    ]
+
+    readonly property var rightModules: [
+        {
+            key: "ws", clip: false, component: wsRightContent,
+            shownFn: () => root.wsRight && !root.hideIdleIcons,
+            sizeFn: () => Theme.h, contentWidthFn: () => Workspaces.span,
+            clockGapFn: () => Theme.wsClockGap,
+            offsetXFn: () => Theme.wsOffsetX, offsetYFn: () => Theme.wsOffsetY
+        },
+        {
+            key: "battery", component: batteryContent,
+            shownFn: () => Battery.shown && Battery.available && Theme.batPlace === "right" && !root.hideIdleIcons,
+            sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
+            offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
+        },
+        {
+            key: "mic", component: micContent,
+            shownFn: () => Mic.muted && Theme.micPlace === "right" && !root.hideIdleIcons,
+            sizeFn: () => Theme.micS,
+            offsetXFn: () => Theme.micOffsetX, offsetYFn: () => Theme.micOffsetY
+        },
+        {
+            key: "record", component: recordContent,
+            shownFn: () => Record.active && Theme.recPlace === "right" && !root.hideIdleIcons,
+            sizeFn: () => Theme.recordDot,
+            offsetXFn: () => Theme.recordOffsetX, offsetYFn: () => Theme.recordOffsetY
+        }
+    ]
+
+    Component {
+        id: wsLeftContent
+        WorkspaceStrip {
+            x: Math.round((parent.width - width) / 2)
+            y: Math.round((parent.height - height) / 2)
+            opacity: (root.wsLeft && !root.hideIdleIcons) ? 1 : 0
+            index: Workspaces.index
+            count: Workspaces.count
+            page: Workspaces.page
+            filled: Workspaces.filled
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: (root.wsLeft && !root.hideIdleIcons) ? 0 : Theme.fall
+                    easing.type: Theme.ease
+                }
+            }
+        }
+    }
+
+    Component {
+        id: wsRightContent
+        WorkspaceStrip {
+            x: Math.round((parent.width - width) / 2)
+            y: Math.round((parent.height - height) / 2)
+            opacity: (root.wsRight && !root.hideIdleIcons) ? 1 : 0
+            index: Workspaces.index
+            count: Workspaces.count
+            page: Workspaces.page
+            filled: Workspaces.filled
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: (root.wsRight && !root.hideIdleIcons) ? 0 : Theme.fall
+                    easing.type: Theme.ease
+                }
+            }
+        }
+    }
+
+    Component {
+        id: batteryContent
+        BatteryIcon {
+            pct: Battery.pct
+            tone: Battery.tone
+            pluggedIn: Battery.pluggedIn
+        }
+    }
+
+    Component {
+        id: micContent
+        MicOff {}
+    }
+
+    Component {
+        id: recordContent
+        RecordDot {}
+    }
+    readonly property real idleTargetW: Math.max(Theme.w, root.idleRowW + Theme.pad + (root.wsAvailable ? 2 * Theme.wsPad : 0))
     readonly property real idleSnap: Math.round((root.width - root.idleRowW) / 2) - (root.width - root.idleRowW) / 2
     readonly property real idleX: (root.width - row.width) / 2 + root.idleSnap
 
@@ -528,13 +649,19 @@ Item {
 
         Row {
             id: row
-            width: clockSlot.width + battery.width + mic.width + record.width
+            width: leftRow.width + clockSlot.width + rightRow.width
             height: parent.height
             spacing: 0
 
+            IconRow {
+                id: leftRow
+                clockEnd: true
+                modules: root.leftModules
+            }
+
             Item {
                 id: clockSlot
-                width: Math.ceil(Math.max(clockText.implicitWidth, vbars.width))
+                width: Math.ceil(Math.max(root.wsOnly ? wsOnlyStrip.span : clockText.implicitWidth, vbars.width))
                 height: parent.height
 
                 Timer {
@@ -550,7 +677,7 @@ Item {
                     anchors.alignWhenCentered: Theme.idleAlignWhenCentered
                     width: clockText.implicitWidth
                     height: parent.height
-                    shown: !root.showVisualizer && root.idleSlotVisible
+                    shown: !root.showVisualizer && !root.wsOnly && root.idleSlotVisible
                     ready: !swapGate.running
                     scale: Theme.slotScale + (1 - Theme.slotScale) * clockScale.value
 
@@ -561,6 +688,12 @@ Item {
                         damping: Theme.idlePopDamping
                         epsilon: Theme.springUnitEps
                         rest: Theme.springUnitStop
+                    }
+
+                    OpticalCenter {
+                        id: clockOptical
+                        targetFont: clockText.font
+                        text: clockText.text
                     }
 
                     Txt {
@@ -574,7 +707,42 @@ Item {
 
                         transform: Translate {
                             x: Theme.clockOffsetX
+                            y: clockOptical.shift
                         }
+                    }
+                }
+
+                Fade {
+                    id: wsOnlyFade
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.alignWhenCentered: Theme.idleAlignWhenCentered
+                    width: wsOnlyStrip.span
+                    height: parent.height
+                    shown: root.wsOnly && !root.showVisualizer && root.idleSlotVisible
+                    ready: !swapGate.running
+                    scale: Theme.slotScale + (1 - Theme.slotScale) * wsOnlyScale.value
+
+                    Spring {
+                        id: wsOnlyScale
+                        target: wsOnlyFade.active ? 1 : 0
+                        response: Theme.idlePopResponse
+                        damping: Theme.idlePopDamping
+                        epsilon: Theme.springUnitEps
+                        rest: Theme.springUnitStop
+                    }
+
+                    transform: Translate {
+                        x: Theme.wsOffsetX
+                    }
+
+                    WorkspaceStrip {
+                        id: wsOnlyStrip
+                        anchors.centerIn: parent
+                        index: Workspaces.index
+                        count: Workspaces.count
+                        page: Workspaces.page
+                        filled: Workspaces.filled
                     }
                 }
 
@@ -608,80 +776,10 @@ Item {
                 }
             }
 
-            BatteryIcon {
-                id: battery
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: Theme.moduleOffsetY + Theme.batteryOffsetY
-                anchors.alignWhenCentered: Theme.idleAlignWhenCentered
-                shown: Battery.shown && !root.hideIdleIcons
-                available: Battery.available
-                pct: Battery.pct
-                tone: Battery.tone
-                pluggedIn: Battery.pluggedIn
-                leadingGap: Theme.clockGap
-
-                transform: Translate {
-                    x: Theme.batteryOffsetX
-                }
-            }
-
-            Slot {
-                id: mic
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: Theme.moduleOffsetY + Theme.micOffsetY
-                anchors.alignWhenCentered: Theme.idleAlignWhenCentered
-                shown: Mic.muted && !root.hideIdleIcons
-                leadingGap: Theme.clockGap + (Theme.rowGap - Theme.clockGap) * battery.enter
-                settledGap: battery.active ? Theme.rowGap : Theme.clockGap
-
-                transform: Translate {
-                    x: Theme.micOffsetX
-                }
-
-                MicOff {}
-            }
-
-            Slot {
-                id: record
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: Theme.moduleOffsetY + Theme.recordOffsetY
-                anchors.alignWhenCentered: Theme.idleAlignWhenCentered
-                size: Theme.recordDot
-                shown: Record.active && !root.hideIdleIcons
-                leadingGap: Theme.clockGap + (Theme.rowGap - Theme.clockGap) * Math.max(battery.enter, mic.enter)
-                settledGap: (battery.active || mic.shown) ? Theme.rowGap : Theme.clockGap
-
-                transform: Translate {
-                    x: Theme.recordOffsetX
-                }
-
-                Rectangle {
-                    property real pulse: 1
-                    anchors.fill: parent
-                    radius: width / 2
-                    color: Theme.red
-                    antialiasing: true
-                    opacity: Theme.dotLow + (1 - Theme.dotLow) * pulse
-
-                    SequentialAnimation on pulse {
-                        running: Record.active
-                        loops: Animation.Infinite
-
-                        NumberAnimation {
-                            from: 1
-                            to: 0
-                            duration: Theme.pulse
-                            easing.type: Easing.InOutSine
-                        }
-
-                        NumberAnimation {
-                            from: 0
-                            to: 1
-                            duration: Theme.pulse
-                            easing.type: Easing.InOutSine
-                        }
-                    }
-                }
+            IconRow {
+                id: rightRow
+                clockEnd: false
+                modules: root.rightModules
             }
         }
     }

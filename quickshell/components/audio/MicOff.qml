@@ -6,9 +6,11 @@ Item {
     readonly property real u: Theme.micS / 12
     anchors.fill: parent
 
+    readonly property real drop: 0.5 * u
+
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
-        y: parent.u - 1
+        y: parent.u - 1 + parent.drop
         width: 5 * parent.u
         height: 7 * parent.u
         radius: width / 2
@@ -18,7 +20,7 @@ Item {
 
     Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 7 * parent.u - 1
+        y: 7 * parent.u - 1 + parent.drop
         width: 7 * parent.u
         height: 3 * parent.u
         radius: parent.u
@@ -39,12 +41,13 @@ Item {
             strokeWidth: -1
             fillColor: Theme.red
 
-            PathSvg { path: "M4.5 9H6.5V11H4.5Z" }
+            PathSvg { path: "M4.5 9.5H6.5V11.5H4.5Z" }
         }
     }
 
     Rectangle {
-        anchors.centerIn: parent
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: (parent.height - height) / 2 + parent.drop
         width: parent.width
         height: 1.5 * parent.u
         radius: height / 2

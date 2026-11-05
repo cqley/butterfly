@@ -14,12 +14,14 @@
 | `brightness` | `toggle` `status` (`toggle` opens the mixer) |
 | `audio` | `toggle` `status` (`toggle` opens the mixer) |
 | `mic` | `toggle` `status` |
-| `battery` | `toggle` `status` |
+| `battery` | `toggle` `ringToggle` `status` |
 | `visualizer` | `toggle` `status` |
 | `notifications` | `toggle` `clear` `status` |
 | `dnd` | `toggle` `status` |
 | `settings` | `toggle` `open` `close` `status` |
 | `tray` | `toggle` `status` |
+| `workspaces` | `toggle` `place <left\|right\|only>` `style <dots\|bars>` `status` |
+| `modal` | `dismiss` `status` |
 
 ```
 quickshell ipc call <target> <action>

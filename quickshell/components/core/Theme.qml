@@ -152,6 +152,24 @@ Singleton {
         const w = base || iconStroke
         return size < iconGrid ? w * iconGrid / size : w
     }
+
+    function capsulePath(w, h) {
+        const r = Math.min(w, h) / 2
+        const a = "A" + r + " " + r + " 0 0 1 "
+        let p = "M" + r + " 0"
+        if (w > 2 * r)
+            p += "H" + (w - r)
+        p += a + w + " " + r
+        if (h > 2 * r)
+            p += "V" + (h - r)
+        p += a + (w - r) + " " + h
+        if (w > 2 * r)
+            p += "H" + r
+        p += a + "0 " + (h - r)
+        if (h > 2 * r)
+            p += "V" + r
+        return p + a + r + " 0Z"
+    }
     readonly property real btnStroke: 5
     readonly property color mediaIconColor: "#ffffff"
     readonly property string lockGlyphPath: "M5 11H19A2 2 0 0 1 21 13V20A2 2 0 0 1 19 22H5A2 2 0 0 1 3 20V13A2 2 0 0 1 5 11ZM7 11V7A5 5 0 0 1 17 7V11"
@@ -216,10 +234,39 @@ Singleton {
     readonly property int micOffsetY: 0
     readonly property int recordOffsetX: 0
     readonly property int recordOffsetY: 0
-    readonly property int clockGap: cfg("clockGap", 4)
+    readonly property int clockGap: cfg("clockGap", 8)
     readonly property real idlePopResponse: springResponse
     readonly property real idlePopDamping: springDamping
     readonly property real slotScale: 0.7
+
+    // workspaces
+    readonly property bool wsOn: cfg("wsOn", true)
+    readonly property string wsPlace: cfg("wsPlace", "left")
+    readonly property bool wsVertical: cfg("wsVertical", false)
+    readonly property bool wsAccent: cfg("wsAccent", false)
+    readonly property int wsCount: cfg("wsCount", 5)
+    readonly property int wsGap: cfg("wsGap", 8)
+    readonly property int wsPad: cfg("wsPad", 7)
+    readonly property int wsClockGap: cfg("wsClockGap", 11)
+    readonly property real wsDotDim: cfg("wsDotDim", 0.3)
+    readonly property real wsDotLive: cfg("wsDotLive", 0.62)
+    readonly property int wsDot: cfg("wsDot", 4)
+    readonly property int wsActiveW: cfg("wsActiveW", 18)
+    readonly property int wsActiveH: cfg("wsActiveH", 6)
+    readonly property int wsBarW: cfg("wsBarW", 6)
+    readonly property int wsBarH: cfg("wsBarH", 10)
+    readonly property int wsBarActiveW: cfg("wsBarActiveW", 8)
+    readonly property int wsBarActiveH: cfg("wsBarActiveH", 16)
+    readonly property int wsBarGap: cfg("wsBarGap", 5)
+    readonly property real wsResponse: springResponse
+    readonly property real wsDamping: springDamping
+    readonly property real wsSpread: cfg("wsSpread", 0.3)
+    readonly property int wsSwap: cfg("wsSwap", 120)
+    readonly property int wsOffsetX: 0
+    readonly property int wsOffsetY: 0
+    readonly property string batPlace: cfg("batPlace", "right")
+    readonly property string micPlace: cfg("micPlace", "right")
+    readonly property string recPlace: cfg("recPlace", "right")
 
     // battery
     readonly property int batRowH: 16
@@ -625,7 +672,7 @@ Singleton {
     readonly property string recordBin: ""
     readonly property string recordBackend: ""
     readonly property int recordFps: 60
-    readonly property int recordDot: 7
+    readonly property int recordDot: 8
     readonly property int recordBadge: 6
     readonly property int recordBadgeInset: 7
     readonly property int recordStopGrace: 3000
@@ -758,6 +805,8 @@ Singleton {
     readonly property string settingsLauncherPath: "M4 4H10.5V10.5H4ZM13.5 4H20V10.5H13.5ZM4 13.5H10.5V20H4ZM13.5 13.5H20V20H13.5Z"
     readonly property string settingsBellPath: "M18 8.5A6 6 0 0 0 6 8.5C6 15 3 17 3 17H21S18 15 18 8.5ZM13.7 20.5A2 2 0 0 1 10.3 20.5"
     readonly property string settingsSystemPath: "M3 5H21V16H3ZM8.5 20H15.5M12 16V20"
+    readonly property string settingsWorkspacesPath: "M4 12H4.01M20 12H20.01M9.5 12H14.5"
+    readonly property string settingsIconsPath: "M4 4H10.5V20H4ZM13.5 4H20V20H13.5Z"
     readonly property string settingsStylePath: "M9.06 11.9L17.13 3.84A2.85 2.85 0 1 1 21.16 7.87L13.1 15.95M7.07 14.94C5.41 14.94 4.07 16.29 4.07 17.96C4.07 19.29 1.57 19.48 2.07 19.98C3.15 21.08 4.56 22 6.07 22C8.27 22 10.07 20.2 10.07 17.96A3.01 3.01 0 0 0 7.07 14.94Z"
     readonly property string settingsMotionPath: "M3 12C5 6 7 6 9 12C11 18 13 18 15 12C17 6 19 6 21 12"
     readonly property real settingsScaleFrom: 0.9

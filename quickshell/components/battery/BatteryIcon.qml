@@ -5,31 +5,13 @@ import QtQuick.Shapes
 Item {
     id: root
 
-    property bool shown: true
-    property bool available: false
     property real pct: 0
     property color tone: Theme.batGreen
     property bool pluggedIn: false
-    property real leadingGap: Theme.batGap
-    property int settledGap: Math.round(leadingGap)
-    readonly property bool active: root.shown && root.available
-    readonly property real targetWidth: root.active ? root.settledGap + Theme.batW + Theme.batNubGap + Theme.batNubW : 0
-    readonly property real enter: enterMotion.value
     readonly property real boltEnter: boltMotion.value
 
-    width: (root.leadingGap + Theme.batW + Theme.batNubGap + Theme.batNubW) * root.enter
+    width: Theme.batW + Theme.batNubGap + Theme.batNubW
     height: Theme.h
-    visible: root.enter > 0
-    clip: true
-
-    Spring {
-        id: enterMotion
-        target: root.active ? 1 : 0
-        response: Theme.idlePopResponse
-        damping: Theme.idlePopDamping
-        epsilon: Theme.springUnitEps
-        rest: Theme.springUnitStop
-    }
 
     Spring {
         id: boltMotion
@@ -42,16 +24,14 @@ Item {
 
     Item {
         id: holder
-        width: root.leadingGap + Theme.batW + Theme.batNubGap + Theme.batNubW
+        width: Theme.batW + Theme.batNubGap + Theme.batNubW
         height: Theme.batRowH
-        anchors.verticalCenter: parent.verticalCenter
-        scale: Theme.batPopScale + (1 - Theme.batPopScale) * root.enter
-        opacity: root.enter
+        anchors.centerIn: parent
 
         Rectangle {
             id: body
-            x: Math.round(root.leadingGap)
-            y: Math.round((parent.height - height) / 2)
+            x: 0
+            y: (parent.height - height) / 2
             width: Theme.batW
             height: Theme.batH
             radius: Theme.batRadius

@@ -31,6 +31,18 @@ Singleton {
             page: "SettingsMotion.qml"
         },
         {
+            id: "workspaces",
+            label: "workspaces",
+            icon: Theme.settingsWorkspacesPath,
+            page: "SettingsWorkspaces.qml"
+        },
+        {
+            id: "icons",
+            label: "icons",
+            icon: Theme.settingsIconsPath,
+            page: "SettingsIcons.qml"
+        },
+        {
             id: "clock",
             label: "clock & calendar",
             icon: Theme.settingsClockPath,
