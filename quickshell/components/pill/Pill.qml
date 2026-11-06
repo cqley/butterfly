@@ -71,7 +71,7 @@ Item {
     readonly property bool dashLive: root.dashFace || root.morphing || dashExit.running
     readonly property bool dashLeaving: root.dashLive && !root.dashFace && !root.morphing
     readonly property real idleRowCy: Theme.idleTopOffsetY + root.idleCenterDrop + Theme.h / 2
-    readonly property bool showVisualizer: Visualizer.on || root.mediaPeek || root.mediaPanelShown
+    readonly property bool showVisualizer: Visualizer.on || (root.mediaPeek && Theme.visPeek) || root.mediaPanelShown
     readonly property bool wifiShown: Theme.wifiOn && (Net.linkKnown || Net.available)
     readonly property bool wsAvailable: Theme.wsOn && Workspaces.available
     readonly property bool wsOnly: root.wsAvailable && Workspaces.place === "only"
@@ -231,12 +231,12 @@ Item {
         function status(): string { return islandPop.report }
     }
 
-    readonly property var dashParts: ["workspaces", "date", "weekday", "notifications", "network", "bluetooth", "power"]
+    readonly property var dashParts: ["workspaces", "date", "weekday", "notifications", "network", "bluetooth", "volume", "battery"]
 
     function dashKey(part) {
         return "dash" + ({
             workspaces: "Ws", date: "Date", weekday: "Weekday", notifications: "Notes",
-            network: "Net", bluetooth: "Bt", power: "Power"
+            network: "Net", bluetooth: "Bt", volume: "Volume", battery: "Battery"
         })[part]
     }
 
@@ -377,7 +377,7 @@ Item {
         {
             key: "battery", component: batteryContent,
             shownFn: () => Battery.shown && Battery.available && Theme.batPlace === "left" && !root.hideIdleIcons,
-            morphsFn: () => Theme.dashPower && Battery.available,
+            morphsFn: () => Theme.dashBattery && Battery.available,
             sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
             offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
         },
@@ -425,7 +425,7 @@ Item {
         {
             key: "battery", component: batteryContent,
             shownFn: () => Battery.shown && Battery.available && Theme.batPlace === "right" && !root.hideIdleIcons,
-            morphsFn: () => Theme.dashPower && Battery.available,
+            morphsFn: () => Theme.dashBattery && Battery.available,
             sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
             offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
         },
@@ -449,7 +449,7 @@ Item {
             layoutFade: Workspaces.layoutFade
             index: Workspaces.index
             count: Workspaces.count
-            page: Workspaces.page
+            total: Workspaces.total
             filled: Workspaces.filled
         }
     }
@@ -464,7 +464,7 @@ Item {
             layoutFade: Workspaces.layoutFade
             index: Workspaces.index
             count: Workspaces.count
-            page: Workspaces.page
+            total: Workspaces.total
             filled: Workspaces.filled
         }
     }
@@ -588,6 +588,9 @@ Item {
         epsilon: Theme.settleEps
     }
 
+    readonly property real skinRadius: Math.min(Math.min(skin.width, skin.height) / 2,
+        Launcher.open ? Theme.launchRadius : Theme.radius)
+
     Item {
         id: skin
         x: (root.width - width) / 2
@@ -639,7 +642,21 @@ Item {
         TapHandler {
             acceptedButtons: Qt.RightButton
             onTapped: {
-                if (!root.alert && !root.modal)
+                if (root.alert)
+                    return
+                if (islandPop.dashShown) {
+                    if (root.media) {
+                        root.armMorph()
+                        islandPop.go("home", 2)
+                    }
+                    return
+                }
+                if (islandPop.mediaShown) {
+                    root.armMorph()
+                    islandPop.go("home", 1)
+                    return
+                }
+                if (!root.modal)
                     Tray.toggle()
             }
         }
@@ -648,7 +665,7 @@ Item {
             id: strip
             x: root.centerX(width)
             y: Theme.islandWeekPad
-            now: clock.date
+            now: root.clockNow
             width: Theme.islandWeekW
             cells: Theme.islandWeekCells
             lead: Theme.islandWeekLead
@@ -668,7 +685,7 @@ Item {
             id: dash
             x: root.centerX(width)
             y: Theme.dashPad
-            now: clock.date
+            now: root.clockNow
             shown: islandPop.dashShown
             present: root.dashLive
             leaving: root.dashLeaving
@@ -677,6 +694,7 @@ Item {
             t: root.morphT
             hands: root.idleClock
             live: root.dashFace && !root.resizing
+            morphs: root.morphRuns
             origins: root.dashOrigins
             originCy: root.idleRowCy
             focus: shown
@@ -700,7 +718,7 @@ Item {
             id: cal
             x: root.centerX(width)
             y: Theme.islandCalPad
-            now: clock.date
+            now: root.clockNow
             cw: Theme.islandCalCellW
             ch: Theme.islandCalCellH
             px: Theme.fsL
@@ -915,11 +933,11 @@ Item {
                         rest: Theme.springUnitStop
                     }
 
-                    InkTxt {
+                    RollTxt {
                         id: clockText
                         anchors.fill: parent
                         horizontalAlignment: Text.AlignHCenter
-                        text: Theme.clockText(clock.date)
+                        text: Theme.clockText(root.clockNow)
                         font.pixelSize: Theme.clockPx
                         font.features: Theme.tabular
                         dx: Theme.clockOffsetX
@@ -960,7 +978,7 @@ Item {
                         layoutFade: Workspaces.layoutFade
                         index: Workspaces.index
                         count: Workspaces.count
-                        page: Workspaces.page
+                        total: Workspaces.total
                         filled: Workspaces.filled
                     }
                 }
@@ -1020,7 +1038,7 @@ Item {
 
     Fade {
         id: ringFade
-        anchors.fill: body
+        anchors.fill: skin
         shown: root.ringBase
         ready: !ringSettle.running
         rise: Theme.batRingRise
@@ -1029,9 +1047,9 @@ Item {
 
         BatteryRing {
             anchors.centerIn: parent
-            pillW: body.width
-            pillH: body.height
-            pillRadius: body.radius
+            pillW: skin.width
+            pillH: skin.height
+            pillRadius: root.skinRadius
             pct: Battery.pct
         }
     }
@@ -1045,5 +1063,15 @@ Item {
         border.color: Qt.rgba(0, 0, 0, Theme.pillHaloOpacity)
         antialiasing: true
         z: 5
+    }
+
+    property int clockShift: 0
+    readonly property date clockNow: new Date(clock.date.getTime() + root.clockShift * 60000)
+
+    IpcHandler {
+        target: "clocktest"
+        function tick(): string { root.clockShift += 1; return Theme.clockText(root.clockNow) }
+        function hour(): string { root.clockShift += 60 - root.clockNow.getMinutes(); return Theme.clockText(root.clockNow) }
+        function reset(): string { root.clockShift = 0; return Theme.clockText(root.clockNow) }
     }
 }

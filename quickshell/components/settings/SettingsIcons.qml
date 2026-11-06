@@ -28,7 +28,7 @@ Column {
             token: "wifiPlace"
 
             SettingsSegmented {
-                options: ["left", "right"]
+                options: root.sides
                 current: Math.max(0, root.sides.indexOf(Theme.wifiPlace))
                 onPicked: i => {
                     Cfg.set("wifiPlace", root.sides[i])
@@ -36,13 +36,15 @@ Column {
                 }
             }
         }
+    }
 
+    SettingsGroup {
         SettingsRow {
-            label: "battery"
+            label: "battery side"
             token: "batPlace"
 
             SettingsSegmented {
-                options: ["left", "right"]
+                options: root.sides
                 current: Math.max(0, root.sides.indexOf(Theme.batPlace))
                 onPicked: i => {
                     Cfg.set("batPlace", root.sides[i])
@@ -52,11 +54,26 @@ Column {
         }
 
         SettingsRow {
+            label: "charge ring"
+            token: "batRingEnabled"
+
+            SettingsToggle {
+                checked: Theme.batRingEnabled
+                onToggled: on => {
+                    Cfg.set("batRingEnabled", on)
+                    Cfg.flush()
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
+        SettingsRow {
             label: "microphone"
             token: "micPlace"
 
             SettingsSegmented {
-                options: ["left", "right"]
+                options: root.sides
                 current: Math.max(0, root.sides.indexOf(Theme.micPlace))
                 onPicked: i => {
                     Cfg.set("micPlace", root.sides[i])
@@ -70,10 +87,25 @@ Column {
             token: "recPlace"
 
             SettingsSegmented {
-                options: ["left", "right"]
+                options: root.sides
                 current: Math.max(0, root.sides.indexOf(Theme.recPlace))
                 onPicked: i => {
                     Cfg.set("recPlace", root.sides[i])
+                    Cfg.flush()
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
+        SettingsRow {
+            label: "visualizer on hover"
+            token: "visPeek"
+
+            SettingsToggle {
+                checked: Theme.visPeek
+                onToggled: on => {
+                    Cfg.set("visPeek", on)
                     Cfg.flush()
                 }
             }

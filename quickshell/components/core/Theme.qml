@@ -152,7 +152,6 @@ Singleton {
     readonly property real springUnitStop: 0.05
     readonly property real springMaxFrame: 1 / 30
     readonly property int pulse: 1400
-    readonly property int blink: 700
     readonly property real settleEps: 0.5
 
     // dim & opacity
@@ -252,6 +251,12 @@ Singleton {
     readonly property int idleTopOffsetY: 0
     readonly property int clockOffsetX: 0
     readonly property int clockOffsetY: 0
+    readonly property int clockRoll: 480
+    readonly property real clockRollLift: 0.9
+    readonly property real clockRollBand: 1.05
+    readonly property real clockRollBlur: 0.55
+    readonly property int clockRollBlurMax: 12
+    readonly property int clockRollCells: 8
     readonly property int moduleOffsetY: 0
     readonly property bool idleAlignWhenCentered: true
     readonly property int batteryOffsetX: 0
@@ -294,6 +299,8 @@ Singleton {
     readonly property real wsResponse: springResponse
     readonly property real wsDamping: springDamping
     readonly property real wsSpread: cfg("wsSpread", 0.3)
+    readonly property int wsSpreadCap: 8
+    readonly property int wsMax: 24
     readonly property int wsSwap: cfg("wsSwap", 150)
     readonly property int wsOffsetX: 0
     readonly property int wsOffsetY: 0
@@ -773,12 +780,13 @@ Singleton {
     readonly property int dashGap: 8
     readonly property int dashStatusGap: cfg("dashStatusGap", 10)
     readonly property int dashGlyph: 14
+    readonly property real dashNoteDot: 4
+    readonly property real dashNoteDotRing: 1.4
     readonly property int dashBtGlyph: 15
     readonly property string dashBtSlashPath: "M6 6L18 18"
     readonly property int dashVolW: 17
     readonly property int dashClockPx: fs(cfg("dashClockPx", 22))
     readonly property int dashDatePx: fsM
-    readonly property int dashLabelPx: fsS
     readonly property string dashDateFormat: cfg("dashDateFormat", "MMM d")
     readonly property string dashWeekdayFormat: cfg("dashWeekdayFormat", "ddd")
     readonly property bool dashWeekday: cfg("dashWeekday", true)
@@ -786,15 +794,18 @@ Singleton {
     readonly property real dashMorphResponse: cfg("dashMorphResponse", springResponse)
     readonly property real dashMorphDamping: cfg("dashMorphDamping", 1)
     readonly property real dashRevealAt: 0.35
+    readonly property real dashLateAt: 0.85
     readonly property real dashSizeHold: 0.06
     readonly property bool dashWs: cfg("dashWs", true)
     readonly property bool dashDate: cfg("dashDate", true)
     readonly property bool dashNotes: cfg("dashNotes", true)
     readonly property bool dashNet: cfg("dashNet", true)
     readonly property bool dashBt: cfg("dashBt", true)
-    readonly property bool dashPower: cfg("dashPower", true)
+    readonly property bool dashVolume: cfg("dashVolume", cfg("dashPower", true))
+    readonly property bool dashBattery: cfg("dashBattery", cfg("dashPower", true))
 
     // visualizer
+    readonly property bool visPeek: cfg("visPeek", false)
     readonly property int visBars: cfg("visBars", 6)
     readonly property int visBarW: cfg("visBarW", 3)
     readonly property int visGap: 3
@@ -838,12 +849,13 @@ Singleton {
     readonly property color settingsRowHover: Qt.rgba(1, 1, 1, 0.045)
     readonly property color settingsValueInk: mix(fg, settingsBg, 0.45)
     readonly property int settingsRowH: 35
-    readonly property int settingsSectionH: 10
     readonly property int settingsSectionPx: fs(10)
     readonly property color settingsSectionInk: mix(fg, settingsBg, 0.5)
     readonly property int settingsRowPadX: 12
     readonly property int settingsValueGap: 6
     readonly property int settingsGroupGap: 9
+    readonly property int settingsTitleInset: 4
+    readonly property int settingsTitleLift: 2
     readonly property int settingsSidebarItemH: 34
     readonly property int settingsSidebarItemRadius: settingsSidebarItemH / 2
     readonly property int settingsSidebarPadX: 7

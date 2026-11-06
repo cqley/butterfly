@@ -11,12 +11,12 @@ QtObject {
 
     readonly property string mode: root.at.mode
     readonly property int level: root.at.level
-    readonly property int pages: root.mode === "dates" || root.media ? 2 : 1
+    readonly property int pages: root.mode === "dates" ? 2 : 1
     readonly property int depth: level > 0 ? level + 1 : (hovered && armed ? 1 : 0)
     readonly property bool popped: depth >= 1
-    readonly property string face: root.level === 0 ? (root.popped ? "peek" : "")
-        : root.mode === "dates" ? (root.level >= 2 ? "calendar" : "week")
-        : root.level >= 2 ? "media" : "dash"
+    readonly property string face: root.at.level === 0 ? (root.popped ? "peek" : "")
+        : root.at.mode === "dates" ? (root.at.level >= 2 ? "calendar" : "week")
+        : root.at.level >= 2 ? "media" : "dash"
     readonly property bool dashShown: root.face === "dash"
     readonly property bool mediaShown: root.face === "media"
     readonly property bool weekShown: root.face === "week"

@@ -19,6 +19,8 @@ Item {
     property bool ready: true
     property real t: 0
     property bool live: false
+    property bool morphs: false
+    property real calm: 0
     property bool hands: true
     property real originCy: 0
     property var origins: ({})
@@ -26,6 +28,9 @@ Item {
     readonly property real originY: root.originCy - Theme.dashPad
     readonly property real revealRaw: Math.max(0, Math.min(1, (root.t - Theme.dashRevealAt) / (1 - Theme.dashRevealAt)))
     readonly property real reveal: root.revealRaw * root.revealRaw * (3 - 2 * root.revealRaw)
+    readonly property real lateRaw: Math.max(0, Math.min(1, (root.t - Theme.dashLateAt) / (1 - Theme.dashLateAt)))
+    readonly property real late: root.lateRaw * root.lateRaw * (3 - 2 * root.lateRaw)
+    readonly property bool composed: !root.morphs || root.live
     readonly property color dim: Theme.mix(Theme.bg, Theme.fg, Theme.dashDim)
 
     readonly property int row1y: 0
@@ -45,9 +50,6 @@ Item {
     // content
 
     readonly property int notes: Notifs.history.length
-    readonly property string notice: Notifs.dnd ? "do not disturb"
-        : root.notes === 0 ? "all caught up"
-        : root.notes + (root.notes === 1 ? " notification" : " notifications")
 
     readonly property string dateText: {
         const w = Theme.dashWeekday ? Qt.formatDate(root.now, Theme.dashWeekdayFormat).toLowerCase() : ""
@@ -104,7 +106,25 @@ Item {
     onLeavingChanged: root.sync()
     onStagedChanged: root.sync()
     onReadyChanged: root.sync()
-    Component.onCompleted: root.sync()
+
+    onComposedChanged: {
+        calmRun.stop()
+        calmRun.duration = root.composed ? Theme.rise : Theme.fall
+        calmRun.to = root.composed ? 1 : 0
+        calmRun.start()
+    }
+
+    Component.onCompleted: {
+        root.calm = root.composed ? 1 : 0
+        root.sync()
+    }
+
+    NumberAnimation {
+        id: calmRun
+        target: root
+        property: "calm"
+        easing.type: Theme.ease
+    }
 
     NumberAnimation {
         id: wash
@@ -147,7 +167,7 @@ Item {
                 layoutFade: Workspaces.layoutFade
                 index: Workspaces.index
                 count: Workspaces.count
-                page: Workspaces.page
+                total: Workspaces.total
                 filled: Workspaces.filled
             }
         }
@@ -166,7 +186,7 @@ Item {
             origin: root.origin("clock")
             fades: !root.hands
 
-            InkTxt {
+            RollTxt {
                 id: clockText
                 anchors.fill: parent
                 horizontalAlignment: Text.AlignHCenter
@@ -201,25 +221,12 @@ Item {
 
         DashCell {
             shown: Theme.dashNotes
-            contentW: Math.round(notice.implicitWidth)
-
-            InkTxt {
-                id: notice
-                height: parent.height
-                text: root.notice
-                color: root.dim
-                font.pixelSize: Theme.dashLabelPx
-            }
-        }
-
-        DashCell {
-            shown: Theme.dashNotes
-            gap: Theme.dashGap
             contentW: Theme.dashGlyph
             hoverable: true
             onActivated: Notifs.open = true
 
             DashGlyph {
+                id: bell
                 anchors.centerIn: parent
                 size: Theme.dashGlyph
                 ink: Theme.accent
@@ -228,6 +235,31 @@ Item {
 
                 Behavior on opacity {
                     NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                }
+
+                Rectangle {
+                    width: Theme.dashNoteDot + 2 * Theme.dashNoteDotRing
+                    height: width
+                    radius: width / 2
+                    x: bell.width - width
+                    y: -Theme.dashNoteDotRing
+                    color: Theme.bg
+                    opacity: root.notes > 0 ? 1 : 0
+                    visible: opacity > 0.004
+                    antialiasing: true
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                    }
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: Theme.dashNoteDot
+                        height: width
+                        radius: width / 2
+                        color: Theme.accent
+                        antialiasing: true
+                    }
                 }
             }
 
@@ -273,6 +305,7 @@ Item {
             shown: Theme.dashBt
             gap: Theme.dashStatusGap
             contentW: Theme.dashGlyph
+            stages: true
             hoverable: true
             togglable: true
             onActivated: Bt.open = true
@@ -287,27 +320,15 @@ Item {
         }
 
         DashCell {
-            shown: Theme.dashPower
+            shown: Theme.dashVolume
             gap: Theme.dashStatusGap
-            contentW: root.onBattery ? bat.width : Theme.dashVolW
-            origin: root.onBattery ? root.origin("battery") : null
+            contentW: Theme.dashVolW
             hoverable: true
             onActivated: Mixer.open = true
-
-            BatteryIcon {
-                id: bat
-                anchors.centerIn: parent
-                visible: root.onBattery
-                height: Theme.h
-                pct: Battery.pct
-                tone: Battery.tone
-                pluggedIn: Battery.pluggedIn
-            }
 
             DashGlyph {
                 anchors.verticalCenter: parent.verticalCenter
                 x: 0
-                visible: !root.onBattery
                 size: Theme.dashGlyph
                 ink: Theme.accent
                 fill: true
@@ -319,6 +340,24 @@ Item {
                     if (Audio.outMuted) out.push(Theme.audioSlashPath)
                     return out
                 }
+            }
+        }
+
+        DashCell {
+            shown: Theme.dashBattery && root.onBattery
+            gap: Theme.dashStatusGap
+            contentW: bat.width
+            origin: root.origin("battery")
+            hoverable: true
+            onActivated: Mixer.open = true
+
+            BatteryIcon {
+                id: bat
+                anchors.centerIn: parent
+                height: Theme.h
+                pct: Battery.pct
+                tone: Battery.tone
+                pluggedIn: Battery.pluggedIn
             }
         }
     }

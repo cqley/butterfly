@@ -7,11 +7,11 @@ Column {
     readonly property var screens: Quickshell.screens.map(s => s.name)
 
     width: parent ? parent.width : 0
-    spacing: Theme.settingsGroupGap
-
-    SettingsSection { text: "display" }
+    spacing: Theme.settingsSidebarItemH + Theme.settingsSidebarGap - Theme.settingsRowH
 
     SettingsGroup {
+        title: "display"
+
         SettingsRow {
             label: "monitor"
             token: "screen"
@@ -27,26 +27,9 @@ Column {
         }
     }
 
-    SettingsSection { text: "battery" }
-
     SettingsGroup {
-        SettingsRow {
-            label: "charge ring"
-            token: "batRingEnabled"
+        title: "reset"
 
-            SettingsToggle {
-                checked: Theme.batRingEnabled
-                onToggled: on => {
-                    Cfg.set("batRingEnabled", on)
-                    Cfg.flush()
-                }
-            }
-        }
-    }
-
-    SettingsSection { text: "reset" }
-
-    SettingsGroup {
         SettingsRow {
             label: "reset everything to defaults"
             value: Cfg.count === 0 ? "nothing changed" : Cfg.count + " changed"

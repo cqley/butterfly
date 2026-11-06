@@ -44,7 +44,9 @@ Column {
                 }
             }
         }
+    }
 
+    SettingsGroup {
         SettingsRow {
             label: "scroll step"
             token: "mixerStep"

@@ -11,6 +11,10 @@ Item {
     property int settledGap: Math.round(leadingGap)
     property int settledTrailingGap: Math.round(trailingGap)
     property bool pinEnd: false
+    readonly property bool pinned: root.shown ? root.pinEnd : !root.pinEnd
+    readonly property real homeX: root.pinned
+        ? root.width - root.trailingGap - root.contentWidth
+        : root.leadingGap
     property real veil: 1
     readonly property int targetWidth: shown ? settledGap + contentWidth + settledTrailingGap : 0
     readonly property real enter: enterMotion.value
@@ -33,7 +37,7 @@ Item {
 
     Item {
         id: holder
-        x: root.pinEnd ? root.width - root.trailingGap - root.contentWidth : Math.round(root.leadingGap)
+        x: root.enter >= 1 ? Math.round(root.homeX) : root.homeX
         y: Math.round((root.height - root.size) / 2)
         width: root.contentWidth
         height: root.size

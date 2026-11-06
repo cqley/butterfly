@@ -228,7 +228,7 @@ Item {
 
                 ShapePath {
                     strokeWidth: root.muted ? Theme.audioSlashStroke : -1
-                    strokeColor: root.filled ? Theme.bg : root.ink
+                    strokeColor: root.ink
                     fillColor: "transparent"
                     capStyle: ShapePath.RoundCap
 

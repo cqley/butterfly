@@ -89,13 +89,26 @@ Column {
         }
 
         SettingsRow {
-            label: "show battery and volume"
-            token: "dashPower"
+            label: "show volume"
+            token: "dashVolume"
 
             SettingsToggle {
-                checked: Theme.dashPower
+                checked: Theme.dashVolume
                 onToggled: on => {
-                    Cfg.set("dashPower", on)
+                    Cfg.set("dashVolume", on)
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
+            label: "show battery"
+            token: "dashBattery"
+
+            SettingsToggle {
+                checked: Theme.dashBattery
+                onToggled: on => {
+                    Cfg.set("dashBattery", on)
                     Cfg.flush()
                 }
             }

@@ -13,18 +13,6 @@ Singleton {
 
     readonly property var categories: [
         {
-            id: "island",
-            label: "island",
-            icon: Theme.settingsIslandPath,
-            page: "SettingsIsland.qml"
-        },
-        {
-            id: "dashboard",
-            label: "dashboard",
-            icon: Theme.settingsDashboardPath,
-            page: "SettingsDashboard.qml"
-        },
-        {
             id: "appearance",
             label: "appearance",
             icon: Theme.settingsStylePath,
@@ -37,10 +25,10 @@ Singleton {
             page: "SettingsMotion.qml"
         },
         {
-            id: "workspaces",
-            label: "workspaces",
-            icon: Theme.settingsWorkspacesPath,
-            page: "SettingsWorkspaces.qml"
+            id: "island",
+            label: "island",
+            icon: Theme.settingsIslandPath,
+            page: "SettingsIsland.qml"
         },
         {
             id: "icons",
@@ -53,6 +41,18 @@ Singleton {
             label: "clock & calendar",
             icon: Theme.settingsClockPath,
             page: "SettingsClock.qml"
+        },
+        {
+            id: "workspaces",
+            label: "workspaces",
+            icon: Theme.settingsWorkspacesPath,
+            page: "SettingsWorkspaces.qml"
+        },
+        {
+            id: "dashboard",
+            label: "dashboard",
+            icon: Theme.settingsDashboardPath,
+            page: "SettingsDashboard.qml"
         },
         {
             id: "media",

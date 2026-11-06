@@ -11,6 +11,7 @@ Item {
     property bool fades: false
     property bool hoverable: false
     property bool togglable: false
+    property bool stages: false
     signal activated
     signal toggled
 
@@ -18,10 +19,13 @@ Item {
 
     readonly property real t: parent && parent.t !== undefined ? parent.t : 1
     readonly property real reveal: parent && parent.reveal !== undefined ? parent.reveal : 1
+    readonly property real late: parent && parent.late !== undefined ? parent.late : 1
     readonly property real originY: parent && parent.originY !== undefined ? parent.originY : 0
     readonly property bool live: parent && parent.live !== undefined ? parent.live : true
+    readonly property real calm: parent && parent.calm !== undefined ? parent.calm : 1
     readonly property real rowCy: parent && parent.rowCy !== undefined ? parent.rowCy : 0
     readonly property bool morphs: cell.origin !== null && cell.origin !== undefined
+    readonly property real hold: cell.stages && !cell.morphs ? Math.min(cell.calm, cell.late) : 1
     readonly property real homeCx: (parent ? parent.x : 0) + cell.x + cell.gap + cell.contentW / 2
     readonly property real travelX: cell.morphs ? (1 - cell.t) * (cell.origin - cell.homeCx) : 0
     readonly property real travelY: cell.morphs ? (1 - cell.t) * (cell.originY - cell.rowCy) : 0
@@ -36,7 +40,7 @@ Item {
     width: cell.shown ? Math.round(cell.gap + cell.contentW) : 0
     height: parent ? parent.height : 0
     visible: cell.width > 0.5
-    opacity: cell.shown && cell.morphs && !cell.fades ? 1 : cell.shown ? cell.reveal : 0
+    opacity: cell.shown && cell.morphs && !cell.fades ? 1 : cell.shown ? cell.reveal * cell.hold : 0
     clip: cell.travelX === 0 && cell.travelY === 0
 
     Behavior on width {

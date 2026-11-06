@@ -34,9 +34,20 @@ Singleton {
     }
 
     property int current: 1
-    readonly property int page: Math.floor((root.current - 1) / root.count)
-    readonly property int first: root.page * root.count + 1
-    readonly property int index: Math.max(0, Math.min(root.count - 1, root.current - root.first))
+
+    readonly property int top: {
+        if (!root.wired)
+            return root.count
+        let high = root.current
+        const list = Hyprland.workspaces.values
+        for (let i = 0; i < list.length; i++)
+            if (list[i].id > high)
+                high = list[i].id
+        return high
+    }
+
+    readonly property int total: Math.max(root.count, Math.min(root.top, Theme.wsMax))
+    readonly property int index: Math.max(0, Math.min(root.total - 1, root.current - 1))
 
     readonly property int span: {
         const vert = root.vertical
@@ -48,7 +59,7 @@ Singleton {
 
     readonly property var filled: {
         const out = []
-        for (let i = 0; i < root.count; i++)
+        for (let i = 0; i < root.total; i++)
             out.push(false)
         if (!root.wired)
             return out
@@ -56,8 +67,8 @@ Singleton {
         const tracked = Hyprland.toplevels.values.length > 0
         for (let i = 0; i < list.length; i++) {
             const ws = list[i]
-            const slot = ws.id - root.first
-            if (slot < 0 || slot >= root.count)
+            const slot = ws.id - 1
+            if (slot < 0 || slot >= root.total)
                 continue
             const raw = ws.lastIpcObject
             const n = tracked ? ws.toplevels.values.length
@@ -179,8 +190,7 @@ Singleton {
             return (Theme.wsOn ? "shown" : "hidden")
                  + " · " + Theme.wsPlace + " · " + (Theme.wsVertical ? "bars" : "dots")
                  + " · ws " + root.current + " on " + where
-                 + " · page " + root.first + "-" + (root.first + root.count - 1)
-                 + " · slot " + (root.index + 1)
+                 + " · slot " + (root.index + 1) + " of " + root.total + ", " + root.count + " shown"
                  + " · filled [" + root.filled + "]"
         }
     }

@@ -6,7 +6,7 @@ Item {
     id: root
     property int index: 0
     property int count: Theme.wsCount
-    property int page: 0
+    property int total: Theme.wsCount
     property var filled: []
     property bool live: true
     property bool vert: false
@@ -14,12 +14,8 @@ Item {
     property real veil: 1
     readonly property real position: slide.value
 
-    property int shownPage: 0
     property int markIndex: 0
-    property var shownFilled: []
-    property int dir: 1
     property real travel: 0
-    property real churn: 0
 
     // dots
     readonly property int dotW: Theme.wsDot
@@ -43,6 +39,14 @@ Item {
     readonly property int pitch: root.vert ? root.barPitch : root.dotPitch
     readonly property int span: (root.count - 1) * root.pitch + root.actW
 
+    // carousel
+    readonly property int bias: Math.floor((root.count - 1) / 2)
+    readonly property int reachWant: Math.max(0, root.total - root.count)
+    property real reach: 0
+    readonly property real limit: Math.max(root.reach, slide.value - (root.count - 1))
+    readonly property real scroll: Math.max(0, Math.min(root.limit, slide.value - root.bias))
+    readonly property int rendered: Math.max(root.total, Math.ceil(slide.value) + 2)
+
     readonly property color dimInk: Theme.mix(Theme.bg, Theme.fg, Theme.wsDotDim)
     readonly property color liveInk: Theme.mix(Theme.bg, Theme.fg, Theme.wsDotLive)
     readonly property color activeInk: Theme.wsAccent ? Theme.accent : Theme.fg
@@ -55,10 +59,8 @@ Item {
     clip: true
 
     function settle() {
-        swapRun.stop()
-        root.churn = 0
-        root.shownPage = root.page
-        root.shownFilled = root.filled
+        reachRun.stop()
+        root.reach = root.reachWant
         root.markIndex = root.index
         root.travel = 0
         slide.land(root.index)
@@ -69,23 +71,27 @@ Item {
             root.settle()
             return
         }
-        if (swapRun.running)
-            return
-        if (root.page !== root.shownPage) {
-            root.dir = root.page > root.shownPage ? 1 : -1
-            swapRun.start()
-            return
-        }
         if (root.markIndex === root.index)
             return
+        reachRun.stop()
+        root.reach = root.reachWant
         root.travel = Math.abs(root.index - slide.value)
         root.markIndex = root.index
     }
 
     onIndexChanged: gate.restart()
-    onPageChanged: gate.restart()
-    onFilledChanged: if (!swapRun.running && root.page === root.shownPage) root.shownFilled = root.filled
+    onTotalChanged: gate.restart()
     onLiveChanged: if (!root.live) root.settle()
+
+    onReachWantChanged: {
+        reachRun.stop()
+        if (!root.live) {
+            root.reach = root.reachWant
+            return
+        }
+        reachRun.to = root.reachWant
+        reachRun.start()
+    }
 
     Component.onCompleted: root.settle()
 
@@ -95,45 +101,17 @@ Item {
         onTriggered: root.sync()
     }
 
-    SequentialAnimation {
-        id: swapRun
-
-        NumberAnimation {
-            target: root
-            property: "churn"
-            to: 1
-            duration: Theme.wsSwap
-            easing.type: Easing.InCubic
-        }
-
-        ScriptAction {
-            script: {
-                root.shownPage = root.page
-                root.shownFilled = root.filled
-                root.markIndex = root.index
-                root.travel = 0
-                slide.land(root.index)
-                root.dir = -root.dir
-            }
-        }
-
-        NumberAnimation {
-            target: root
-            property: "churn"
-            to: 0
-            duration: Theme.wsSwap
-            easing.type: Easing.OutCubic
-        }
-
-        ScriptAction {
-            script: gate.restart()
-        }
+    SmoothedAnimation {
+        id: reachRun
+        target: root
+        property: "reach"
+        velocity: 1000 / Theme.wsSwap
     }
 
     Spring {
         id: slide
         target: root.markIndex
-        response: Theme.wsResponse * (1 + Theme.wsSpread * Math.max(0, root.travel - 1))
+        response: Theme.wsResponse * (1 + Theme.wsSpread * Math.max(0, Math.min(root.travel, Theme.wsSpreadCap) - 1))
         damping: Theme.wsDamping
         epsilon: Theme.springUnitEps
         rest: Theme.springUnitStop
@@ -146,13 +124,13 @@ Item {
 
         Item {
             id: track
-            x: -root.dir * root.pitch * root.churn
-            width: root.span
+            x: -root.scroll * root.pitch
+            width: root.rendered * root.pitch
             height: parent.height
-            opacity: (1 - root.churn) * (1 - root.layoutFade) * root.veil
+            opacity: (1 - root.layoutFade) * root.veil
 
             Repeater {
-                model: root.count
+                model: root.rendered
 
                 Shape {
                     id: pip
@@ -160,6 +138,9 @@ Item {
                     required property int index
                     readonly property real weight: Math.max(0, 1 - Math.abs(pip.index - slide.value))
                     readonly property real lead: Math.max(0, Math.min(1, pip.index - slide.value))
+                    readonly property real seen: pip.x + track.x + root.pipW / 2
+                    readonly property real past: Math.max(0, -pip.seen) + Math.max(0, pip.seen - root.span)
+                    readonly property real edge: Math.max(0, 1 - pip.past / (root.pitch / 2))
 
                     x: root.vert
                         ? pip.index * root.pitch + (root.actW - root.pipW) / 2
@@ -167,13 +148,13 @@ Item {
                     y: (track.height - root.pipH) / 2
                     width: root.pipW
                     height: root.pipH
-                    opacity: 1 - pip.weight
+                    opacity: (1 - pip.weight) * pip.edge
                     transformOrigin: Item.TopLeft
                     transform: Scale { xScale: 1 / root.grid; yScale: 1 / root.grid }
 
                     ShapePath {
                         strokeWidth: -1
-                        fillColor: root.shownFilled[pip.index] ? root.liveInk : root.dimInk
+                        fillColor: root.filled[pip.index] ? root.liveInk : root.dimInk
 
                         PathSvg { path: root.pipPath }
                     }

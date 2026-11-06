@@ -67,7 +67,7 @@ Column {
 
     SettingsGroup {
         SettingsRow {
-            label: "workspaces per page"
+            label: "visible workspaces"
             token: "wsCount"
             value: Theme.wsCount + ""
 
@@ -272,7 +272,7 @@ Column {
         }
 
         SettingsRow {
-            label: "page and style change"
+            label: "style change"
             token: "wsSwap"
             value: Theme.wsSwap + " ms"
 
