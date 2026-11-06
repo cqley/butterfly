@@ -44,6 +44,11 @@ Item {
         interval: Theme.speed
     }
 
+    Timer {
+        id: dashExit
+        interval: Theme.fall
+    }
+
     readonly property bool hot: hover.hovered
     readonly property bool modal: Modal.any && Modal.which !== "settings"
     readonly property bool alert: Notifs.current !== null && !modal
@@ -51,16 +56,38 @@ Item {
     readonly property bool panelOpen: islandPop.open
     readonly property bool islandOwn: Modal.which === "island"
     readonly property bool engaged: islandPop.popped
-    readonly property bool mediaPeek: islandPop.popped && !islandPop.open && root.media
+    readonly property bool mediaPeek: root.media && islandPop.hovered && islandPop.armed
     readonly property bool mediaPanelShown: islandPop.mediaShown
+    readonly property bool dashFace: islandPop.dashShown
+    property bool wasClosed: true
+    property bool openedFromIdle: true
+    property bool heldVis: false
+    readonly property bool idleShowing: root.idleRowActive && (!root.panelOpen || root.mediaPanelShown)
+    readonly property bool idleBare: root.idleRowActive && !root.panelOpen
+    readonly property bool morphRuns: root.openedFromIdle && (root.dashFace || root.idleBare)
+    readonly property bool dashStaged: root.dashFace && !root.morphRuns
+    readonly property real morphT: root.morphRuns ? morph.value : 1
+    readonly property bool morphing: root.morphRuns && (root.dashFace || morph.moving)
+    readonly property bool dashLive: root.dashFace || root.morphing || dashExit.running
+    readonly property bool dashLeaving: root.dashLive && !root.dashFace && !root.morphing
+    readonly property real idleRowCy: Theme.idleTopOffsetY + root.idleCenterDrop + Theme.h / 2
     readonly property bool showVisualizer: Visualizer.on || root.mediaPeek || root.mediaPanelShown
+    readonly property bool wifiShown: Theme.wifiOn && (Net.linkKnown || Net.available)
     readonly property bool wsAvailable: Theme.wsOn && Workspaces.available
-    readonly property bool wsOnly: root.wsAvailable && Theme.wsPlace === "only"
-    readonly property bool wsLeft: root.wsAvailable && Theme.wsPlace !== "only" && Theme.wsPlace !== "right"
-    readonly property bool wsRight: root.wsAvailable && Theme.wsPlace === "right"
+    readonly property bool wsOnly: root.wsAvailable && Workspaces.place === "only"
+    readonly property bool wsLeft: root.wsAvailable && Workspaces.place !== "only" && Workspaces.place !== "right"
+    readonly property bool wsRight: root.wsAvailable && Workspaces.place === "right"
     readonly property bool idleRowActive: root.calm || root.islandOwn
-    readonly property bool idleSlotVisible: root.idleRowActive && (!root.panelOpen || root.mediaPanelShown)
-    readonly property bool hideIdleIcons: !root.idleRowActive || root.panelOpen
+    readonly property bool idleHeld: root.morphing
+    readonly property bool idleVeiled: root.morphing || dash.visible
+    readonly property real morphVeil: root.morphRuns ? (root.idleVeiled ? 0 : 1) : root.orphanVeil
+    property real orphanVeil: 1
+    readonly property bool wsMorphs: Theme.dashWs && Workspaces.available
+    readonly property real wsVeil: root.wsMorphs ? root.morphVeil : root.orphanVeil
+    readonly property bool idleSlotVisible: root.idleHeld || root.idleShowing
+    readonly property bool hideIdleIcons: !root.idleHeld && (!root.idleRowActive || root.panelOpen)
+    readonly property bool slotVis: root.idleHeld ? root.heldVis : root.showVisualizer
+    readonly property bool idleClock: !root.slotVis && !root.wsOnly
     readonly property bool ringGeometryBase: root.calm && !root.hot && !root.hideIdleIcons
     readonly property bool ringBase: root.ringGeometryBase && Theme.batRingEnabled && Battery.ringShown && Battery.available
     readonly property bool resizing:
@@ -81,7 +108,7 @@ Item {
     readonly property real hAnim: hMotion.value
 
     onEngagedChanged: sync()
-    onShowVisualizerChanged: swapGate.restart()
+    onSlotVisChanged: swapGate.restart()
     onWsOnlyChanged: swapGate.restart()
     onFaceChanged: {
         swapped = root.wasMenu && root.modal
@@ -92,6 +119,27 @@ Item {
     onCalmChanged: if (calm && Theme.idleWait > 0) wake.restart()
     onRingGeometryBaseChanged: ringSettle.restart()
     onPanelRevealChanged: if (root.panelReveal) root.revealedFace = root.face
+    onDashFaceChanged: {
+        if (!root.dashFace) {
+            dashExit.restart()
+            return
+        }
+        root.openedFromIdle = root.wasClosed
+        dashExit.stop()
+    }
+    onIdleVeiledChanged: {
+        veilRun.stop()
+        veilRun.duration = root.idleVeiled ? Theme.fall : Theme.rise
+        veilRun.to = root.idleVeiled ? 0 : 1
+        veilRun.start()
+    }
+
+    NumberAnimation {
+        id: veilRun
+        target: root
+        property: "orphanVeil"
+        easing.type: Theme.ease
+    }
     onWantWChanged: root.brake()
     onWantHChanged: root.brake()
 
@@ -104,7 +152,53 @@ Item {
             return
         if (root.modal && !root.islandOwn)
             return
+        root.armMorph()
         islandPop.show(mode)
+    }
+
+    function showFace(name) {
+        root.armMorph()
+        return islandPop.toggleFace(name)
+    }
+
+    Spring {
+        id: morph
+        target: root.dashFace ? 1 : 0
+        response: root.dashFace ? Theme.dashMorphResponse : Theme.islandResponse
+        damping: root.dashFace ? Theme.dashMorphDamping : Theme.islandDamping
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
+    }
+
+    readonly property real dashLeft: Math.round((root.width - dash.width) / 2)
+    readonly property real slotX: root.idleX + leftRow.width
+    readonly property real clockHomeX: root.slotX + clockFade.x + clockFade.width / 2
+    readonly property real wsOnlyHomeX: root.slotX + wsOnlyFade.x + wsOnlyFade.width / 2
+
+    function slotLocal(key) {
+        if (key === "ws" && root.wsOnly)
+            return root.wsOnlyHomeX - root.dashLeft
+        const l = leftRow.slotCenter(key)
+        if (l !== null)
+            return root.idleX + l - root.dashLeft
+        const r = rightRow.slotCenter(key)
+        if (r !== null)
+            return root.slotX + clockSlot.width + r - root.dashLeft
+        return null
+    }
+
+    readonly property var dashOrigins: ({
+        clock: (root.idleClock ? root.clockHomeX : root.width / 2) - root.dashLeft,
+        ws: root.slotLocal("ws"),
+        wifi: root.slotLocal("wifi"),
+        battery: root.slotLocal("battery")
+    })
+
+    function armMorph() {
+        root.wasClosed = !islandPop.open
+        root.heldVis = root.showVisualizer
+        if (!root.dashFace)
+            morph.land(0)
     }
 
     function brake() {
@@ -130,10 +224,53 @@ Item {
     IpcHandler {
         target: "island"
 
-        function week(): string { return islandPop.toggleFace("week") }
-        function calendar(): string { return islandPop.toggleFace("calendar") }
-        function media(): string { return islandPop.toggleFace("media") }
+        function week(): string { return root.showFace("week") }
+        function calendar(): string { return root.showFace("calendar") }
+        function media(): string { return root.showFace("media") }
+        function dash(): string { return root.showFace("dash") }
         function status(): string { return islandPop.report }
+    }
+
+    readonly property var dashParts: ["workspaces", "date", "weekday", "notifications", "network", "bluetooth", "power"]
+
+    function dashKey(part) {
+        return "dash" + ({
+            workspaces: "Ws", date: "Date", weekday: "Weekday", notifications: "Notes",
+            network: "Net", bluetooth: "Bt", power: "Power"
+        })[part]
+    }
+
+    function dashShows(part) {
+        return Theme[root.dashKey(part)]
+    }
+
+    IpcHandler {
+        target: "dashboard"
+
+        function toggle(): string { return root.showFace("dash") }
+
+        function part(part: string): string {
+            if (root.dashParts.indexOf(part) < 0)
+                return "expected one of " + root.dashParts.join("|")
+            const on = !root.dashShows(part)
+            Cfg.set(root.dashKey(part), on)
+            Cfg.flush()
+            return part + " " + (on ? "shown" : "hidden")
+        }
+
+        function width(px: int): string {
+            if (px < Theme.dashMinW || px > Theme.dashMaxW)
+                return "expected " + Theme.dashMinW + "-" + Theme.dashMaxW
+            Cfg.set("dashW", px)
+            Cfg.flush()
+            return Theme.dashW + " px"
+        }
+
+        function status(): string {
+            const parts = root.dashParts.map(p => p + " " + (root.dashShows(p) ? "on" : "off"))
+            return (islandPop.face === "dash" ? "open" : "closed")
+                 + " · " + Theme.dashW + " px · " + parts.join(", ")
+        }
     }
 
     readonly property bool islandReady: !stage.running
@@ -206,7 +343,19 @@ Item {
     Binding {
         target: Notifs
         property: "hovered"
-        value: root.hot || root.modal
+        value: root.hot && root.alert
+    }
+
+    Binding {
+        target: Notifs
+        property: "veiled"
+        value: root.modal
+    }
+
+    Binding {
+        target: Net
+        property: "pinLink"
+        value: Theme.wifiOn
     }
 
     SystemClock {
@@ -220,6 +369,7 @@ Item {
         {
             key: "ws", component: wsLeftContent,
             shownFn: () => root.wsLeft && !root.hideIdleIcons,
+            morphsFn: () => root.wsMorphs,
             sizeFn: () => Theme.h, contentWidthFn: () => Workspaces.span,
             clockGapFn: () => Theme.wsClockGap,
             offsetXFn: () => Theme.wsOffsetX, offsetYFn: () => Theme.wsOffsetY
@@ -227,8 +377,16 @@ Item {
         {
             key: "battery", component: batteryContent,
             shownFn: () => Battery.shown && Battery.available && Theme.batPlace === "left" && !root.hideIdleIcons,
+            morphsFn: () => Theme.dashPower && Battery.available,
             sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
             offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
+        },
+        {
+            key: "wifi", component: wifiContent,
+            shownFn: () => root.wifiShown && Theme.wifiPlace === "left" && !root.hideIdleIcons,
+            morphsFn: () => Theme.dashNet,
+            sizeFn: () => Theme.sigRowH, contentWidthFn: () => Theme.sigRowW,
+            offsetXFn: () => Theme.wifiOffsetX, offsetYFn: () => Theme.wifiOffsetY
         },
         {
             key: "mic", component: micContent,
@@ -258,14 +416,23 @@ Item {
             offsetXFn: () => Theme.micOffsetX, offsetYFn: () => Theme.micOffsetY
         },
         {
+            key: "wifi", component: wifiContent,
+            shownFn: () => root.wifiShown && Theme.wifiPlace === "right" && !root.hideIdleIcons,
+            morphsFn: () => Theme.dashNet,
+            sizeFn: () => Theme.sigRowH, contentWidthFn: () => Theme.sigRowW,
+            offsetXFn: () => Theme.wifiOffsetX, offsetYFn: () => Theme.wifiOffsetY
+        },
+        {
             key: "battery", component: batteryContent,
             shownFn: () => Battery.shown && Battery.available && Theme.batPlace === "right" && !root.hideIdleIcons,
+            morphsFn: () => Theme.dashPower && Battery.available,
             sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
             offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
         },
         {
             key: "ws", component: wsRightContent,
             shownFn: () => root.wsRight && !root.hideIdleIcons,
+            morphsFn: () => root.wsMorphs,
             sizeFn: () => Theme.h, contentWidthFn: () => Workspaces.span,
             clockGapFn: () => Theme.wsClockGap,
             offsetXFn: () => Theme.wsOffsetX, offsetYFn: () => Theme.wsOffsetY
@@ -278,6 +445,8 @@ Item {
             x: Math.round((parent.width - width) / 2)
             y: Math.round((parent.height - height) / 2)
             live: root.wsLeft && !root.hideIdleIcons
+            vert: Workspaces.vertical
+            layoutFade: Workspaces.layoutFade
             index: Workspaces.index
             count: Workspaces.count
             page: Workspaces.page
@@ -291,6 +460,8 @@ Item {
             x: Math.round((parent.width - width) / 2)
             y: Math.round((parent.height - height) / 2)
             live: root.wsRight && !root.hideIdleIcons
+            vert: Workspaces.vertical
+            layoutFade: Workspaces.layoutFade
             index: Workspaces.index
             count: Workspaces.count
             page: Workspaces.page
@@ -304,6 +475,19 @@ Item {
             pct: Battery.pct
             tone: Battery.tone
             pluggedIn: Battery.pluggedIn
+        }
+    }
+
+    Component {
+        id: wifiContent
+        Sig {
+            anchors.centerIn: parent
+            level: Net.bars
+            tint: Net.enabled ? Theme.fg : Theme.mix(Theme.bg, Theme.fg, Theme.dimMid)
+
+            Behavior on tint {
+                ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
+            }
         }
     }
 
@@ -340,6 +524,7 @@ Item {
         { cond: () => islandPop.calendarShown, w: () => Theme.islandCalW, h: () => cal.y + cal.height + Theme.islandCalPad },
         { cond: () => islandPop.weekShown, w: () => Theme.islandWeekW, h: () => Theme.islandWeekH },
         { cond: () => islandPop.mediaShown, w: () => Theme.islandMediaW, h: () => Theme.islandMediaH },
+        { cond: () => islandPop.dashShown, w: () => Theme.dashW, h: () => dash.y + dash.height + Theme.dashPad },
         { cond: () => islandPop.popped, w: () => root.idleTargetW + Theme.islandPopW, h: () => Theme.h + Theme.islandPopH }
     ]
 
@@ -479,6 +664,26 @@ Item {
             Keys.onEscapePressed: Modal.dismiss()
         }
 
+        Dash {
+            id: dash
+            x: root.centerX(width)
+            y: Theme.dashPad
+            now: clock.date
+            shown: islandPop.dashShown
+            present: root.dashLive
+            leaving: root.dashLeaving
+            staged: root.dashStaged
+            ready: root.islandReady
+            t: root.morphT
+            hands: root.idleClock
+            live: root.dashFace && !root.resizing
+            origins: root.dashOrigins
+            originCy: root.idleRowCy
+            focus: shown
+            onShownChanged: if (shown) dash.forceActiveFocus()
+            Keys.onEscapePressed: Modal.dismiss()
+        }
+
         MediaPanel {
             id: tune
             x: root.centerX(width)
@@ -515,7 +720,7 @@ Item {
             n: Notifs.current
             expanded: root.hot
             shown: root.alert
-            ready: root.panelReveal
+            ready: root.panelReveal && note.settled
             rise: root.panelRise
         }
 
@@ -628,11 +833,16 @@ Item {
         }
     }
 
+    Item {
+        id: idleHost
+        anchors.fill: parent
+        visible: root.morphVeil > 0 || root.orphanVeil > 0
+        z: 2
+
     Fade {
         id: idle
         x: body.x
-        anchors.top: body.top
-        anchors.topMargin: Theme.idleTopOffsetY + root.idleCenterDrop
+        y: body.y + Theme.idleTopOffsetY + root.idleCenterDrop
         width: body.width
         height: Theme.h
         clip: true
@@ -641,7 +851,6 @@ Item {
         rise: Theme.idleRise
         fall: Theme.idleFall
         scale: Theme.slotScale + (1 - Theme.slotScale) * idleScale.value
-        z: 2
 
         Spring {
             id: idleScale
@@ -668,20 +877,21 @@ Item {
                 id: leftRow
                 clockEnd: true
                 modules: root.leftModules
+                morphVeil: root.morphVeil
+                orphanVeil: root.orphanVeil
             }
 
             Item {
                 id: clockSlot
-                property bool wsFace: false
-                width: Math.ceil(Math.max(clockSlot.wsFace ? wsOnlyStrip.span : clockText.implicitWidth, vbars.width))
+                readonly property real restW: root.wsOnly ? wsOnlyStrip.span : clockText.implicitWidth
+                width: Math.ceil(Math.max(clockSlot.restW, vbars.width,
+                    clockFade.visible ? clockText.implicitWidth : 0,
+                    wsOnlyFade.visible ? wsOnlyStrip.span : 0))
                 height: parent.height
-
-                Component.onCompleted: clockSlot.wsFace = root.wsOnly
 
                 Timer {
                     id: swapGate
                     interval: Theme.fall
-                    onTriggered: clockSlot.wsFace = root.wsOnly
                 }
 
                 Fade {
@@ -692,7 +902,7 @@ Item {
                     anchors.alignWhenCentered: Theme.idleAlignWhenCentered
                     width: clockText.implicitWidth
                     height: parent.height
-                    shown: !root.showVisualizer && !root.wsOnly && root.idleSlotVisible
+                    shown: !root.slotVis && !root.wsOnly && root.idleSlotVisible
                     ready: !swapGate.running
                     scale: Theme.slotScale + (1 - Theme.slotScale) * clockScale.value
 
@@ -705,25 +915,15 @@ Item {
                         rest: Theme.springUnitStop
                     }
 
-                    OpticalCenter {
-                        id: clockOptical
-                        targetFont: clockText.font
-                        text: clockText.text
-                    }
-
-                    Txt {
+                    InkTxt {
                         id: clockText
                         anchors.fill: parent
                         horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
                         text: Theme.clockText(clock.date)
                         font.pixelSize: Theme.clockPx
                         font.features: Theme.tabular
-
-                        transform: Translate {
-                            x: Theme.clockOffsetX
-                            y: clockOptical.shift
-                        }
+                        dx: Theme.clockOffsetX
+                        opacity: root.morphVeil
                     }
                 }
 
@@ -734,7 +934,7 @@ Item {
                     anchors.alignWhenCentered: Theme.idleAlignWhenCentered
                     width: wsOnlyStrip.span
                     height: parent.height
-                    shown: root.wsOnly && !root.showVisualizer && root.idleSlotVisible
+                    shown: root.wsOnly && !root.slotVis && root.idleSlotVisible
                     ready: !swapGate.running
                     scale: Theme.slotScale + (1 - Theme.slotScale) * wsOnlyScale.value
 
@@ -754,7 +954,10 @@ Item {
                     WorkspaceStrip {
                         id: wsOnlyStrip
                         anchors.centerIn: parent
+                        veil: root.wsVeil
                         live: wsOnlyFade.shown
+                        vert: Workspaces.vertical
+                        layoutFade: Workspaces.layoutFade
                         index: Workspaces.index
                         count: Workspaces.count
                         page: Workspaces.page
@@ -768,8 +971,8 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: vbars.width
                     height: parent.height
-                    shown: root.showVisualizer && root.idleSlotVisible
-                    ready: root.panelReveal && !swapGate.running
+                    shown: root.slotVis && root.idleSlotVisible
+                    ready: root.idleHeld || (root.panelReveal && !swapGate.running)
                     rise: root.panelRise
                     scale: Theme.slotScale + (1 - Theme.slotScale) * visScale.value
 
@@ -785,6 +988,7 @@ Item {
                     VisualizerBars {
                         id: vbars
                         anchors.centerIn: parent
+                        opacity: root.orphanVeil
                         playing: Media.playing
                         shown: visFade.visible
                         artUrl: Media.artUrl
@@ -796,8 +1000,12 @@ Item {
                 id: rightRow
                 clockEnd: false
                 modules: root.rightModules
+                morphVeil: root.morphVeil
+                orphanVeil: root.orphanVeil
             }
         }
+    }
+
     }
 
     Rectangle {

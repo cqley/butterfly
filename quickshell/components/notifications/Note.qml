@@ -6,6 +6,9 @@ import Quickshell.Services.Notifications
 Fade {
     id: root
     property var n
+    property var shownN: null
+    property bool churn: false
+    readonly property bool settled: !root.churn
     property bool expanded: false
     property string summary: ""
     property string body: ""
@@ -38,6 +41,7 @@ Fade {
     }
 
     function refresh() {
+        const n = root.shownN
         if (!n)
             return
 
@@ -62,10 +66,29 @@ Fade {
         chip.refresh()
     }
 
-    onNChanged: refresh()
+    function adopt() {
+        root.churn = false
+        root.shownN = root.n
+        root.refresh()
+    }
+
+    onNChanged: {
+        if (root.n && root.shownN && root.n !== root.shownN) {
+            root.churn = true
+            swap.restart()
+            return
+        }
+        root.adopt()
+    }
+
+    Timer {
+        id: swap
+        interval: Theme.fade
+        onTriggered: root.adopt()
+    }
 
     Connections {
-        target: root.n && !root.n.system ? root.n : null
+        target: root.shownN && !root.shownN.system ? root.shownN : null
         ignoreUnknownSignals: true
         function onSummaryChanged() { root.refresh() }
         function onBodyChanged() { root.refresh() }

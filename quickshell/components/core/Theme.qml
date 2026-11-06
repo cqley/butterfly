@@ -173,8 +173,10 @@ Singleton {
         return size < iconGrid ? w * iconGrid / size : w
     }
 
-    function capsulePath(w, h) {
-        const r = Math.min(w, h) / 2
+    function roundRectPath(w, h, radius) {
+        const r = Math.max(0, Math.min(radius, Math.min(w, h) / 2))
+        if (r <= 0)
+            return "M0 0H" + w + "V" + h + "H0Z"
         const a = "A" + r + " " + r + " 0 0 1 "
         let p = "M" + r + " 0"
         if (w > 2 * r)
@@ -189,6 +191,10 @@ Singleton {
         if (h > 2 * r)
             p += "V" + r
         return p + a + r + " 0Z"
+    }
+
+    function capsulePath(w, h) {
+        return roundRectPath(w, h, Math.min(w, h) / 2)
     }
     readonly property real btnStroke: 5
     readonly property color mediaIconColor: "#ffffff"
@@ -258,6 +264,13 @@ Singleton {
     readonly property real idlePopResponse: springResponse
     readonly property real idlePopDamping: springDamping
     readonly property real slotScale: 0.7
+    readonly property bool wifiOn: cfg("wifiOn", false)
+    readonly property string wifiPlace: cfg("wifiPlace", "right")
+    readonly property int wifiOffsetX: 0
+    readonly property int wifiOffsetY: 0
+    readonly property string batPlace: cfg("batPlace", "right")
+    readonly property string micPlace: cfg("micPlace", "right")
+    readonly property string recPlace: cfg("recPlace", "right")
 
     // workspaces
     readonly property bool wsOn: cfg("wsOn", false)
@@ -284,9 +297,6 @@ Singleton {
     readonly property int wsSwap: cfg("wsSwap", 150)
     readonly property int wsOffsetX: 0
     readonly property int wsOffsetY: 0
-    readonly property string batPlace: cfg("batPlace", "right")
-    readonly property string micPlace: cfg("micPlace", "right")
-    readonly property string recPlace: cfg("recPlace", "right")
 
     // battery
     readonly property int batRowH: 16
@@ -546,30 +556,29 @@ Singleton {
     readonly property int netRows: 6
     readonly property int netTimeout: 30000
     readonly property int netFieldH: 34
-    readonly property int netToggleW: 36
-    readonly property int netToggleH: 20
-    readonly property int netKnob: 14
     readonly property int sigBars: 4
     readonly property int sigGap: 2
     readonly property int sigW: 3
     readonly property int sigH: 4
     readonly property int sigStep: 2
-    readonly property int sigR: 1
     readonly property real sigOn: 0.9
     readonly property real sigOff: 0.2
+    readonly property int sigRowW: sigBars * sigW + (sigBars - 1) * sigGap
+    readonly property int sigRowH: sigH + (sigBars - 1) * sigStep
     readonly property int lockW: 14
     readonly property int lockH: 12
     readonly property real lockBorder: 1.4
     readonly property string lockShacklePath: "M3.7 5.5V3.7A3.3 3.3 0 0 1 10.3 3.7V5.5"
     readonly property string lockBodyPath: "M4 4H10A2 2 0 0 1 12 6V10A2 2 0 0 1 10 12H4A2 2 0 0 1 2 10V6A2 2 0 0 1 4 4Z"
-    readonly property int netTitleX: 4
-    readonly property int netToggleInset: 2
     readonly property int netMetaR: 12
     readonly property int netSettle: 600
     readonly property int netKill: 3000
     readonly property int netVerify: 600
     readonly property int netPollBusy: 1500
     readonly property int netPoll: 4000
+    readonly property int netLinkPoll: 2000
+    readonly property int netLinkIdlePoll: 10000
+    readonly property real netLinkMax: 70
     readonly property int netRescanWait: 2500
     readonly property int netMonitorRestart: 2000
     readonly property int netProbe: 2000
@@ -586,12 +595,7 @@ Singleton {
     readonly property int btPad: netPad
     readonly property int btRowH: netRowH
     readonly property int btRows: netRows
-    readonly property int btTitleX: netTitleX
     readonly property int btMetaR: netMetaR
-    readonly property int btToggleW: netToggleW
-    readonly property int btToggleH: netToggleH
-    readonly property int btToggleInset: netToggleInset
-    readonly property int btKnob: netKnob
     readonly property string btGlyphPath: "M7 7L17 17L12 22L12 2L17 7L7 17"
     readonly property int btTimeout: 15000
     readonly property int btBatteryWait: 1200
@@ -757,6 +761,39 @@ Singleton {
     readonly property int islandMediaW: mediaW + 2 * islandMediaPad
     readonly property int islandMediaH: islandMediaTopPad + artS + islandMediaPad
 
+    // dashboard
+    readonly property int dashW: cfg("dashW", 520)
+    readonly property int dashMinW: 360
+    readonly property int dashMaxW: 760
+    readonly property int dashPad: 12
+    readonly property int dashPadX: cfg("dashPadX", 26)
+    readonly property int dashRowH: 24
+    readonly property int dashRow2H: 14
+    readonly property int dashRowGap: 4
+    readonly property int dashGap: 8
+    readonly property int dashStatusGap: cfg("dashStatusGap", 10)
+    readonly property int dashGlyph: 14
+    readonly property int dashBtGlyph: 15
+    readonly property string dashBtSlashPath: "M6 6L18 18"
+    readonly property int dashVolW: 17
+    readonly property int dashClockPx: fs(cfg("dashClockPx", 22))
+    readonly property int dashDatePx: fsM
+    readonly property int dashLabelPx: fsS
+    readonly property string dashDateFormat: cfg("dashDateFormat", "MMM d")
+    readonly property string dashWeekdayFormat: cfg("dashWeekdayFormat", "ddd")
+    readonly property bool dashWeekday: cfg("dashWeekday", true)
+    readonly property real dashDim: dimSoft
+    readonly property real dashMorphResponse: cfg("dashMorphResponse", springResponse)
+    readonly property real dashMorphDamping: cfg("dashMorphDamping", 1)
+    readonly property real dashRevealAt: 0.35
+    readonly property real dashSizeHold: 0.06
+    readonly property bool dashWs: cfg("dashWs", true)
+    readonly property bool dashDate: cfg("dashDate", true)
+    readonly property bool dashNotes: cfg("dashNotes", true)
+    readonly property bool dashNet: cfg("dashNet", true)
+    readonly property bool dashBt: cfg("dashBt", true)
+    readonly property bool dashPower: cfg("dashPower", true)
+
     // visualizer
     readonly property int visBars: cfg("visBars", 6)
     readonly property int visBarW: cfg("visBarW", 3)
@@ -783,7 +820,7 @@ Singleton {
     readonly property real visLerp: 0.3
 
     // settings
-    readonly property int settingsW: 640
+    readonly property int settingsW: cfg("settingsW", 760)
     readonly property int settingsRadius: launchRadius
     readonly property int settingsPad: 14
     readonly property int settingsPadBottom: 16
@@ -825,6 +862,7 @@ Singleton {
     readonly property color settingsArrowInk: settingsValueInk
     readonly property string settingsArrowPath: "M5 12H19M13 6L19 12L13 18"
     readonly property string settingsSlidersPath: "M21 4H14M10 4H3M21 12H12M8 12H3M21 20H16M12 20H3M14 2V6M8 10V14M16 18V22"
+    readonly property string settingsDashboardPath: "M3.5 5.5H20.5A1 1 0 0 1 21.5 6.5V17.5A1 1 0 0 1 20.5 18.5H3.5A1 1 0 0 1 2.5 17.5V6.5A1 1 0 0 1 3.5 5.5Z M2.5 12H21.5 M9 12V18.5"
     readonly property string settingsIslandPath: "M7.5 7H16.5A5 5 0 0 1 16.5 17H7.5A5 5 0 0 1 7.5 7Z"
     readonly property string settingsClockPath: "M12 3A9 9 0 1 1 12 21A9 9 0 1 1 12 3ZM12 7.5V12L15.5 14.5"
     readonly property string settingsMediaPath: "M8 5L19 12L8 19Z"

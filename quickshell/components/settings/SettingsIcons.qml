@@ -11,6 +11,33 @@ Column {
 
     SettingsGroup {
         SettingsRow {
+            label: "wifi"
+            token: "wifiOn"
+
+            SettingsToggle {
+                checked: Theme.wifiOn
+                onToggled: on => {
+                    Cfg.set("wifiOn", on)
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
+            label: "wifi side"
+            token: "wifiPlace"
+
+            SettingsSegmented {
+                options: ["left", "right"]
+                current: Math.max(0, root.sides.indexOf(Theme.wifiPlace))
+                onPicked: i => {
+                    Cfg.set("wifiPlace", root.sides[i])
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
             label: "battery"
             token: "batPlace"
 

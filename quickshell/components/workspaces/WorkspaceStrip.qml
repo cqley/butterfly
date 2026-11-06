@@ -9,6 +9,9 @@ Item {
     property int page: 0
     property var filled: []
     property bool live: true
+    property bool vert: false
+    property real layoutFade: 0
+    property real veil: 1
     readonly property real position: slide.value
 
     property int shownPage: 0
@@ -18,12 +21,26 @@ Item {
     property real travel: 0
     property real churn: 0
 
-    readonly property bool vert: Theme.wsVertical
-    readonly property int pipW: root.vert ? Theme.wsBarW : Theme.wsDot
-    readonly property int pipH: root.vert ? Theme.wsBarH : Theme.wsDot
-    readonly property int actW: Math.max(root.vert ? Theme.wsBarActiveW : Theme.wsActiveW, root.pipW)
-    readonly property int actH: Math.max(root.vert ? Theme.wsBarActiveH : Theme.wsActiveH, root.pipH)
-    readonly property int pitch: root.pipW + (root.vert ? Theme.wsBarGap : Theme.wsGap)
+    // dots
+    readonly property int dotW: Theme.wsDot
+    readonly property int dotH: Theme.wsDot
+    readonly property int dotActW: Math.max(Theme.wsActiveW, root.dotW)
+    readonly property int dotActH: Math.max(Theme.wsActiveH, root.dotH)
+    readonly property int dotPitch: root.dotW + Theme.wsGap
+
+    // bars
+    readonly property int barW: Theme.wsBarW
+    readonly property int barH: Theme.wsBarH
+    readonly property int barActW: Math.max(Theme.wsBarActiveW, root.barW)
+    readonly property int barActH: Math.max(Theme.wsBarActiveH, root.barH)
+    readonly property int barPitch: root.barW + Theme.wsBarGap
+
+    // mode
+    readonly property int pipW: root.vert ? root.barW : root.dotW
+    readonly property int pipH: root.vert ? root.barH : root.dotH
+    readonly property int actW: root.vert ? root.barActW : root.dotActW
+    readonly property int actH: root.vert ? root.barActH : root.dotActH
+    readonly property int pitch: root.vert ? root.barPitch : root.dotPitch
     readonly property int span: (root.count - 1) * root.pitch + root.actW
 
     readonly property color dimInk: Theme.mix(Theme.bg, Theme.fg, Theme.wsDotDim)
@@ -67,31 +84,10 @@ Item {
 
     onIndexChanged: gate.restart()
     onPageChanged: gate.restart()
-    onFilledChanged: if (!swapRun.running) root.shownFilled = root.filled
+    onFilledChanged: if (!swapRun.running && root.page === root.shownPage) root.shownFilled = root.filled
+    onLiveChanged: if (!root.live) root.settle()
 
-    onLiveChanged: {
-        hide.stop()
-        if (root.live) {
-            root.opacity = 1
-            return
-        }
-        root.settle()
-        hide.start()
-    }
-
-    Component.onCompleted: {
-        root.opacity = root.live ? 1 : 0
-        root.settle()
-    }
-
-    NumberAnimation {
-        id: hide
-        target: root
-        property: "opacity"
-        to: 0
-        duration: Theme.fall
-        easing.type: Theme.ease
-    }
+    Component.onCompleted: root.settle()
 
     Timer {
         id: gate
@@ -143,57 +139,63 @@ Item {
         rest: Theme.springUnitStop
     }
 
-    Item {
-        id: track
-        x: -root.dir * root.pitch * root.churn
-        width: root.span
-        height: parent.height
-        opacity: 1 - root.churn
+    Fade {
+        id: reveal
+        anchors.fill: parent
+        shown: root.live
 
-        Repeater {
-            model: root.count
+        Item {
+            id: track
+            x: -root.dir * root.pitch * root.churn
+            width: root.span
+            height: parent.height
+            opacity: (1 - root.churn) * (1 - root.layoutFade) * root.veil
+
+            Repeater {
+                model: root.count
+
+                Shape {
+                    id: pip
+                    preferredRendererType: Shape.CurveRenderer
+                    required property int index
+                    readonly property real weight: Math.max(0, 1 - Math.abs(pip.index - slide.value))
+                    readonly property real lead: Math.max(0, Math.min(1, pip.index - slide.value))
+
+                    x: root.vert
+                        ? pip.index * root.pitch + (root.actW - root.pipW) / 2
+                        : pip.index * root.pitch + (root.actW - root.pipW) * pip.lead
+                    y: (track.height - root.pipH) / 2
+                    width: root.pipW
+                    height: root.pipH
+                    opacity: 1 - pip.weight
+                    transformOrigin: Item.TopLeft
+                    transform: Scale { xScale: 1 / root.grid; yScale: 1 / root.grid }
+
+                    ShapePath {
+                        strokeWidth: -1
+                        fillColor: root.shownFilled[pip.index] ? root.liveInk : root.dimInk
+
+                        PathSvg { path: root.pipPath }
+                    }
+                }
+            }
 
             Shape {
-                id: pip
+                id: mark
                 preferredRendererType: Shape.CurveRenderer
-                required property int index
-                readonly property real weight: Math.max(0, 1 - Math.abs(pip.index - slide.value))
-                readonly property real lead: Math.max(0, Math.min(1, pip.index - slide.value))
-
-                x: root.vert
-                    ? pip.index * root.pitch + (root.actW - root.pipW) / 2
-                    : pip.index * root.pitch + (root.actW - root.pipW) * pip.lead
-                y: (track.height - root.pipH) / 2
-                width: root.pipW
-                height: root.pipH
-                opacity: 1 - pip.weight
+                x: slide.value * root.pitch
+                y: (track.height - root.actH) / 2
+                width: root.actW
+                height: root.actH
                 transformOrigin: Item.TopLeft
                 transform: Scale { xScale: 1 / root.grid; yScale: 1 / root.grid }
 
                 ShapePath {
                     strokeWidth: -1
-                    fillColor: root.shownFilled[pip.index] ? root.liveInk : root.dimInk
+                    fillColor: root.activeInk
 
-                    PathSvg { path: root.pipPath }
+                    PathSvg { path: root.actPath }
                 }
-            }
-        }
-
-        Shape {
-            id: mark
-            preferredRendererType: Shape.CurveRenderer
-            x: slide.value * root.pitch
-            y: (track.height - root.actH) / 2
-            width: root.actW
-            height: root.actH
-            transformOrigin: Item.TopLeft
-            transform: Scale { xScale: 1 / root.grid; yScale: 1 / root.grid }
-
-            ShapePath {
-                strokeWidth: -1
-                fillColor: root.activeInk
-
-                PathSvg { path: root.actPath }
             }
         }
     }

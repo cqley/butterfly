@@ -123,114 +123,6 @@ Pick {
 
         Item {
             width: parent.width
-            height: Theme.netRowH
-
-            Txt {
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.netTitleX
-                anchors.verticalCenter: parent.verticalCenter
-                text: Net.title
-                font.weight: Font.DemiBold
-                color: Net.phase !== "" ? Theme.accent : !Net.available || !Net.enabled ? Theme.red : Theme.fg
-                opacity: pulse.running ? Theme.dimMuted + (1 - Theme.dimMuted) * pulse.val : 1
-
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.glide
-                        easing.type: Theme.ease
-                    }
-                }
-            }
-
-            QtObject {
-                id: pulse
-                property real val: 1
-                property bool running: Net.phase === "connecting" || Net.phase === "disconnecting"
-            }
-
-            SequentialAnimation {
-                running: pulse.running
-                loops: Animation.Infinite
-
-                NumberAnimation {
-                    target: pulse
-                    property: "val"
-                    from: 1
-                    to: 0
-                    duration: Theme.blink
-                    easing.type: Easing.InOutSine
-                }
-
-                NumberAnimation {
-                    target: pulse
-                    property: "val"
-                    from: 0
-                    to: 1
-                    duration: Theme.blink
-                    easing.type: Easing.InOutSine
-                }
-            }
-
-            Rectangle {
-                id: toggle
-                readonly property real gap: (height - Theme.netKnob) / 2
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.netToggleInset
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.netToggleW
-                height: Theme.netToggleH
-                radius: height / 2
-                color: Net.enabled ? Theme.accent : Theme.tile
-                opacity: !Net.available || Net.busy || Net.toggling ? Theme.dimMid : 1
-                transformOrigin: Item.Center
-                scale: toggleArea.pressed ? Theme.feedbackPressScale : toggleArea.containsMouse ? Theme.feedbackHoverScale : 1
-                antialiasing: true
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.glide
-                        easing.type: Theme.ease
-                    }
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.glide
-                        easing.type: Theme.ease
-                    }
-                }
-
-                Rectangle {
-                    x: Net.enabled ? toggle.width - width - toggle.gap : toggle.gap
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.netKnob
-                    height: Theme.netKnob
-                    radius: width / 2
-                    color: Theme.fg
-                    antialiasing: true
-
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: Theme.glide
-                            easing.type: Theme.ease
-                        }
-                    }
-                }
-
-                MouseArea {
-                    id: toggleArea
-                    anchors.fill: parent
-                    enabled: Net.available && !Net.busy && !Net.toggling
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Net.toggleWifi()
-                }
-            }
-        }
-
-        Item {
-            width: parent.width
             height: Math.min(root.n, Theme.netRows) * Theme.netRowH
             clip: true
             visible: Net.available && Net.enabled && root.n > 0
@@ -401,6 +293,19 @@ Pick {
                 id: empty
                 anchors.centerIn: parent
                 text: "no networks"
+                opacity: Theme.dimEmpty
+            }
+        }
+
+        Item {
+            width: parent.width
+            height: offline.implicitHeight + Theme.emptyPad
+            visible: !root.ask && !(Net.available && Net.enabled)
+
+            Txt {
+                id: offline
+                anchors.centerIn: parent
+                text: Net.title
                 opacity: Theme.dimEmpty
             }
         }

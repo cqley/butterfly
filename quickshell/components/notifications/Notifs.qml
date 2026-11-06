@@ -10,6 +10,7 @@ Singleton {
     property var current: null
     property var queue: []
     property bool hovered: false
+    property bool veiled: false
     property bool open: false
     property bool dnd: false
     property var history: []
@@ -109,9 +110,9 @@ Singleton {
         if (!e)
             return
         if (e.system) {
+            queue = queue.filter(x => !echoes(x, e))
             if (echoes(current, e))
                 next()
-            queue = queue.filter(x => !echoes(x, e))
             return
         }
         if (current && !current.system && current.id === e.nid) {
@@ -216,6 +217,19 @@ Singleton {
             pump()
     }
 
+    function promote() {
+        if (veiled)
+            return false
+        const q = queue.filter(alive)
+        queue = q.slice(1)
+        if (q.length === 0)
+            return false
+        current = q[0]
+        if (!hovered)
+            armHold(current)
+        return true
+    }
+
     function push(n) {
         if (!n)
             return
@@ -282,20 +296,18 @@ Singleton {
     }
 
     function pump() {
-        const q = queue.filter(alive)
-        queue = q.slice(1)
-        if (q.length === 0)
-            return
-        current = q[0]
-        if (!hovered)
-            armHold(current)
+        root.promote()
     }
 
     function next() {
         hold.stop()
+        if (root.promote())
+            return
         current = null
         gap.restart()
     }
+
+    onVeiledChanged: if (!veiled && current === null && !gap.running) pump()
 
     function dismiss() {
         const n = current

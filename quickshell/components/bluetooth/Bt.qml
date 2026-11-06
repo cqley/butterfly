@@ -18,7 +18,7 @@ Singleton {
 
     readonly property string title: {
         if (!available)
-            return "no adapter"
+            return "bluetooth not available"
         if (blocked)
             return "bluetooth blocked"
         if (adapter.state === BluetoothAdapterState.Enabling)

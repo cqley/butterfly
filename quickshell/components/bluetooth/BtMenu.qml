@@ -92,113 +92,6 @@ Pick {
 
         Item {
             width: parent.width
-            height: Theme.btRowH
-
-            Txt {
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.btTitleX
-                anchors.verticalCenter: parent.verticalCenter
-                text: Bt.title
-                font.weight: Font.DemiBold
-                color: Bt.busy || Bt.powering ? Theme.accent : !Bt.enabled ? Theme.red : Theme.fg
-                opacity: pulse.running ? Theme.dimMuted + (1 - Theme.dimMuted) * pulse.val : 1
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.glide
-                        easing.type: Theme.ease
-                    }
-                }
-            }
-
-            QtObject {
-                id: pulse
-                property real val: 1
-                property bool running: Bt.busy || Bt.powering
-            }
-
-            SequentialAnimation {
-                running: pulse.running
-                loops: Animation.Infinite
-
-                NumberAnimation {
-                    target: pulse
-                    property: "val"
-                    from: 1
-                    to: 0
-                    duration: Theme.blink
-                    easing.type: Easing.InOutSine
-                }
-
-                NumberAnimation {
-                    target: pulse
-                    property: "val"
-                    from: 0
-                    to: 1
-                    duration: Theme.blink
-                    easing.type: Easing.InOutSine
-                }
-            }
-
-            Rectangle {
-                id: toggle
-                readonly property real gap: (height - Theme.btKnob) / 2
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.btToggleInset
-                anchors.verticalCenter: parent.verticalCenter
-                width: Theme.btToggleW
-                height: Theme.btToggleH
-                radius: height / 2
-                color: Bt.enabled ? Theme.accent : Theme.tile
-                opacity: !Bt.available || Bt.blocked || Bt.busy || Bt.powering ? Theme.dimMid : 1
-                transformOrigin: Item.Center
-                scale: toggleArea.pressed ? Theme.feedbackPressScale : toggleArea.containsMouse ? Theme.feedbackHoverScale : 1
-                antialiasing: true
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Theme.glide
-                        easing.type: Theme.ease
-                    }
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Theme.glide
-                        easing.type: Theme.ease
-                    }
-                }
-
-                Rectangle {
-                    x: Bt.enabled ? toggle.width - width - toggle.gap : toggle.gap
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Theme.btKnob
-                    height: Theme.btKnob
-                    radius: width / 2
-                    color: Theme.fg
-                    antialiasing: true
-
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: Theme.glide
-                            easing.type: Theme.ease
-                        }
-                    }
-                }
-
-                MouseArea {
-                    id: toggleArea
-                    anchors.fill: parent
-                    enabled: Bt.available && !Bt.blocked && !Bt.busy && !Bt.powering
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Bt.toggleAdapter()
-                }
-            }
-        }
-
-        Item {
-            width: parent.width
             height: Math.min(root.n, Theme.btRows) * Theme.btRowH
             clip: true
             visible: Bt.enabled && root.n > 0
@@ -348,6 +241,19 @@ Pick {
                 id: empty
                 anchors.centerIn: parent
                 text: "no devices"
+                opacity: Theme.dimEmpty
+            }
+        }
+
+        Item {
+            width: parent.width
+            height: offline.implicitHeight + Theme.emptyPad
+            visible: !Bt.enabled
+
+            Txt {
+                id: offline
+                anchors.centerIn: parent
+                text: Bt.title
                 opacity: Theme.dimEmpty
             }
         }

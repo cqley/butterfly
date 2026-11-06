@@ -272,7 +272,7 @@ Column {
         }
 
         SettingsRow {
-            label: "page change"
+            label: "page and style change"
             token: "wsSwap"
             value: Theme.wsSwap + " ms"
 

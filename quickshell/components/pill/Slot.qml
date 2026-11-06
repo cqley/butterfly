@@ -11,8 +11,10 @@ Item {
     property int settledGap: Math.round(leadingGap)
     property int settledTrailingGap: Math.round(trailingGap)
     property bool pinEnd: false
+    property real veil: 1
     readonly property int targetWidth: shown ? settledGap + contentWidth + settledTrailingGap : 0
     readonly property real enter: enterMotion.value
+    readonly property real contentX: holder.x
     default property alias content: holder.data
 
     width: (leadingGap + contentWidth + trailingGap) * enter
@@ -37,6 +39,6 @@ Item {
         height: root.size
         transformOrigin: Item.Center
         scale: Theme.slotScale + (1 - Theme.slotScale) * root.enter
-        opacity: root.enter
+        opacity: root.enter * root.veil
     }
 }

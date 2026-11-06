@@ -143,7 +143,7 @@ Item {
                     id: stage
                     anchors.fill: parent
 
-                    property int shownIndex: Settings.selected
+                    property int shownIndex: 0
                     property bool churn: false
 
                     function retarget(to, ms) {
@@ -158,7 +158,10 @@ Item {
                             stage.retarget(1, Theme.rise)
                     }
 
-                    Component.onCompleted: stage.reveal()
+                    Component.onCompleted: {
+                        stage.shownIndex = Settings.selected
+                        stage.reveal()
+                    }
 
                     Connections {
                         target: Settings

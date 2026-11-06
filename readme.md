@@ -8,7 +8,7 @@
 | `polkit` | `status` |
 | `record` | `toggle` `stop` `status` |
 | `screenshot` | `toggle` `region` `window` `monitor` `active` `cancel` `status` |
-| `network` | `toggle` `power` `status` |
+| `network` | `toggle` `power` `indicator` `status` |
 | `bluetooth` | `toggle` `power` `status` |
 | `mixer` | `toggle` `status` |
 | `brightness` | `toggle` `status` (`toggle` opens the mixer) |
@@ -19,7 +19,8 @@
 | `notifications` | `toggle` `clear` `status` |
 | `dnd` | `toggle` `status` |
 | `settings` | `toggle` `open` `close` `status` |
-| `island` | `week` `calendar` `media` `status` |
+| `island` | `dash` `week` `calendar` `media` `status` |
+| `dashboard` | `toggle` `part <name>` `width <px>` `status` |
 | `tray` | `toggle` `status` |
 | `workspaces` | `toggle` `place <left\|right\|only>` `style <dots\|bars>` `status` |
 | `modal` | `dismiss` `status` |

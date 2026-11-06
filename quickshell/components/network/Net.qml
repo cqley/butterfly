@@ -35,7 +35,7 @@ Singleton {
 
     readonly property string title: {
         if (!available)
-            return "no wifi"
+            return "wifi not available"
         if (!enabled)
             return "wifi off"
         if (asking !== "")
@@ -47,6 +47,59 @@ Singleton {
         if (active !== "")
             return active
         return "network"
+    }
+
+    property bool watchLink: false
+    property bool pinLink: false
+    readonly property bool liveLink: root.watchLink || root.pinLink
+    property real link: -1
+    readonly property bool linkKnown: root.link >= 0
+
+    readonly property int bars: {
+        if (root.linkKnown)
+            return root.link <= 0 ? 0 : Math.max(1, Math.round(root.link * Theme.sigBars))
+        if (!root.available || !root.enabled || root.active === "")
+            return 0
+        for (const n of root.list)
+            if (n.active)
+                return Math.max(1, Math.round(n.signal * Theme.sigBars))
+        return Theme.sigBars
+    }
+
+    function linkText() {
+        return root.linkKnown ? " · signal " + Math.round(root.link * 100) + "%" : " · signal unknown"
+    }
+
+    function parseLink(text) {
+        const lines = String(text || "").split("\n")
+        for (let i = 2; i < lines.length; i++) {
+            const row = lines[i].trim()
+            if (row === "" || row.indexOf(":") < 0)
+                continue
+            const p = row.split(/\s+/)
+            if (p.length < 3)
+                continue
+            const q = parseFloat(p[2])
+            if (!isFinite(q))
+                continue
+            return Math.max(0, Math.min(1, q / Theme.netLinkMax))
+        }
+        return -1
+    }
+
+    FileView {
+        id: linkFile
+        path: "/proc/net/wireless"
+        onLoaded: root.link = root.parseLink(text())
+        onLoadFailed: root.link = -1
+    }
+
+    Timer {
+        interval: root.watchLink ? Theme.netLinkPoll : Theme.netLinkIdlePoll
+        repeat: true
+        running: root.liveLink
+        triggeredOnStart: true
+        onTriggered: linkFile.reload()
     }
 
     function startWatching() {
@@ -164,12 +217,6 @@ Singleton {
             clearConnectionState()
         radioSet.command = ["nmcli", "radio", "wifi", on ? "on" : "off"]
         radioSet.running = true
-    }
-
-    function toggleWifi() {
-        if (!available)
-            return
-        setRadio(!enabled)
     }
 
     function requestPower() {
@@ -592,6 +639,14 @@ Singleton {
         target: "network"
         function toggle(): void { root.open = !root.open }
         function power(): void { root.requestPower() }
+
+        function indicator(): string {
+            const on = !Theme.wifiOn
+            Cfg.set("wifiOn", on)
+            Cfg.flush()
+            return on ? "shown" : "hidden"
+        }
+
         function status(): string {
             if (!root.available)
                 return "no wifi"
@@ -600,8 +655,8 @@ Singleton {
             if (root.phase !== "")
                 return root.phase + " " + root.pending
             if (root.active !== "")
-                return "connected " + root.active
-            return "idle"
+                return "connected " + root.active + root.linkText()
+            return "idle" + root.linkText()
         }
     }
 }

@@ -62,7 +62,10 @@ Singleton {
         } catch (e) {
             parsed = null
         }
-        root.v = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : ({})
+        const ok = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        if (!ok && root.ready)
+            return
+        root.v = ok ? parsed : ({})
     }
 
     Timer {
@@ -80,7 +83,7 @@ Singleton {
         printErrors: false
 
         onFileChanged: reload()
-        onLoadFailed: { root.v = ({}); root.ready = true }
+        onLoadFailed: { if (!root.ready) root.v = ({}); root.ready = true }
         onLoaded: {
             if (!settle.running && text() !== root.mine)
                 root.adopt(text())

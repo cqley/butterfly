@@ -19,6 +19,12 @@ Singleton {
             page: "SettingsIsland.qml"
         },
         {
+            id: "dashboard",
+            label: "dashboard",
+            icon: Theme.settingsDashboardPath,
+            page: "SettingsDashboard.qml"
+        },
+        {
             id: "appearance",
             label: "appearance",
             icon: Theme.settingsStylePath,

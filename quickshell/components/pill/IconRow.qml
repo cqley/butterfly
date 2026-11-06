@@ -6,6 +6,8 @@ Item {
 
     property var modules: []
     property bool clockEnd: false
+    property real morphVeil: 1
+    property real orphanVeil: 1
 
     width: row.width
     height: Theme.h
@@ -29,6 +31,18 @@ Item {
 
     function item(i) {
         return rowRepeater.itemAt(i)
+    }
+
+    function slotCenter(key) {
+        for (let i = 0; i < root.modules.length; i++) {
+            if (root.modules[i].key !== key)
+                continue
+            const it = rowRepeater.itemAt(i)
+            if (!it || !it.shown)
+                return null
+            return it.x + it.contentX + it.contentWidth / 2
+        }
+        return null
     }
 
     function leadGap(i, own) {
@@ -57,6 +71,7 @@ Item {
                 required property var modelData
                 readonly property real ownGap: modelData.clockGapFn ? modelData.clockGapFn() : Theme.clockGap
                 pinEnd: !root.clockEnd
+                veil: modelData.morphsFn && modelData.morphsFn() ? root.morphVeil : root.orphanVeil
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: Theme.moduleOffsetY + (modelData.offsetYFn ? modelData.offsetYFn() : 0)
                 anchors.alignWhenCentered: Theme.idleAlignWhenCentered

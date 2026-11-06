@@ -6,31 +6,35 @@ QtObject {
     property bool hovered: false
     property bool armed: true
     property bool media: false
-    property string mode: "dates"
-    property int level: 0
     property bool open: false
+    property var at: ({ mode: "home", level: 0 })
 
-    readonly property int pages: root.mode === "dates" ? 2 : 1
+    readonly property string mode: root.at.mode
+    readonly property int level: root.at.level
+    readonly property int pages: root.mode === "dates" || root.media ? 2 : 1
     readonly property int depth: level > 0 ? level + 1 : (hovered && armed ? 1 : 0)
     readonly property bool popped: depth >= 1
-    readonly property bool mediaShown: depth === 2 && mode === "media"
-    readonly property bool weekShown: depth === 2 && mode === "dates"
-    readonly property bool calendarShown: depth >= 3
-    readonly property string face: calendarShown ? "calendar" : mediaShown ? "media" : weekShown ? "week" : popped ? "peek" : ""
-    readonly property string primary: root.level > 0 ? root.mode : "media"
+    readonly property string face: root.level === 0 ? (root.popped ? "peek" : "")
+        : root.mode === "dates" ? (root.level >= 2 ? "calendar" : "week")
+        : root.level >= 2 ? "media" : "dash"
+    readonly property bool dashShown: root.face === "dash"
+    readonly property bool mediaShown: root.face === "media"
+    readonly property bool weekShown: root.face === "week"
+    readonly property bool calendarShown: root.face === "calendar"
+    readonly property string primary: root.level > 0 ? root.mode : "home"
     readonly property string report: root.face === "" ? "closed" : root.face
 
+    function go(mode, level) {
+        root.at = { mode: mode, level: level }
+    }
+
     function show(next) {
+        root.armed = true
         if (root.mode === next && root.level > 0) {
-            root.armed = true
-            root.level = root.level < root.pages ? root.level + 1 : (root.pages > 1 ? 1 : 0)
+            root.go(next, root.level < root.pages ? root.level + 1 : (root.pages > 1 ? 1 : 0))
             return
         }
-        if (next === "media" && !root.media)
-            return
-        root.armed = true
-        root.mode = next
-        root.level = 1
+        root.go(next, 1)
     }
 
     function toggleFace(name) {
@@ -41,30 +45,28 @@ QtObject {
         if (name === "media" && !root.media)
             return "no media"
         root.armed = true
-        root.mode = name === "media" ? "media" : "dates"
-        root.level = name === "calendar" ? 2 : 1
+        const dates = name === "week" || name === "calendar"
+        root.go(dates ? "dates" : "home", name === "calendar" || name === "media" ? 2 : 1)
         return root.report
     }
 
     onHoveredChanged: if (!hovered) armed = true
 
-    onLevelChanged: {
-        if (level > 0) {
-            open = true
+    onAtChanged: {
+        if (root.at.level > 0) {
+            root.open = true
             Modal.claim("island")
         } else {
-            open = false
+            root.open = false
         }
     }
 
     onOpenChanged: {
-        if (open && level === 0) {
-            if (mode === "media" && !media)
-                mode = "dates"
-            level = 1
-        } else if (!open && level > 0) {
-            level = 0
-            armed = !hovered
+        if (root.open && root.at.level === 0) {
+            root.go(root.at.mode, 1)
+        } else if (!root.open && root.at.level > 0) {
+            root.go(root.at.mode, 0)
+            root.armed = !root.hovered
         }
     }
 }

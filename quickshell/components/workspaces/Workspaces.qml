@@ -11,7 +11,6 @@ Singleton {
     readonly property bool wired: Compositor.isHyprland && Hyprland.workspaces.values.length > 0 && Cfg.ready
     property bool synced: false
     readonly property bool available: root.wired && root.synced
-    readonly property int count: Math.max(1, Theme.wsCount)
 
     readonly property var monitor: {
         if (!root.wired)
@@ -40,7 +39,7 @@ Singleton {
     readonly property int index: Math.max(0, Math.min(root.count - 1, root.current - root.first))
 
     readonly property int span: {
-        const vert = Theme.wsVertical
+        const vert = root.vertical
         const pipW = vert ? Theme.wsBarW : Theme.wsDot
         const actW = Math.max(vert ? Theme.wsBarActiveW : Theme.wsActiveW, pipW)
         const pitch = pipW + (vert ? Theme.wsBarGap : Theme.wsGap)
@@ -68,6 +67,59 @@ Singleton {
         return out
     }
 
+    // layout
+    readonly property bool wantVertical: Theme.wsVertical
+    readonly property int wantCount: Math.max(1, Theme.wsCount)
+    readonly property string wantPlace: Theme.wsPlace
+    property bool vertical: false
+    property int count: 1
+    property string place: "left"
+    property real layoutFade: 0
+
+    function applyLayout() {
+        root.vertical = root.wantVertical
+        root.count = root.wantCount
+        root.place = root.wantPlace
+    }
+
+    function relayout() {
+        if (Theme.wsOn && root.available) {
+            layoutRun.restart()
+            return
+        }
+        layoutRun.stop()
+        root.layoutFade = 0
+        root.applyLayout()
+    }
+
+    onWantVerticalChanged: root.relayout()
+    onWantCountChanged: root.relayout()
+    onWantPlaceChanged: root.relayout()
+
+    SequentialAnimation {
+        id: layoutRun
+
+        NumberAnimation {
+            target: root
+            property: "layoutFade"
+            to: 1
+            duration: Theme.wsSwap
+            easing.type: Easing.InCubic
+        }
+
+        ScriptAction {
+            script: root.applyLayout()
+        }
+
+        NumberAnimation {
+            target: root
+            property: "layoutFade"
+            to: 0
+            duration: Theme.wsSwap
+            easing.type: Easing.OutCubic
+        }
+    }
+
     function adopt() {
         if (root.liveId < 1)
             return
@@ -85,7 +137,10 @@ Singleton {
         onTriggered: root.synced = true
     }
 
-    Component.onCompleted: root.adopt()
+    Component.onCompleted: {
+        root.applyLayout()
+        root.adopt()
+    }
 
     readonly property var placements: ["left", "right", "only"]
 
