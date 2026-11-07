@@ -295,6 +295,34 @@ Item {
         }
     }
 
+    property bool hidden: false
+    readonly property bool tucked: root.hidden && !Modal.any && Notifs.current === null
+    readonly property bool tucking: root.tucked || tuckMotion.moving
+
+    IpcHandler {
+        target: "bar"
+
+        function toggle(): string {
+            root.hidden = !root.hidden
+            return root.hidden ? "hidden" : "shown"
+        }
+
+        function status(): string { return root.hidden ? "hidden" : "shown" }
+    }
+
+    Spring {
+        id: tuckMotion
+        target: root.tucked ? 1 : 0
+        hold: Theme.springHold
+        response: Theme.barResponse
+        damping: Theme.barDamping
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
+    }
+
+    opacity: root.tucked && !tuckMotion.moving ? 0 : 1
+    transform: Translate { y: -tuckMotion.shaped * (yMotion.value + root.hAnim + Theme.barClear) }
+
     readonly property bool islandReady: !stage.running
 
     Component.onCompleted: {

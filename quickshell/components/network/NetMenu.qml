@@ -51,12 +51,22 @@ Pick {
         remember()
     }
 
+    function connecting(item) {
+        return !!item && Net.phase === "connecting" && Net.pending === item.ssid
+    }
+
     function run() {
         if (ask) {
             Net.submitPsk(pass.text)
             return
         }
-        if (n && !Net.busy)
+        if (!n)
+            return
+        if (connecting(items[sel])) {
+            Net.stopConnect()
+            return
+        }
+        if (!Net.busy)
             Net.pick(items[sel])
     }
 
@@ -103,7 +113,9 @@ Pick {
     Keys.onPressed: e => {
         const k = e.key
         if (k === Qt.Key_Escape) {
-            if (ask || (Net.busy && Net.phase === "connecting"))
+            if (Net.phase === "connecting")
+                Net.stopConnect()
+            else if (ask)
                 Net.cancelAsk()
             else
                 Net.open = false
@@ -114,6 +126,35 @@ Pick {
         else if (!nav(e))
             return
         e.accepted = true
+    }
+
+    QtObject {
+        id: pulse
+        property real val: 1
+        property bool running: Net.phase === "connecting" || Net.phase === "disconnecting"
+    }
+
+    SequentialAnimation {
+        running: pulse.running
+        loops: Animation.Infinite
+
+        NumberAnimation {
+            target: pulse
+            property: "val"
+            from: 1
+            to: 0
+            duration: Theme.blink
+            easing.type: Easing.InOutSine
+        }
+
+        NumberAnimation {
+            target: pulse
+            property: "val"
+            from: 0
+            to: 1
+            duration: Theme.blink
+            easing.type: Easing.InOutSine
+        }
     }
 
     Column {
@@ -273,8 +314,12 @@ Pick {
                                     root.aim(mapToItem(null, m.x, m.y), row.index)
                             }
                             onClicked: {
-                                if (root.ask)
+                                if (root.ask) {
+                                    const same = Net.asking === row.modelData.ssid
                                     Net.cancelAsk()
+                                    if (same)
+                                        return
+                                }
                                 root.sel = row.index
                                 root.run()
                             }
@@ -310,12 +355,26 @@ Pick {
             }
         }
 
-        Column {
+        Fade {
+            id: prompt
             width: parent.width
-            spacing: Theme.listGap
-            visible: root.ask
+            height: rule.height + Theme.netPromptGap + Theme.netFieldH
+            shown: root.ask
+
+            transform: Translate {
+                y: -Theme.netPromptRise * (1 - prompt.opacity)
+            }
 
             Rectangle {
+                id: rule
+                x: Theme.rowR
+                width: parent.width - 2 * Theme.rowR
+                height: Theme.surfaceBorderWidth
+                color: Theme.surfaceBorder
+            }
+
+            Rectangle {
+                y: rule.height + Theme.netPromptGap
                 width: parent.width
                 height: Theme.netFieldH
                 radius: height / 2

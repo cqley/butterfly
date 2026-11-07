@@ -239,6 +239,12 @@ Singleton {
     readonly property int shadowContactBlur: 4
     readonly property int shadowContactOffsetY: 1
 
+    // bar
+    readonly property real barResponse: islandResponse
+    readonly property real barDamping: islandDamping
+    readonly property int barClear: shadowBlur + shadowOffsetY + pillHaloSpread
+    readonly property bool barFreesZone: true
+
     // idle row
     readonly property int clockPx: fs(cfg("clockPx", 14))
     readonly property string clockFormat: cfg("clockFormat", "HH:mm")
@@ -569,6 +575,9 @@ Singleton {
     readonly property int netRows: 6
     readonly property int netTimeout: 30000
     readonly property int netFieldH: 34
+    readonly property int netPromptGap: 10
+    readonly property int netPromptRise: 6
+    readonly property int blink: 700
     readonly property int sigBars: 4
     readonly property int sigGap: 2
     readonly property int sigW: 3

@@ -22,8 +22,9 @@ Scope {
                     left: true
                     right: true
                 }
-                implicitHeight: Theme.zone
-                exclusiveZone: Theme.zone
+                readonly property int reserve: pill.hidden && Theme.barFreesZone ? 0 : Theme.zone
+                implicitHeight: Math.max(1, reserve)
+                exclusiveZone: reserve
                 aboveWindows: false
                 color: "transparent"
                 mask: Region {}
@@ -34,6 +35,7 @@ Scope {
                 readonly property bool modal: Modal.any && Modal.which !== "settings"
                 property var pillMask: Region { item: pill.hitTarget }
                 property var openMask: Region { width: win.width; height: win.height }
+                property var tuckMask: Region {}
 
                 screen: modelData
                 anchors {
@@ -44,7 +46,7 @@ Scope {
                 }
                 exclusionMode: ExclusionMode.Ignore
                 color: "transparent"
-                mask: modal ? openMask : pillMask
+                mask: modal ? openMask : pill.tucking ? tuckMask : pillMask
                 WlrLayershell.keyboardFocus: modal ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
                 Pill { id: pill }

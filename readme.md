@@ -24,6 +24,7 @@
 | `tray` | `toggle` `status` |
 | `workspaces` | `toggle` `place <left\|right\|only>` `style <dots\|bars>` `status` |
 | `modal` | `dismiss` `status` |
+| `bar` | `toggle` `status` (hides the pill; menus, the island and notifications still pop it out) |
 
 ```
 quickshell ipc call <target> <action>

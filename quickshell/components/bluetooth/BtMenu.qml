@@ -85,6 +85,35 @@ Pick {
         e.accepted = true
     }
 
+    QtObject {
+        id: pulse
+        property real val: 1
+        property bool running: Bt.busy || Bt.powering
+    }
+
+    SequentialAnimation {
+        running: pulse.running
+        loops: Animation.Infinite
+
+        NumberAnimation {
+            target: pulse
+            property: "val"
+            from: 1
+            to: 0
+            duration: Theme.blink
+            easing.type: Easing.InOutSine
+        }
+
+        NumberAnimation {
+            target: pulse
+            property: "val"
+            from: 0
+            to: 1
+            duration: Theme.blink
+            easing.type: Easing.InOutSine
+        }
+    }
+
     Column {
         id: col
         width: parent.width

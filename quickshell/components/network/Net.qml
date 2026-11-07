@@ -311,6 +311,13 @@ Singleton {
         phase = ""
     }
 
+    function stopConnect() {
+        const live = phase === "connecting"
+        cancelAsk()
+        if (live && !halt.running)
+            halt.running = true
+    }
+
     function clearPhase() {
         pending = ""
         phase = ""
@@ -580,6 +587,12 @@ Singleton {
 
     Process {
         id: forget
+    }
+
+    Process {
+        id: halt
+        command: ["sh", "-c", "nmcli -t -f UUID,TYPE,STATE connection show --active | awk -F: '$2 == \"802-11-wireless\" && $3 == \"activating\" { print $1 }' | xargs -r -n1 nmcli connection down uuid"]
+        onExited: root.refresh()
     }
 
     Process {
