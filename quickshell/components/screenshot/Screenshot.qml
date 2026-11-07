@@ -365,6 +365,16 @@ Singleton {
         detect.running = true
     }
 
+    function report() {
+        if (root.picking || root.targeting)
+            return "picking"
+        if (root.busy)
+            return "capturing"
+        if (root.grimBin === "")
+            return "no backend"
+        return "idle " + root.grimBin
+    }
+
     IpcHandler {
         target: "screenshot"
         function toggle(): void { root.toggle() }
@@ -376,14 +386,6 @@ Singleton {
             root.cancelRegion()
             root.cancelTargetPick()
         }
-        function status(): string {
-            if (root.picking || root.targeting)
-                return "picking"
-            if (root.busy)
-                return "capturing"
-            if (root.grimBin === "")
-                return "no backend"
-            return "idle " + root.grimBin
-        }
+        function status(): string { return (root.open ? "open" : "closed") + " · " + root.report() }
     }
 }

@@ -43,5 +43,6 @@ Singleton {
     IpcHandler {
         target: "launcher"
         function toggle(): void { root.open = !root.open }
+        function status(): string { return root.open ? "open" : "closed" }
     }
 }

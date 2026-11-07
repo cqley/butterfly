@@ -275,18 +275,20 @@ Singleton {
         }
     }
 
+    function report() {
+        if (root.pending)
+            return "switching"
+        if (root.active)
+            return "recording " + root.backend + " " + root.clock + " " + root.targetLabel + " " + root.optsLabel + " " + root.lastFile
+        if (root.lastError !== "")
+            return "idle " + root.backend + " " + root.bin + " err:" + root.lastError
+        return "idle " + (root.bin !== "" ? root.backend + " " + root.optsLabel + " " + root.bin : "no-backend")
+    }
+
     IpcHandler {
         target: "record"
         function toggle(): void { root.toggle() }
         function stop(): void { root.stop() }
-        function status(): string {
-            if (root.pending)
-                return "switching"
-            if (root.active)
-                return "recording " + root.backend + " " + root.clock + " " + root.targetLabel + " " + root.optsLabel + " " + root.lastFile
-            if (root.lastError !== "")
-                return "idle " + root.backend + " " + root.bin + " err:" + root.lastError
-            return "idle " + (root.bin !== "" ? root.backend + " " + root.optsLabel + " " + root.bin : "no-backend")
-        }
+        function status(): string { return (root.open ? "open" : "closed") + " · " + root.report() }
     }
 }

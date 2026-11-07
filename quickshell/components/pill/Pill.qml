@@ -1118,13 +1118,5 @@ Item {
         z: 5
     }
 
-    property int clockShift: 0
-    readonly property date clockNow: new Date(clock.date.getTime() + root.clockShift * 60000)
-
-    IpcHandler {
-        target: "clocktest"
-        function tick(): string { root.clockShift += 1; return Theme.clockText(root.clockNow) }
-        function hour(): string { root.clockShift += 60 - root.clockNow.getMinutes(); return Theme.clockText(root.clockNow) }
-        function reset(): string { root.clockShift = 0; return Theme.clockText(root.clockNow) }
-    }
+    readonly property date clockNow: clock.date
 }

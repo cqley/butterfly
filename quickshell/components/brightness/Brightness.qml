@@ -1,6 +1,5 @@
 pragma Singleton
 import "../core"
-import "../mixer"
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -247,7 +246,6 @@ Singleton {
 
     IpcHandler {
         target: "brightness"
-        function toggle(): void { Mixer.open = !Mixer.open }
         function status(): string {
             if (root.count === 0)
                 return root.scanned ? "unavailable" : "not probed"

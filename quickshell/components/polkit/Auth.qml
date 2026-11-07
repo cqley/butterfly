@@ -59,6 +59,11 @@ Fade {
         input.forceActiveFocus()
     }
 
+    function refocus() {
+        if (root.visible)
+            input.forceActiveFocus()
+    }
+
     function cancel() {
         Polkit.cancel()
     }
@@ -99,13 +104,13 @@ Fade {
             if (!root.asking)
                 return
             input.text = ""
-            input.forceActiveFocus()
+            Qt.callLater(root.refocus)
         }
         function onAuthenticationFailed() {
             root.take()
             root.slip = true
             shake.restart()
-            root.forceActiveFocus()
+            Qt.callLater(root.refocus)
         }
         function onSupplementaryMessageChanged() {
             root.take()
@@ -258,7 +263,8 @@ Fade {
                     font.family: Theme.font
                     font.pixelSize: Theme.fsL
                     font.weight: Font.Medium
-                    enabled: root.asking
+                    readOnly: !root.asking
+                    cursorVisible: root.asking && activeFocus
                     onTextEdited: root.slip = false
                     onAccepted: root.submit()
                 }
@@ -322,9 +328,8 @@ Fade {
             }
 
             Txt {
-                x: Theme.authStatusX
                 y: Theme.authFieldH + Theme.authStatusGap
-                width: parent.width - Theme.authStatusX
+                width: parent.width
                 height: Theme.authStatusH
                 verticalAlignment: Text.AlignVCenter
                 text: root.slip ? root.fault : root.detail

@@ -1,6 +1,5 @@
 pragma Singleton
 import "../core"
-import "../mixer"
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -185,7 +184,6 @@ Singleton {
 
     IpcHandler {
         target: "audio"
-        function toggle(): void { Mixer.open = !Mixer.open }
         function status(): string {
             const out = []
             for (let i = 0; i < root.count; i++) {

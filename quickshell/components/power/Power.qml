@@ -28,5 +28,6 @@ Singleton {
     IpcHandler {
         target: "power"
         function toggle(): void { root.open = !root.open }
+        function status(): string { return root.open ? "open" : "closed" }
     }
 }

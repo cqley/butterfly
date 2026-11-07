@@ -648,6 +648,18 @@ Singleton {
         onTriggered: root.refresh()
     }
 
+    function report() {
+        if (!root.available)
+            return "no wifi"
+        if (!root.enabled)
+            return "wifi off"
+        if (root.phase !== "")
+            return root.phase + " " + root.pending
+        if (root.active !== "")
+            return "connected " + root.active + root.linkText()
+        return "idle" + root.linkText()
+    }
+
     IpcHandler {
         target: "network"
         function toggle(): void { root.open = !root.open }
@@ -660,17 +672,7 @@ Singleton {
             return on ? "shown" : "hidden"
         }
 
-        function status(): string {
-            if (!root.available)
-                return "no wifi"
-            if (!root.enabled)
-                return "wifi off"
-            if (root.phase !== "")
-                return root.phase + " " + root.pending
-            if (root.active !== "")
-                return "connected " + root.active + root.linkText()
-            return "idle" + root.linkText()
-        }
+        function status(): string { return (root.open ? "open" : "closed") + " · " + root.report() }
     }
 }
 

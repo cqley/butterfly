@@ -502,7 +502,6 @@ Singleton {
     readonly property int authMsgLines: 3
     readonly property int authStatusGap: 6
     readonly property int authStatusH: 13
-    readonly property int authStatusX: 6
     readonly property real authLockShut: 11
     readonly property real authLockOpen: 6
     readonly property string authShackleHead: "M7 11V7A5 5 0 0 1 17 7V"
@@ -522,7 +521,7 @@ Singleton {
     readonly property int authShakeStep: 35
     readonly property real authPressed: 0.82
     readonly property real authDisabled: 0.45
-    readonly property string passChar: "∙"
+    readonly property string passChar: "•"
 
     // media
     readonly property int mediaPillW: cfg("mediaPillW", 324)

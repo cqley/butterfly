@@ -79,6 +79,6 @@ Singleton {
     IpcHandler {
         target: "tray"
         function toggle(): void { root.toggle() }
-        function status(): string { return root.open ? "open " + root.items.length : "closed " + root.items.length }
+        function status(): string { return (root.open ? "open" : "closed") + " · " + root.items.length + " icons" }
     }
 }

@@ -231,6 +231,14 @@ Singleton {
         }
     }
 
+    function report() {
+        if (!root.available)
+            return "no adapter"
+        if (root.blocked)
+            return "blocked"
+        return root.enabled ? "on" : "off"
+    }
+
     IpcHandler {
         target: "bluetooth"
         function toggle(): void { root.open = !root.open }
@@ -245,12 +253,6 @@ Singleton {
             }
             root.toggleAdapter()
         }
-        function status(): string {
-            if (!root.available)
-                return "no adapter"
-            if (root.blocked)
-                return "blocked"
-            return root.enabled ? "on" : "off"
-        }
+        function status(): string { return (root.open ? "open" : "closed") + " · " + root.report() }
     }
 }
