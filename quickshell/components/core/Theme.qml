@@ -469,7 +469,7 @@ Singleton {
     readonly property string pwOffPath: "M18.36 6.64a9 9 0 1 1-12.73 0M12 2L12 12"
 
     // wallpaper
-    readonly property string wallPath: dir(cfg("wallPath", ""), Quickshell.env("HOME") + "/pictures/wallpapers")
+    readonly property string wallPath: dir(cfg("wallPath", ""), Quickshell.env("HOME") + "/pictures/wallpaper")
     readonly property string wallPathShort: tilde(wallPath)
     readonly property string wallDir: url(wallPath)
     readonly property var wallCmd: [Quickshell.shellPath("components/core/scripts/colors.sh")]

@@ -211,7 +211,7 @@ Column {
 
             SettingsField {
                 width: Theme.settingsPathW
-                placeholder: "~/pictures/wallpapers"
+                placeholder: "~/pictures/wallpaper"
                 text: Theme.wallPathShort
                 onCommitted: t => root.store("wallPath", t.trim())
             }
