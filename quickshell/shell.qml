@@ -62,7 +62,6 @@ Scope {
                 id: setWin
 
                 screen: modelData
-                visible: settingsPopup.alive
                 anchors {
                     top: true
                     bottom: true
@@ -72,7 +71,7 @@ Scope {
                 exclusionMode: ExclusionMode.Ignore
                 color: "transparent"
                 mask: Settings.open ? openMask : closedMask
-                WlrLayershell.layer: WlrLayer.Overlay
+                WlrLayershell.layer: WlrLayer.Top
                 WlrLayershell.namespace: "quickshell-settings"
                 WlrLayershell.keyboardFocus: Settings.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 

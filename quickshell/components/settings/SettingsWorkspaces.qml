@@ -52,6 +52,19 @@ Column {
         }
 
         SettingsRow {
+            label: "click to switch"
+            token: "wsClick"
+
+            SettingsToggle {
+                checked: Theme.wsClick
+                onToggled: on => {
+                    Cfg.set("wsClick", on)
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
             label: "accent the active workspace"
             token: "wsAccent"
 
@@ -272,7 +285,7 @@ Column {
         }
 
         SettingsRow {
-            label: "style change"
+            label: "layout change"
             token: "wsSwap"
             value: Theme.wsSwap + " ms"
 

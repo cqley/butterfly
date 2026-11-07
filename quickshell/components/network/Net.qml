@@ -21,6 +21,7 @@ Singleton {
     property string activeConnection: ""
     property bool canceling: false
     property bool sent: false
+    property string secret: ""
     property bool timedOut: false
     property bool watch: false
     property bool askLocked: false
@@ -272,6 +273,8 @@ Singleton {
         askLocked = !!item.locked
         resolved = false
         sent = false
+        root.secret = ""
+        up.stdinEnabled = false
         up.command = ["nmcli", "device", "wifi", "connect", item.ssid]
         up.running = true
     }
@@ -287,7 +290,9 @@ Singleton {
         asking = ""
         resolved = false
         sent = true
-        up.command = ["nmcli", "device", "wifi", "connect", target, "password", psk]
+        root.secret = psk
+        up.stdinEnabled = true
+        up.command = ["nmcli", "--ask", "device", "wifi", "connect", target]
         up.running = true
     }
 
@@ -515,7 +520,15 @@ Singleton {
     Process {
         id: up
         stderr: StdioCollector {}
+        onStarted: {
+            if (root.secret === "")
+                return
+            up.write(root.secret + "\n")
+            root.secret = ""
+            up.stdinEnabled = false
+        }
         onExited: code => {
+            root.secret = ""
             kill.stop()
             if (root.resolved) {
                 root.canceling = false

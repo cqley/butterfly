@@ -203,6 +203,14 @@ Fade {
                 readonly property int travel: Math.max(Theme.fast, Math.round(over / Theme.mediaScrollSpeed * 1000))
                 property real roll: 0
 
+                function rewind() {
+                    titleBox.roll = 0
+                    if (roller.running)
+                        roller.restart()
+                }
+
+                onRollingChanged: titleBox.rewind()
+
                 width: parent.width
                 height: Theme.mediaTitleH
                 clip: rolling
@@ -220,6 +228,7 @@ Fade {
                     height: parent.height
                     verticalAlignment: Text.AlignVCenter
                     text: root.title
+                    onTextChanged: titleBox.rewind()
                     elide: titleBox.rolling ? Text.ElideNone : Text.ElideRight
                     maximumLineCount: 1
                     font.pixelSize: Theme.fsL
@@ -227,6 +236,7 @@ Fade {
                 }
 
                 SequentialAnimation {
+                    id: roller
                     running: titleBox.rolling && root.visible
                     loops: Animation.Infinite
 
@@ -306,6 +316,10 @@ Fade {
             color: Theme.mediaTrack
             antialiasing: true
 
+            Behavior on y {
+                NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+            }
+
             Rectangle {
                 width: parent.width * root.frac
                 height: parent.height
@@ -341,9 +355,13 @@ Fade {
             y: parent.height - Theme.mediaTimeH
             height: Theme.mediaTimeH
             verticalAlignment: Text.AlignVCenter
-            visible: Theme.mediaTimes
+            visible: opacity > 0.004
             font.pixelSize: Theme.fsXS
-            opacity: root.dur > 0 ? Theme.dimMuted : 0
+            opacity: Theme.mediaTimes && root.dur > 0 ? Theme.dimMuted : 0
+
+            Behavior on opacity {
+                NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+            }
             text: root.clock(root.elapsed)
         }
 
@@ -353,9 +371,13 @@ Fade {
             height: Theme.mediaTimeH
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignRight
-            visible: Theme.mediaTimes
+            visible: opacity > 0.004
             font.pixelSize: Theme.fsXS
-            opacity: root.dur > 0 ? Theme.dimHint : 0
+            opacity: Theme.mediaTimes && root.dur > 0 ? Theme.dimHint : 0
+
+            Behavior on opacity {
+                NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+            }
             text: Theme.mediaRemainChar + root.clock(root.remain)
         }
     }

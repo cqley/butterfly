@@ -40,7 +40,17 @@ Item {
             const it = rowRepeater.itemAt(i)
             if (!it || !it.shown)
                 return null
-            return it.x + it.contentX + it.contentWidth / 2
+            return it.x + it.contentX + it.contentNow / 2
+        }
+        return null
+    }
+
+    function content(key) {
+        for (let i = 0; i < root.modules.length; i++) {
+            if (root.modules[i].key !== key)
+                continue
+            const it = rowRepeater.itemAt(i)
+            return it && it.shown ? it.loaded : null
         }
         return null
     }
@@ -87,7 +97,10 @@ Item {
                     x: modelData.offsetXFn ? modelData.offsetXFn() : 0
                 }
 
+                readonly property var loaded: loader.item
+
                 Loader {
+                    id: loader
                     anchors.fill: parent
                     sourceComponent: modelData.component
                 }

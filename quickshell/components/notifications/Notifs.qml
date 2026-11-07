@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
+import Quickshell.Wayland
 
 Singleton {
     id: root
@@ -54,6 +55,8 @@ Singleton {
             summary: plain(n.summary),
             body: plain(n.body),
             app: own ? "system" : name.toLowerCase(),
+            entry: own ? "" : String(n.desktopEntry || "").toLowerCase(),
+            site: own ? "" : site(n.body),
             letter: ((name || "?")[0] || "?").toLowerCase(),
             picture: own || /^image:\/\/qsimage\//i.test(raw) ? "" : fileUrl(raw),
             mark: own ? "" : (fileUrl(n.appIcon) || fileUrl(n.desktopEntry)),
@@ -150,11 +153,12 @@ Singleton {
         flush(false)
     }
 
-    function toggleDnd() {
+    function toggleDnd(quiet = false) {
         dnd = !dnd
         if (dnd)
             flush(true)
-        pushSystem(dnd ? "do not disturb on" : "do not disturb off", "", dnd, "dnd")
+        if (!quiet)
+            pushSystem(dnd ? "do not disturb on" : "do not disturb off", "", dnd, "dnd")
     }
 
     onHoveredChanged: if (current) {
@@ -316,6 +320,61 @@ Singleton {
         next()
         if (!n.system && n.tracked)
             n.dismiss()
+    }
+
+    function site(body) {
+        const m = String(body || "").match(/^\s*<a[^>]*>\s*([^<\s]+)\s*<\/a>/i)
+        if (!m)
+            return ""
+        const parts = m[1].toLowerCase().replace(/^www\./, "").split(".")
+        return parts.length > 1 ? parts[parts.length - 2] : parts[0]
+    }
+
+    function raise(entry, app, hint) {
+        const want = [entry, app].map(s => String(s || "").toLowerCase()).filter(s => s !== "")
+        if (want.length === 0)
+            return false
+        const list = ToplevelManager.toplevels.values.filter(t => {
+            const id = String(t.appId || "").toLowerCase()
+            return id !== "" && want.some(w => id === w || id.endsWith("." + w) || w.endsWith("." + id))
+        })
+        const tip = String(hint || "").toLowerCase()
+        const hit = (tip !== "" ? list.find(t => String(t.title || "").toLowerCase().indexOf(tip) >= 0) : null) || list[0]
+        if (!hit)
+            return false
+        hit.activate()
+        return true
+    }
+
+    function focusCurrent() {
+        const n = current
+        if (!n || n.system)
+            return
+        const act = n.tracked ? (n.actions || []).find(a => a.identifier === "default") : null
+        raise(n.desktopEntry, n.appName, site(n.body))
+        if (!act) {
+            dismiss()
+            return
+        }
+        next()
+        act.invoke()
+    }
+
+    function focusEntry(key) {
+        const e = history.find(x => x.key === key)
+        if (!e || e.system)
+            return
+        const live = [current, ...queue].find(x => x && !x.system && x.id === e.nid && x.tracked)
+        const act = live ? (live.actions || []).find(a => a.identifier === "default") : null
+        open = false
+        raise(e.entry, e.app, e.site)
+        if (!act)
+            return
+        if (live === current)
+            next()
+        else
+            queue = queue.filter(x => x !== live)
+        act.invoke()
     }
 
     function drop() {

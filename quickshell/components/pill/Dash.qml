@@ -58,6 +58,7 @@ Item {
     }
 
     readonly property bool wifiHands: root.origin("wifi") !== null
+    readonly property bool wifiTravels: Theme.dashNet && root.wifiHands
     property real netLit: Net.enabled ? 1 : 0
     readonly property color wifiInk: Theme.mix(root.dim, Theme.accent, root.netLit)
     readonly property color wifiIdleInk: Theme.mix(Theme.mix(Theme.bg, Theme.fg, Theme.dimMid), Theme.fg, root.netLit)
@@ -151,24 +152,60 @@ Item {
 
     DashRow {
         x: 0
+        y: root.row1y
+        height: Theme.dashRowH
+
+        DashCell {
+            shown: Theme.dashBattery && root.onBattery
+            contentW: bat.width
+            origin: root.origin("battery")
+            hoverable: true
+            onActivated: Mixer.open = true
+
+            BatteryIcon {
+                id: bat
+                anchors.centerIn: parent
+                height: Theme.h
+                pct: Battery.pct
+                tone: Battery.tone
+                pluggedIn: Battery.pluggedIn
+            }
+        }
+    }
+
+    DashRow {
+        x: 0
         y: root.row2y
         height: Theme.dashRow2H
 
         DashCell {
+            id: wsCell
             shown: Theme.dashWs && Workspaces.available
-            contentW: strip.span
+            contentW: Workspaces.span
             origin: root.origin("ws")
 
             WorkspaceStrip {
                 id: strip
-                anchors.centerIn: parent
+                x: (parent.width - width) / 2
+                y: Math.round((parent.height - height) / 2)
                 live: Theme.dashWs && Workspaces.available
-                vert: Workspaces.vertical
+                vert: Theme.wsVertical
                 layoutFade: Workspaces.layoutFade
                 index: Workspaces.index
                 count: Workspaces.count
                 total: Workspaces.total
                 filled: Workspaces.filled
+
+                MouseArea {
+                    anchors.fill: parent
+                    visible: Theme.wsClick && wsCell.shown && wsCell.live
+                    hoverEnabled: visible
+                    cursorShape: Qt.PointingHandCursor
+                    onPositionChanged: m => strip.hot = strip.slotAt(m.x)
+                    onExited: strip.hot = -1
+                    onVisibleChanged: if (!visible) strip.hot = -1
+                    onClicked: m => Workspaces.focus(strip.slotAt(m.x) + 1)
+                }
             }
         }
     }
@@ -223,7 +260,9 @@ Item {
             shown: Theme.dashNotes
             contentW: Theme.dashGlyph
             hoverable: true
+            togglable: true
             onActivated: Notifs.open = true
+            onToggled: Notifs.toggleDnd(true)
 
             DashGlyph {
                 id: bell
@@ -232,6 +271,11 @@ Item {
                 ink: Theme.accent
                 paths: [Theme.bellPath, Theme.bellClapperPath]
                 opacity: Notifs.dnd ? 0 : 1
+                scale: Notifs.dnd ? Theme.dashSwapScale : 1
+
+                Behavior on scale {
+                    NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                }
 
                 Behavior on opacity {
                     NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
@@ -270,6 +314,16 @@ Item {
                 fill: true
                 paths: [Theme.moonPath]
                 opacity: Notifs.dnd ? 1 : 0
+                scale: Notifs.dnd ? 1 : Theme.dashSwapScale
+                rotation: Notifs.dnd ? 0 : Theme.dashSwapTurn
+
+                Behavior on scale {
+                    NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                }
+
+                Behavior on rotation {
+                    NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                }
 
                 Behavior on opacity {
                     NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
@@ -305,7 +359,7 @@ Item {
             shown: Theme.dashBt
             gap: Theme.dashStatusGap
             contentW: Theme.dashGlyph
-            stages: true
+            stages: root.wifiTravels
             hoverable: true
             togglable: true
             onActivated: Bt.open = true
@@ -323,6 +377,7 @@ Item {
             shown: Theme.dashVolume
             gap: Theme.dashStatusGap
             contentW: Theme.dashVolW
+            stages: root.wifiTravels
             hoverable: true
             onActivated: Mixer.open = true
 
@@ -340,24 +395,6 @@ Item {
                     if (Audio.outMuted) out.push(Theme.audioSlashPath)
                     return out
                 }
-            }
-        }
-
-        DashCell {
-            shown: Theme.dashBattery && root.onBattery
-            gap: Theme.dashStatusGap
-            contentW: bat.width
-            origin: root.origin("battery")
-            hoverable: true
-            onActivated: Mixer.open = true
-
-            BatteryIcon {
-                id: bat
-                anchors.centerIn: parent
-                height: Theme.h
-                pct: Battery.pct
-                tone: Battery.tone
-                pluggedIn: Battery.pluggedIn
             }
         }
     }

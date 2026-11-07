@@ -151,6 +151,7 @@ Singleton {
     readonly property real springUnitEps: 0.002
     readonly property real springUnitStop: 0.05
     readonly property real springMaxFrame: 1 / 30
+    readonly property real springHold: 0.01
     readonly property int pulse: 1400
     readonly property real settleEps: 0.5
 
@@ -233,7 +234,10 @@ Singleton {
     readonly property real shadowOpacity: cfg("shadowOpacity", 0.42)
     readonly property int shadowBlur: cfg("shadowBlur", 30)
     readonly property int shadowSpread: cfg("shadowSpread", 0)
-    readonly property int shadowOffsetY: 0
+    readonly property int shadowOffsetY: cfg("shadowOffsetY", 4)
+    readonly property real shadowContact: cfg("shadowContact", 0.6)
+    readonly property int shadowContactBlur: 4
+    readonly property int shadowContactOffsetY: 1
 
     // idle row
     readonly property int clockPx: fs(cfg("clockPx", 14))
@@ -269,6 +273,7 @@ Singleton {
     readonly property real idlePopResponse: springResponse
     readonly property real idlePopDamping: springDamping
     readonly property real slotScale: 0.7
+    readonly property real slotExitAt: 0.75
     readonly property bool wifiOn: cfg("wifiOn", false)
     readonly property string wifiPlace: cfg("wifiPlace", "right")
     readonly property int wifiOffsetX: 0
@@ -282,6 +287,8 @@ Singleton {
     readonly property string wsPlace: cfg("wsPlace", "left")
     readonly property bool wsVertical: cfg("wsVertical", false)
     readonly property bool wsAccent: cfg("wsAccent", false)
+    readonly property bool wsClick: cfg("wsClick", false)
+    readonly property real wsHotLift: 0.45
     readonly property int wsCount: cfg("wsCount", 5)
     readonly property int wsGap: cfg("wsGap", 8)
     readonly property int wsPad: cfg("wsPad", 7)
@@ -540,8 +547,8 @@ Singleton {
     readonly property int artR: 18
     readonly property int artGlyph: 32
     readonly property string artNotePath: "M9 18V5L21 3V16M9 18A3 3 0 0 1 3 18A3 3 0 0 1 9 18ZM21 16A3 3 0 0 1 15 16A3 3 0 0 1 21 16Z"
-    readonly property bool mediaTimes: false
-    readonly property bool mediaScroll: false
+    readonly property bool mediaTimes: cfg("mediaTimes", false)
+    readonly property bool mediaScroll: cfg("mediaScroll", false)
     readonly property int mediaScrollSpeed: 24
     readonly property int mediaScrollHold: 1600
     readonly property real mediaPausedArt: 0.97
@@ -769,7 +776,7 @@ Singleton {
     readonly property int islandMediaH: islandMediaTopPad + artS + islandMediaPad
 
     // dashboard
-    readonly property int dashW: cfg("dashW", 520)
+    readonly property int dashW: cfg("dashW", 420)
     readonly property int dashMinW: 360
     readonly property int dashMaxW: 760
     readonly property int dashPad: 12
@@ -780,6 +787,8 @@ Singleton {
     readonly property int dashGap: 8
     readonly property int dashStatusGap: cfg("dashStatusGap", 10)
     readonly property int dashGlyph: 14
+    readonly property real dashSwapScale: 0.6
+    readonly property int dashSwapTurn: -40
     readonly property real dashNoteDot: 4
     readonly property real dashNoteDotRing: 1.4
     readonly property int dashBtGlyph: 15
@@ -831,7 +840,7 @@ Singleton {
     readonly property real visLerp: 0.3
 
     // settings
-    readonly property int settingsW: cfg("settingsW", 760)
+    readonly property int settingsW: cfg("settingsW", 860)
     readonly property int settingsRadius: launchRadius
     readonly property int settingsPad: 14
     readonly property int settingsPadBottom: 16
@@ -842,6 +851,7 @@ Singleton {
     readonly property real settingsBorderOpacity: pillBorderOpacity
     readonly property color settingsBg: bg
     readonly property real settingsBgOpacity: 1
+    readonly property int settingsEdgeFade: 36
     readonly property color settingsCard: mix(settingsBg, fg, 0.07)
     readonly property color settingsHover: mix(settingsBg, fg, 0.13)
     readonly property color settingsTrack: mix(settingsBg, fg, 0.2)
@@ -886,10 +896,10 @@ Singleton {
     readonly property string settingsStylePath: "M9.06 11.9L17.13 3.84A2.85 2.85 0 1 1 21.16 7.87L13.1 15.95M7.07 14.94C5.41 14.94 4.07 16.29 4.07 17.96C4.07 19.29 1.57 19.48 2.07 19.98C3.15 21.08 4.56 22 6.07 22C8.27 22 10.07 20.2 10.07 17.96A3.01 3.01 0 0 0 7.07 14.94Z"
     readonly property string settingsMotionPath: "M3 12C5 6 7 6 9 12C11 18 13 18 15 12C17 6 19 6 21 12"
     readonly property string settingsRecordPath: "M6 6H13A3 3 0 0 1 16 9V15A3 3 0 0 1 13 18H6A3 3 0 0 1 3 15V9A3 3 0 0 1 6 6Z M16 11L21 8V16L16 13"
-    readonly property real settingsScaleFrom: 0.9
-    readonly property int settingsRiseOffset: 14
+    readonly property real settingsScaleFrom: 0.86
     readonly property real settingsPopResponse: 0.3
-    readonly property real settingsPopDamping: 0.82
+    readonly property real settingsPopDamping: springDamping
+    readonly property real settingsSettleHold: 0.02
     readonly property real settingsBoxFadeIn: 0.3
     readonly property real settingsContentDelay: 0.35
     readonly property int settingsContentRise: 6

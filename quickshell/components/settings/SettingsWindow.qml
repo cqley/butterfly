@@ -8,20 +8,22 @@ Item {
     readonly property bool alive: pop.value > 0.001 || popup.shown
     readonly property int sidebarContentH: Settings.categories.length * Theme.settingsSidebarItemH
         + Math.max(0, Settings.categories.length - 1) * Theme.settingsSidebarGap
+    readonly property real settle: Math.max(0, Math.min(1, pop.value / (1 - Theme.settingsSettleHold)))
     readonly property real contentProgress: Math.max(0, Math.min(1,
-        (pop.value - Theme.settingsContentDelay) / (1 - Theme.settingsContentDelay)))
+        (popup.settle - Theme.settingsContentDelay) / (1 - Theme.settingsContentDelay)))
 
     width: Theme.settingsW
     height: popup.sidebarContentH + Theme.settingsPad + Theme.settingsPadBottom
     x: parent ? Math.round((parent.width - width) / 2) : 0
     y: parent ? Math.round((parent.height - height) / 2) : 0
     visible: popup.alive
-    transformOrigin: Item.Center
-    scale: Theme.settingsScaleFrom + (1 - Theme.settingsScaleFrom) * pop.value
     opacity: Math.max(0, Math.min(1, pop.value / Theme.settingsBoxFadeIn))
 
-    transform: Translate {
-        y: (1 - pop.value) * Theme.settingsRiseOffset
+    transform: Scale {
+        origin.x: popup.width / 2
+        origin.y: Theme.gap + Theme.h / 2 - popup.y
+        xScale: Theme.settingsScaleFrom + (1 - Theme.settingsScaleFrom) * popup.settle
+        yScale: Theme.settingsScaleFrom + (1 - Theme.settingsScaleFrom) * popup.settle
     }
 
     Spring {
@@ -38,6 +40,7 @@ Item {
     Shadow {
         anchors.fill: shell
         radius: shell.radius
+        cached: true
     }
 
     ClippingRectangle {
@@ -193,6 +196,31 @@ Item {
                         opacity: 0
 
                         onReadyChanged: stage.reveal()
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: Theme.settingsEdgeFade
+                    opacity: Math.max(0, Math.min(1, view.contentY / Theme.settingsEdgeFade))
+                    visible: opacity > 0.004
+
+                    gradient: Gradient {
+                        GradientStop { position: 0; color: Theme.settingsBg }
+                        GradientStop { position: 1; color: Qt.rgba(Theme.settingsBg.r, Theme.settingsBg.g, Theme.settingsBg.b, 0) }
+                    }
+                }
+
+                Rectangle {
+                    y: parent.height - height
+                    width: parent.width
+                    height: Theme.settingsEdgeFade
+                    opacity: Math.max(0, Math.min(1, (view.contentHeight - view.height - view.contentY) / Theme.settingsEdgeFade))
+                    visible: opacity > 0.004
+
+                    gradient: Gradient {
+                        GradientStop { position: 0; color: Qt.rgba(Theme.settingsBg.r, Theme.settingsBg.g, Theme.settingsBg.b, 0) }
+                        GradientStop { position: 1; color: Theme.settingsBg }
                     }
                 }
             }

@@ -7,6 +7,34 @@ Column {
 
     SettingsGroup {
         SettingsRow {
+            label: "scrolling title"
+            token: "mediaScroll"
+
+            SettingsToggle {
+                checked: Theme.mediaScroll
+                onToggled: on => {
+                    Cfg.set("mediaScroll", on)
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
+            label: "elapsed and remaining time"
+            token: "mediaTimes"
+
+            SettingsToggle {
+                checked: Theme.mediaTimes
+                onToggled: on => {
+                    Cfg.set("mediaTimes", on)
+                    Cfg.flush()
+                }
+            }
+        }
+    }
+
+    SettingsGroup {
+        SettingsRow {
             label: "card width"
             token: "mediaPillW"
             value: Theme.mediaPillW + " px"

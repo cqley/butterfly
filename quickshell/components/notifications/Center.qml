@@ -335,10 +335,14 @@ Pick {
                                 enabled: row.onscreen
                                 hoverEnabled: row.onscreen
                                 cursorShape: Qt.PointingHandCursor
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
                                 onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
-                                onClicked: {
+                                onClicked: e => {
                                     root.sel = row.index
-                                    Notifs.forget(row.modelData.key)
+                                    if (e.button === Qt.RightButton)
+                                        Notifs.focusEntry(row.modelData.key)
+                                    else
+                                        Notifs.forget(row.modelData.key)
                                 }
                             }
 

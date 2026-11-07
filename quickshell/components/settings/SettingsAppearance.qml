@@ -172,6 +172,36 @@ Column {
                 onCommitted: Cfg.flush()
             }
         }
+
+        SettingsRow {
+            label: "shadow lift"
+            token: "shadowOffsetY"
+            value: Theme.shadowOffsetY + " px"
+
+            SettingsSlider {
+                from: 0
+                to: 12
+                step: 1
+                value: Theme.shadowOffsetY
+                onMoved: v => Cfg.set("shadowOffsetY", Math.round(v))
+                onCommitted: Cfg.flush()
+            }
+        }
+
+        SettingsRow {
+            label: "edge shadow"
+            token: "shadowContact"
+            value: Math.round(Theme.shadowContact * 100) + "%"
+
+            SettingsSlider {
+                from: 0
+                to: 1
+                step: 0.05
+                value: Theme.shadowContact
+                onMoved: v => Cfg.set("shadowContact", Math.round(v * 100) / 100)
+                onCommitted: Cfg.flush()
+            }
+        }
     }
 
     SettingsGroup {

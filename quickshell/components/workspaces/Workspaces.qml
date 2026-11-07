@@ -50,7 +50,7 @@ Singleton {
     readonly property int index: Math.max(0, Math.min(root.total - 1, root.current - 1))
 
     readonly property int span: {
-        const vert = root.vertical
+        const vert = Theme.wsVertical
         const pipW = vert ? Theme.wsBarW : Theme.wsDot
         const actW = Math.max(vert ? Theme.wsBarActiveW : Theme.wsActiveW, pipW)
         const pitch = pipW + (vert ? Theme.wsBarGap : Theme.wsGap)
@@ -79,16 +79,13 @@ Singleton {
     }
 
     // layout
-    readonly property bool wantVertical: Theme.wsVertical
     readonly property int wantCount: Math.max(1, Theme.wsCount)
     readonly property string wantPlace: Theme.wsPlace
-    property bool vertical: false
     property int count: 1
     property string place: "left"
     property real layoutFade: 0
 
     function applyLayout() {
-        root.vertical = root.wantVertical
         root.count = root.wantCount
         root.place = root.wantPlace
     }
@@ -103,7 +100,6 @@ Singleton {
         root.applyLayout()
     }
 
-    onWantVerticalChanged: root.relayout()
     onWantCountChanged: root.relayout()
     onWantPlaceChanged: root.relayout()
 
@@ -153,6 +149,21 @@ Singleton {
         root.adopt()
     }
 
+    function focus(id) {
+        const n = Math.round(Number(id))
+        if (!root.available || !(n >= 1) || n === root.current || switcher.running)
+            return
+        const cmd = Compositor.focusWorkspaceCmd(n)
+        if (cmd.length === 0)
+            return
+        switcher.command = cmd
+        switcher.running = true
+    }
+
+    Process {
+        id: switcher
+    }
+
     readonly property var placements: ["left", "right", "only"]
 
     function store(key, value) {
@@ -180,6 +191,11 @@ Singleton {
                 return "expected dots|bars"
             root.store("wsVertical", kind === "bars")
             return kind
+        }
+
+        function go(id: int): string {
+            root.focus(id)
+            return "ws " + id
         }
 
         function status(): string {

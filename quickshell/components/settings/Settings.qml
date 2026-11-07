@@ -3,10 +3,13 @@ import "../core"
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 
 Singleton {
     id: root
     property bool open: false
+    readonly property bool covered: ToplevelManager.toplevels.values.some(t => t.fullscreen && t.activated
+        && t.screens.some(s => s && s.name === root.screenName))
     readonly property string screenName: Theme.shellScreen
     property int selected: 0
     property bool keyNav: false
@@ -100,7 +103,13 @@ Singleton {
         selected = ((selected + d) % n + n) % n
     }
 
+    onCoveredChanged: if (covered && open) open = false
+
     onOpenChanged: {
+        if (open && covered) {
+            open = false
+            return
+        }
         if (open) {
             keyNav = false
             Modal.claim("settings")

@@ -9,12 +9,24 @@ Item {
     property real target: 0
     property real value: 0
     property real velocity: 0
+    property real hold: 0
+    property real origin: 0
     readonly property bool moving: drive.running
+    property real shaped: 0
+
+    function shape() {
+        const s = root.target - root.origin
+        if (root.hold <= 0 || Math.abs(s) < 1e-6)
+            return root.value
+        return root.origin + s * Math.min(1, Math.max(0, (root.value - root.origin) / s) / (1 - root.hold))
+    }
 
     function land(v) {
         drive.stop()
         root.velocity = 0
         root.value = v
+        root.origin = v
+        root.shaped = v
     }
 
     function kick(v) {
@@ -57,9 +69,16 @@ Item {
         }
         root.value = root.target + x
         root.velocity = v
+        root.shaped = root.shape()
     }
 
-    onTargetChanged: drive.start()
+    onTargetChanged: {
+        if (root.hold > 0)
+            root.value = root.shaped
+        root.origin = root.value
+        root.shaped = root.value
+        drive.start()
+    }
 
     Component.onCompleted: root.land(root.target)
 

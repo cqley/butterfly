@@ -15,6 +15,7 @@ import "../polkit"
 import "../power"
 import "../recording"
 import "../screenshot"
+import "../settings"
 import "../battery"
 import "../tray"
 import "../wallpaper"
@@ -66,7 +67,7 @@ Item {
     readonly property bool idleBare: root.idleRowActive && !root.panelOpen
     readonly property bool morphRuns: root.openedFromIdle && (root.dashFace || root.idleBare)
     readonly property bool dashStaged: root.dashFace && !root.morphRuns
-    readonly property real morphT: root.morphRuns ? morph.value : 1
+    readonly property real morphT: root.morphRuns ? morph.shaped : 1
     readonly property bool morphing: root.morphRuns && (root.dashFace || morph.moving)
     readonly property bool dashLive: root.dashFace || root.morphing || dashExit.running
     readonly property bool dashLeaving: root.dashLive && !root.dashFace && !root.morphing
@@ -104,8 +105,8 @@ Item {
     property real holdW: Theme.w
     property real holdH: Theme.h
     property bool media: false
-    readonly property real wAnim: wMotion.value
-    readonly property real hAnim: hMotion.value
+    readonly property real wAnim: wMotion.shaped
+    readonly property real hAnim: hMotion.shaped
 
     onEngagedChanged: sync()
     onSlotVisChanged: swapGate.restart()
@@ -164,6 +165,7 @@ Item {
     Spring {
         id: morph
         target: root.dashFace ? 1 : 0
+        hold: Theme.springHold
         response: root.dashFace ? Theme.dashMorphResponse : Theme.islandResponse
         damping: root.dashFace ? Theme.dashMorphDamping : Theme.islandDamping
         epsilon: Theme.springUnitEps
@@ -199,6 +201,26 @@ Item {
         root.heldVis = root.showVisualizer
         if (!root.dashFace)
             morph.land(0)
+    }
+
+    function idleWsHit(p) {
+        if (!Theme.wsClick || !root.wsAvailable || root.alert || root.panelOpen || root.modal || root.idleHeld)
+            return null
+        const strips = [root.wsOnly ? wsOnlyStrip : null, leftRow.content("ws"), rightRow.content("ws")]
+        for (const s of strips) {
+            if (!s || !s.live)
+                continue
+            const q = body.mapToItem(s, p.x, p.y)
+            if (q.x >= 0 && q.x <= s.width && q.y >= 0 && q.y <= s.height)
+                return { strip: s, slot: s.slotAt(q.x) }
+        }
+        return null
+    }
+
+    readonly property var idleWsHot: hover.hovered ? root.idleWsHit(hover.point.position) : null
+
+    function idleHotIn(s) {
+        return root.idleWsHot && root.idleWsHot.strip === s ? root.idleWsHot.slot : -1
     }
 
     function brake() {
@@ -363,7 +385,7 @@ Item {
         precision: SystemClock.Minutes
     }
 
-    readonly property real idleRowW: leftRow.targetWidth + clockSlot.width + rightRow.targetWidth
+    readonly property real idleRowW: leftRow.targetWidth + clockSlot.wantW + rightRow.targetWidth
 
     readonly property var leftModules: [
         {
@@ -442,10 +464,12 @@ Item {
     Component {
         id: wsLeftContent
         WorkspaceStrip {
-            x: Math.round((parent.width - width) / 2)
+            id: leftStrip
+            x: (parent.width - width) / 2
             y: Math.round((parent.height - height) / 2)
+            hot: root.idleHotIn(leftStrip)
             live: root.wsLeft && !root.hideIdleIcons
-            vert: Workspaces.vertical
+            vert: Theme.wsVertical
             layoutFade: Workspaces.layoutFade
             index: Workspaces.index
             count: Workspaces.count
@@ -457,10 +481,12 @@ Item {
     Component {
         id: wsRightContent
         WorkspaceStrip {
-            x: Math.round((parent.width - width) / 2)
+            id: rightStrip
+            x: (parent.width - width) / 2
             y: Math.round((parent.height - height) / 2)
+            hot: root.idleHotIn(rightStrip)
             live: root.wsRight && !root.hideIdleIcons
-            vert: Workspaces.vertical
+            vert: Theme.wsVertical
             layoutFade: Workspaces.layoutFade
             index: Workspaces.index
             count: Workspaces.count
@@ -559,6 +585,7 @@ Item {
     Spring {
         id: wMotion
         target: root.targetW
+        hold: Theme.springHold
         response: Theme.islandResponse
         damping: Theme.islandDamping
         epsilon: Theme.settleEps
@@ -567,6 +594,7 @@ Item {
     Spring {
         id: hMotion
         target: root.targetH
+        hold: Theme.springHold
         response: Theme.islandResponse
         damping: Theme.islandDamping
         epsilon: Theme.settleEps
@@ -623,27 +651,42 @@ Item {
 
         HoverHandler {
             id: hover
+            cursorShape: root.idleWsHot ? Qt.PointingHandCursor : Qt.ArrowCursor
         }
 
         TapHandler {
-            onTapped: {
-                if (root.alert)
+            onTapped: p => {
+                if (root.alert) {
                     Notifs.dismiss()
-                else
-                    root.pop(islandPop.primary)
+                    return
+                }
+                const hit = root.idleWsHit(p.position)
+                if (hit) {
+                    Workspaces.focus(hit.slot + 1)
+                    return
+                }
+                root.pop(islandPop.primary)
             }
         }
 
         TapHandler {
             acceptedButtons: Qt.MiddleButton
-            onTapped: root.pop("dates")
+            onTapped: {
+                if (islandPop.dashShown) {
+                    Settings.open = true
+                    return
+                }
+                root.pop("dates")
+            }
         }
 
         TapHandler {
             acceptedButtons: Qt.RightButton
             onTapped: {
-                if (root.alert)
+                if (root.alert) {
+                    Notifs.focusCurrent()
                     return
+                }
                 if (islandPop.dashShown) {
                     if (root.media) {
                         root.armMorph()
@@ -902,10 +945,19 @@ Item {
             Item {
                 id: clockSlot
                 readonly property real restW: root.wsOnly ? wsOnlyStrip.span : clockText.implicitWidth
-                width: Math.ceil(Math.max(clockSlot.restW, vbars.width,
+                readonly property real wantW: Math.ceil(Math.max(clockSlot.restW, vbars.width,
                     clockFade.visible ? clockText.implicitWidth : 0,
                     wsOnlyFade.visible ? wsOnlyStrip.span : 0))
+                width: slotMotion.value
                 height: parent.height
+
+                Spring {
+                    id: slotMotion
+                    target: clockSlot.wantW
+                    response: Theme.idlePopResponse
+                    damping: Theme.idlePopDamping
+                    epsilon: Theme.settleEps
+                }
 
                 Timer {
                     id: swapGate
@@ -950,7 +1002,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.alignWhenCentered: Theme.idleAlignWhenCentered
-                    width: wsOnlyStrip.span
+                    width: wsOnlyStrip.width
                     height: parent.height
                     shown: root.wsOnly && !root.slotVis && root.idleSlotVisible
                     ready: !swapGate.running
@@ -972,9 +1024,10 @@ Item {
                     WorkspaceStrip {
                         id: wsOnlyStrip
                         anchors.centerIn: parent
+                        hot: root.idleHotIn(wsOnlyStrip)
                         veil: root.wsVeil
                         live: wsOnlyFade.shown
-                        vert: Workspaces.vertical
+                        vert: Theme.wsVertical
                         layoutFade: Workspaces.layoutFade
                         index: Workspaces.index
                         count: Workspaces.count

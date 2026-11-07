@@ -18,6 +18,15 @@ Singleton {
         ? ["sh", "-c", "hyprctl -j monitors; echo '@@split@@'; hyprctl -j clients"]
         : []
 
+    function focusWorkspaceCmd(id) {
+        const n = Math.max(1, Math.round(Number(id)))
+        if (root.isHyprland)
+            return ["sh", "-c", "hyprctl dispatch \"hl.dsp.focus({ workspace = $1 })\" | grep -q '^ok' || hyprctl dispatch workspace \"$1\"", "sh", String(n)]
+        if (root.isNiri)
+            return ["niri", "msg", "action", "focus-workspace", String(n)]
+        return []
+    }
+
     readonly property var logoutCmd: ["sh", "-c",
         "loginctl terminate-session \"$XDG_SESSION_ID\" || " + (
             isHyprland ? "hyprctl dispatch exit"
