@@ -4,33 +4,75 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
+import Quickshell.I3
 
 Singleton {
     id: root
 
-    readonly property bool wired: Compositor.isHyprland && Hyprland.workspaces.values.length > 0 && Cfg.ready
+    readonly property var spaces: {
+        if (Compositor.isHyprland) {
+            const tracked = Hyprland.toplevels.values.length > 0
+            return Hyprland.workspaces.values.map(ws => {
+                const raw = ws.lastIpcObject
+                const n = tracked ? ws.toplevels.values.length
+                                  : (raw && raw.windows !== undefined ? raw.windows : 0)
+                return { id: ws.id, filled: n > 0 }
+            })
+        }
+        if (Compositor.isSway) {
+            const list = I3.workspaces.values
+            let next = list.reduce((m, ws) => Math.max(m, ws.number), root.count)
+            return list.map(ws => {
+                const raw = ws.lastIpcObject
+                return { id: ws.number >= 1 ? ws.number : ++next, name: ws.name, named: ws.number < 1,
+                         filled: !!(raw && raw.focus && raw.focus.length > 0) }
+            })
+        }
+        if (Compositor.isNiri) {
+            const f = Niri.focused
+            if (!f)
+                return []
+            return Niri.workspaces.filter(w => w.output === f.output && (w.is_active || w.active_window_id !== null))
+                                  .map(w => ({ id: w.idx, filled: w.active_window_id !== null }))
+        }
+        return []
+    }
+
+    readonly property bool wired: root.spaces.length > 0 && Cfg.ready
     property bool synced: false
     readonly property bool available: root.wired && root.synced
 
-    readonly property var monitor: {
-        if (!root.wired)
-            return null
-        const want = Theme.shellScreen
-        const list = Hyprland.monitors.values
-        for (let i = 0; i < list.length; i++)
-            if (list[i].name === want)
-                return list[i]
-        return null
+    readonly property string output: {
+        if (Compositor.isHyprland) {
+            const ws = Hyprland.focusedWorkspace
+            return ws && ws.monitor ? ws.monitor.name : ""
+        }
+        if (Compositor.isSway)
+            return I3.focusedMonitor ? I3.focusedMonitor.name : ""
+        if (Compositor.isNiri)
+            return Niri.focused ? Niri.focused.output || "" : ""
+        return ""
     }
 
     readonly property int liveId: {
         if (!root.wired)
             return 0
-        const ws = Hyprland.focusedWorkspace
-        if (ws)
-            return ws.id
-        const m = root.monitor
-        return m && m.activeWorkspace ? m.activeWorkspace.id : 0
+        if (Compositor.isHyprland) {
+            const ws = Hyprland.focusedWorkspace
+            if (ws)
+                return ws.id
+            const want = Theme.shellScreen
+            const m = Hyprland.monitors.values.find(m => m.name === want)
+            return m && m.activeWorkspace ? m.activeWorkspace.id : 0
+        }
+        if (Compositor.isSway) {
+            const ws = I3.focusedWorkspace
+            const hit = ws ? root.spaces.find(s => s.name === ws.name) : null
+            return hit ? hit.id : 0
+        }
+        if (Compositor.isNiri)
+            return Niri.focused ? Niri.focused.idx : 0
+        return 0
     }
 
     property int current: 1
@@ -39,10 +81,9 @@ Singleton {
         if (!root.wired)
             return root.count
         let high = root.current
-        const list = Hyprland.workspaces.values
-        for (let i = 0; i < list.length; i++)
-            if (list[i].id > high)
-                high = list[i].id
+        for (const s of root.spaces)
+            if (s.id > high)
+                high = s.id
         return high
     }
 
@@ -63,19 +104,17 @@ Singleton {
             out.push(false)
         if (!root.wired)
             return out
-        const list = Hyprland.workspaces.values
-        const tracked = Hyprland.toplevels.values.length > 0
-        for (let i = 0; i < list.length; i++) {
-            const ws = list[i]
-            const slot = ws.id - 1
-            if (slot < 0 || slot >= root.total)
-                continue
-            const raw = ws.lastIpcObject
-            const n = tracked ? ws.toplevels.values.length
-                              : (raw && raw.windows !== undefined ? raw.windows : 0)
-            out[slot] = n > 0
+        for (const s of root.spaces) {
+            const slot = s.id - 1
+            if (slot >= 0 && slot < root.total)
+                out[slot] = out[slot] || s.filled
         }
         return out
+    }
+
+    I3IpcListener {
+        subscriptions: Compositor.isSway ? ["window"] : []
+        onIpcEvent: I3.refreshWorkspaces()
     }
 
     // layout
@@ -153,7 +192,8 @@ Singleton {
         const n = Math.round(Number(id))
         if (!root.available || !(n >= 1) || n === root.current || switcher.running)
             return
-        const cmd = Compositor.focusWorkspaceCmd(n)
+        const hit = root.spaces.find(s => s.id === n)
+        const cmd = Compositor.focusWorkspaceCmd(n, hit && hit.named ? hit.name : "")
         if (cmd.length === 0)
             return
         switcher.command = cmd
@@ -201,11 +241,9 @@ Singleton {
         function status(): string {
             if (!root.available)
                 return "unavailable"
-            const ws = Hyprland.focusedWorkspace
-            const where = ws && ws.monitor ? ws.monitor.name : "?"
             return (Theme.wsOn ? "shown" : "hidden")
                  + " · " + Theme.wsPlace + " · " + (Theme.wsVertical ? "bars" : "dots")
-                 + " · ws " + root.current + " on " + where
+                 + " · ws " + root.current + " on " + (root.output || "?") + " · " + Compositor.backend
                  + " · slot " + (root.index + 1) + " of " + root.total + ", " + root.count + " shown"
                  + " · filled [" + root.filled + "]"
         }

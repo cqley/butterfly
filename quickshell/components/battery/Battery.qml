@@ -9,8 +9,8 @@ import Quickshell.Services.UPower
 Singleton {
     id: root
 
-    property bool shown: true
-    property bool ringShown: true
+    readonly property bool shown: Theme.batOn
+    readonly property bool ringShown: Theme.batRingEnabled
     property string lastPowerConnection: ""
     property int lastPercent: -1
     property bool chargingSeen: false
@@ -122,11 +122,13 @@ Singleton {
     }
 
     function toggle() {
-        root.shown = !root.shown
+        Cfg.set("batOn", !Theme.batOn)
+        Cfg.flush()
     }
 
     function toggleRing() {
-        root.ringShown = !root.ringShown
+        Cfg.set("batRingEnabled", !Theme.batRingEnabled)
+        Cfg.flush()
     }
 
     Component.onCompleted: root.syncPowerConnection()

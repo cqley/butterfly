@@ -24,7 +24,7 @@
 | `tray` | `toggle` `status` |
 | `workspaces` | `toggle` `place <left\|right\|only>` `style <dots\|bars>` `status` |
 | `modal` | `dismiss` `status` |
-| `bar` | `toggle` `status` (hides the pill; menus, the island and notifications still pop it out) |
+| `bar` | `toggle` `status` |
 
 ```
 quickshell ipc call <target> <action>
@@ -34,13 +34,13 @@ quickshell ipc call <target> <action>
 
 | for | needs |
 | --- | --- |
-| shell | `quickshell`, `hyprland`, `Inter` (font) |
+| shell | `quickshell`, `hyprland` `sway` `niri`, `Inter` (font) |
 | network | `nmcli` |
 | brightness | `brightnessctl`, `ddcutil` (external monitors) |
 | recording | `gpu-screen-recorder`, `wf-recorder` or `wl-screenrec` |
 | screenshot | `grim` + `wl-copy` |
 | colors | `magick`, `gawk`, `awww` |
-| lock | `hyprlock` (optional) |
+| lock | `hyprlock` `swaylock` (optional) |
 | visualizer | `cava` (optional) fallback if absent|
 
 ## install

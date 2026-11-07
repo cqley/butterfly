@@ -28,6 +28,7 @@ Singleton {
     }
 
     function cfg(key, fallback) {
+        Cfg.remember(key, fallback)
         const store = Cfg.v
         const x = store ? store[key] : undefined
         return x === undefined || x === null ? fallback : x
@@ -347,6 +348,7 @@ Singleton {
     readonly property color batBoltOutline: "#000000"
     readonly property real batRedAt: cfg("batRedAt", 0.15)
     readonly property real batYellowAt: cfg("batYellowAt", 0.25)
+    readonly property bool batOn: cfg("batOn", true)
     readonly property bool batRingEnabled: cfg("batRingEnabled", true)
     readonly property real batRingWidth: cfg("batRingWidth", 2.0)
     readonly property int batRingGap: 0

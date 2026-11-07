@@ -12,7 +12,7 @@ Item {
     property bool last: true
     property bool hasActor: false
     readonly property bool interactive: root.showArrow || root.hasActor
-    readonly property bool modified: root.token !== "" && Cfg.has(root.token)
+    readonly property bool modified: root.token !== "" && !Cfg.isDefault(root.token)
     signal activated
 
     function reset() {

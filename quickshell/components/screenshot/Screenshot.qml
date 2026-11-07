@@ -18,7 +18,7 @@ Singleton {
     property string lastFile: ""
     property bool needsCopy: false
     property var items: []
-    readonly property bool busy: proc.running || picking || targeting || settle.running || check.running || copy.running || clientsQuery.running || activeQuery.running
+    readonly property bool busy: proc.running || picking || targeting || settle.running || check.running || copy.running || clientsQuery.running || activeQuery.running || pickQuery.running
 
     onOpenChanged: if (open) {
         Modal.claim("screenshot")
@@ -43,7 +43,7 @@ Singleton {
         const list = []
         if (grimBin !== "") {
             list.push({ kind: "region", label: "region" })
-            if (Compositor.supportsWindowTargets) {
+            if (Compositor.supportsWindowTargets || Compositor.supportsNativeWindowShot) {
                 list.push({ kind: "window", label: "window" })
                 list.push({ kind: "active", label: "active window" })
             }
@@ -98,7 +98,18 @@ Singleton {
         proc.exec([grimBin, "-o", name, file])
     }
 
+    function captureNative(id) {
+        const file = newFile()
+        needsCopy = true
+        proc.exec(Compositor.nativeWindowShotCmd(file, id))
+    }
+
     function captureActive() {
+        if (Compositor.supportsNativeWindowShot) {
+            if (!busy)
+                captureNative(null)
+            return
+        }
         if (grimBin === "") {
             Notifs.pushSystem("screenshot unavailable", "grim not found", false, "shot", true)
             return
@@ -214,6 +225,10 @@ Singleton {
     function startWindowPick() {
         if (busy)
             return
+        if (Compositor.supportsNativeWindowShot) {
+            pickQuery.running = true
+            return
+        }
         if (grimBin === "") {
             Notifs.pushSystem("screenshot unavailable", "grim not found", false, "shot", true)
             return
@@ -243,6 +258,18 @@ Singleton {
                     targetSeed.running = false
                     targetSeed.running = true
                 }
+            }
+        }
+    }
+
+    Process {
+        id: pickQuery
+        command: Compositor.pickWindowCmd
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const id = Compositor.parsePickedWindow(text)
+                if (id !== null)
+                    root.captureNative(id)
             }
         }
     }

@@ -78,6 +78,19 @@ sync_niri_border_color() {
     [[ -n $sock ]] && NIRI_SOCKET="$sock" niri msg action load-config-file >/dev/null 2>&1 || true
 }
 
+sync_sway_border_color() {
+    local accent=$1 cfg="$HOME/.config/sway/config" sock hex='#[0-9A-Fa-f]{6,8}' sp='[[:space:]]'
+    [[ -f $cfg ]] || return 0
+    sed -i -E \
+        -e "s/^(${sp}*client\.focused${sp}+)${hex}/\1${accent}/" \
+        -e "s/^(${sp}*client\.focused(${sp}+${hex}){3}${sp}+)${hex}/\1${accent}/" \
+        -e "s/^(${sp}*client\.focused(${sp}+${hex}){4}${sp}+)${hex}/\1${accent}/" \
+        "$cfg"
+    command -v swaymsg >/dev/null 2>&1 || return 0
+    sock=${SWAYSOCK:-$(find "/run/user/$(id -u)" -maxdepth 1 -name 'sway-ipc.*.sock' 2>/dev/null | head -n1)}
+    [[ -n $sock ]] && SWAYSOCK="$sock" swaymsg reload >/dev/null 2>&1 || true
+}
+
 hex_channel() {
     local h=${1#\#}
     printf '%d' "$((16#${h:$2:2}))"
@@ -517,8 +530,8 @@ set_wallpaper() {
         return 0
     fi
 
-    if [[ -n $monitor ]] && command -v hyprctl >/dev/null 2>&1 &&
-        hyprctl monitors 2>/dev/null | grep -q "Monitor $monitor "
+    if [[ -n $monitor ]] &&
+        awww query 2>/dev/null | grep -q ": $monitor:"
     then
         outputs=(-o "$monitor")
     fi
@@ -653,6 +666,7 @@ main() {
             hyprctl reload >/dev/null 2>&1 || true
         fi
         sync_niri_border_color "$accent"
+        sync_sway_border_color "$accent"
     fi
     if ((do_print)); then
         print_swatches

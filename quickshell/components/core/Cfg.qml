@@ -10,6 +10,7 @@ Singleton {
     readonly property string shortPath: "~/.config/quickshell/settings.json"
     readonly property int settleMs: 400
     property var v: ({})
+    readonly property var defaults: ({})
     property bool ready: false
     property string mine: ""
     readonly property int count: Object.keys(v).length
@@ -19,12 +20,33 @@ Singleton {
         return x !== undefined && x !== null
     }
 
+    function remember(key, fallback) {
+        root.defaults[key] = fallback
+    }
+
+    function same(a, b) {
+        if (typeof a === "number" && typeof b === "number")
+            return Math.abs(a - b) < 1e-6
+        if (a !== null && b !== null && typeof a === "object" && typeof b === "object")
+            return JSON.stringify(a) === JSON.stringify(b)
+        return a === b
+    }
+
+    function isDefault(key) {
+        return !root.has(key) || (key in root.defaults && root.same(root.v[key], root.defaults[key]))
+    }
+
     function get(key, fallback) {
+        root.remember(key, fallback)
         const x = root.v[key]
         return x === undefined || x === null ? fallback : x
     }
 
     function set(key, value) {
+        if (key in root.defaults && root.same(value, root.defaults[key])) {
+            root.clear(key)
+            return
+        }
         if (root.v[key] === value)
             return
         const next = Object.assign({}, root.v)
