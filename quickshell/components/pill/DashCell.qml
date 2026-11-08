@@ -41,7 +41,6 @@ Item {
     height: parent ? parent.height : 0
     visible: cell.width > 0.5
     opacity: cell.shown && cell.morphs && !cell.fades ? 1 : cell.shown ? cell.reveal * cell.hold : 0
-    clip: cell.travelX === 0 && cell.travelY === 0
 
     Behavior on width {
         NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
@@ -53,12 +52,21 @@ Item {
     }
 
     Item {
-        id: holder
-        x: cell.gap
-        width: cell.contentW
-        height: cell.height
-        transformOrigin: Item.Center
-        scale: cell.touchScale
+        id: frame
+        y: -cell.height
+        width: cell.width
+        height: cell.height * 3
+        clip: cell.travelX === 0 && cell.travelY === 0
+
+        Item {
+            id: holder
+            x: cell.gap
+            y: cell.height
+            width: cell.contentW
+            height: cell.height
+            transformOrigin: Item.Center
+            scale: cell.touchScale
+        }
     }
 
     MouseArea {
