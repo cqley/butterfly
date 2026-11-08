@@ -117,6 +117,7 @@ Item {
 
     Component.onCompleted: {
         root.calm = root.composed ? 1 : 0
+        clockLift.land(clockLift.target)
         root.sync()
     }
 
@@ -138,6 +139,12 @@ Item {
         target: Net
         property: "watchLink"
         value: root.visible
+    }
+
+    Spring {
+        id: clockLift
+        target: root.dateText === "" ? Math.round((root.height - Theme.dashRowH) / 2) : root.row1y
+        hold: Theme.dashMorphHold
     }
 
     Txt {
@@ -215,11 +222,11 @@ Item {
     DashRow {
         id: centre
         x: Math.round((root.width - width) / 2)
-        y: root.row1y
+        y: clockLift.shaped
         height: Theme.dashRowH
 
         DashCell {
-            contentW: Math.round(ghost.width)
+            contentW: 2 * Math.ceil(ghost.width / 2)
             origin: root.origin("clock")
             fades: !root.hands
 
@@ -233,15 +240,22 @@ Item {
                 scale: root.clockScale
             }
         }
+    }
+
+    DashRow {
+        x: Math.round((root.width - width) / 2)
+        y: root.row2y
+        height: Theme.dashRow2H
 
         DashCell {
             shown: root.dateText !== ""
-            gap: Theme.dashGap
-            contentW: Math.round(date.implicitWidth)
+            contentW: 2 * Math.ceil(date.implicitWidth / 2)
 
             InkTxt {
                 id: date
+                width: parent.width
                 height: parent.height
+                horizontalAlignment: Text.AlignHCenter
                 text: root.dateText
                 color: root.dim
                 font.pixelSize: Theme.dashDatePx

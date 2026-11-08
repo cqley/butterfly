@@ -200,7 +200,7 @@ Pick {
 
                 Keys.onPressed: e => {
                     if (e.isAutoRepeat) {
-                        e.accepted = true
+                        e.accepted = e.key !== Qt.Key_Backspace && e.key !== Qt.Key_Delete
                         return
                     }
                     const k = e.key
