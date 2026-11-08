@@ -6,6 +6,7 @@ import Quickshell.Io
 
 Singleton {
     id: root
+    Component.onCompleted: Modal.register("power", root)
     property bool open: false
     readonly property var items: [
         { dx: 0, cmd: ["sh", "-c", "pidof hyprlock swaylock >/dev/null && exit; for l in $0 $1; do command -v $l >/dev/null && exec $l; done",

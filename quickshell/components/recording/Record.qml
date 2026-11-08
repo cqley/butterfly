@@ -185,21 +185,18 @@ Singleton {
         check.running = true
     }
 
-    Process {
+    Which {
         id: detect
-        command: ["sh", "-lc", "for b in gpu-screen-recorder wf-recorder wl-screenrec; do p=$(command -v $b) && echo \"$b $p\" && break; done; true"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const t = text.trim()
-                const i = t.indexOf(" ")
-                const kinds = { "gpu-screen-recorder": "gsr", "wf-recorder": "wf", "wl-screenrec": "wl" }
-                root.backend = i > 0 ? kinds[t.slice(0, i)] || "" : ""
-                root.bin = root.backend !== "" ? t.slice(i + 1) : ""
-                if (root.backend === "")
-                    root.lastError = "no recorder found"
-                if (root.open)
-                    root.refresh()
-            }
+        names: ["gpu-screen-recorder", "wf-recorder", "wl-screenrec"]
+        onDone: {
+            const b = first()
+            const kinds = { "gpu-screen-recorder": "gsr", "wf-recorder": "wf", "wl-screenrec": "wl" }
+            root.backend = kinds[b] || ""
+            root.bin = root.backend !== "" ? found[b] : ""
+            if (root.backend === "")
+                root.lastError = "no recorder found"
+            if (root.open)
+                root.refresh()
         }
     }
 
@@ -264,6 +261,7 @@ Singleton {
     }
 
     Component.onCompleted: {
+        Modal.register("record", root)
         root.ensureDir()
         if (Theme.recordBin !== "") {
             root.bin = Theme.recordBin

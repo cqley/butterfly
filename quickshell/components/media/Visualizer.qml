@@ -56,12 +56,10 @@ Singleton {
         printErrors: false
     }
 
-    Process {
+    Which {
         id: detect
-        command: ["sh", "-lc", "command -v cava"]
-        stdout: StdioCollector {
-            onStreamFinished: root.cavaBin = text.trim()
-        }
+        names: ["cava"]
+        onDone: root.cavaBin = found["cava"] || ""
     }
 
     Process {

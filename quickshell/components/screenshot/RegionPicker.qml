@@ -10,6 +10,7 @@ Variants {
         id: win
         required property var modelData
         property bool fadeShown: Screenshot.picking
+        readonly property bool live: fadeShown || surface.opacity > 0 || Screenshot.holding
 
         readonly property real offX: modelData.x
         readonly property real offY: modelData.y
@@ -29,23 +30,23 @@ Variants {
         readonly property real selH: Math.abs(Screenshot.curG.y - Screenshot.pressG.y)
 
         screen: modelData
-        visible: fadeShown || surface.opacity > 0
         anchors {
             top: true
-            bottom: true
             left: true
+            bottom: true
             right: true
         }
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
-        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.layer: win.live ? WlrLayer.Overlay : WlrLayer.Background
         WlrLayershell.keyboardFocus: win.fadeShown ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-        mask: Region { width: win.width; height: win.height }
+        mask: Region { width: win.fadeShown ? win.width : 0; height: win.fadeShown ? win.height : 0 }
 
         Item {
             id: surface
             anchors.fill: parent
             opacity: 0
+            visible: win.live
             focus: win.fadeShown
 
             states: State {
@@ -54,16 +55,10 @@ Variants {
                 PropertyChanges { surface.opacity: 1 }
             }
 
-            transitions: [
-                Transition {
-                    to: "on"
-                    NumberAnimation { property: "opacity"; duration: Theme.rise; easing.type: Theme.ease }
-                },
-                Transition {
-                    from: "on"
-                    NumberAnimation { property: "opacity"; duration: Theme.fall; easing.type: Theme.ease }
-                }
-            ]
+            transitions: Transition {
+                from: "on"
+                NumberAnimation { property: "opacity"; duration: Screenshot.holding ? 0 : Theme.fall; easing.type: Theme.ease }
+            }
 
             Keys.onEscapePressed: Screenshot.cancelRegion()
 

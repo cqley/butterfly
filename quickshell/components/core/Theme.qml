@@ -697,6 +697,7 @@ Singleton {
     readonly property int screenshotCheckDelay: 300
     readonly property int screenshotSettleDelay: fall + speed + 40
     readonly property int regionMinSize: 4
+    readonly property int regionShotWait: 34
     readonly property real regionDim: 0.8
     readonly property int regionBorderWidth: 2
     readonly property int regionLabelGap: 8
@@ -815,6 +816,7 @@ Singleton {
     readonly property real dashRevealAt: 0.35
     readonly property real dashLateAt: 0.85
     readonly property real dashSizeHold: 0.06
+    readonly property real dashMorphHold: 0.06
     readonly property bool dashWs: cfg("dashWs", true)
     readonly property bool dashDate: cfg("dashDate", true)
     readonly property bool dashNotes: cfg("dashNotes", true)

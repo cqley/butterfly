@@ -8,6 +8,7 @@ import Quickshell.Io
 
 Singleton {
     id: root
+    Component.onCompleted: Modal.register("mixer", root)
     property bool open: false
 
     onOpenChanged: {

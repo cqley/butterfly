@@ -8,6 +8,7 @@ import Quickshell.Wayland
 
 Singleton {
     id: root
+    Component.onCompleted: Modal.register("notifs", root)
     property var current: null
     property var queue: []
     property bool hovered: false
@@ -179,7 +180,7 @@ Singleton {
         if (isFinite(t) && t === 0)
             return Theme.dwellNever
         if (isFinite(t) && t > 0)
-            return Math.min(Theme.dwellMax, Math.max(Theme.dwellMin, Math.round(t)))
+            return Math.min(Theme.dwellMax, Math.max(Theme.dwellMin, Math.round(t * 1000)))
         if (n.urgency === NotificationUrgency.Critical)
             return Theme.dwellCritical
         return Theme.dwell

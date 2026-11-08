@@ -22,6 +22,7 @@ Singleton {
     }
 
     Component.onCompleted: {
+        Modal.register("launcher", root)
         Quickshell.execDetached(["mkdir", "-p", Quickshell.stateDir])
         try {
             const parsed = JSON.parse(store.text())

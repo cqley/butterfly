@@ -18,7 +18,7 @@ Singleton {
     property string lastFile: ""
     property bool needsCopy: false
     property var items: []
-    readonly property bool busy: proc.running || picking || targeting || settle.running || check.running || copy.running || clientsQuery.running || activeQuery.running || pickQuery.running
+    readonly property bool busy: proc.running || picking || targeting || holding || settle.running || check.running || copy.running || clientsQuery.running || activeQuery.running || pickQuery.running
 
     onOpenChanged: if (open) {
         Modal.claim("screenshot")
@@ -183,10 +183,22 @@ Singleton {
         const ry = Math.min(pressG.y, curG.y)
         const rw = Math.abs(curG.x - pressG.x)
         const rh = Math.abs(curG.y - pressG.y)
-        if (rw >= Theme.regionMinSize && rh >= Theme.regionMinSize && !proc.running)
-            captureBox(rx, ry, rw, rh)
+        if (rw >= Theme.regionMinSize && rh >= Theme.regionMinSize && !proc.running) {
+            shot = Qt.rect(rx, ry, rw, rh)
+            holding = true
+            shotWait.restart()
+        }
         dragging = false
         picking = false
+    }
+
+    property rect shot: Qt.rect(0, 0, 0, 0)
+    property bool holding: false
+
+    Timer {
+        id: shotWait
+        interval: Theme.regionShotWait
+        onTriggered: root.captureBox(root.shot.x, root.shot.y, root.shot.width, root.shot.height)
     }
 
     Process {
@@ -304,6 +316,8 @@ Singleton {
 
     function confirmTargetPick() {
         if (targetIndex < 0 || targetIndex >= targets.length || proc.running) {
+            if (proc.running)
+                Notifs.pushSystem("screenshot skipped", "previous capture still running", false, "shot", true)
             cancelTargetPick()
             return
         }
@@ -327,30 +341,23 @@ Singleton {
         targetIndex = -1
     }
 
-    Process {
+    Which {
         id: detect
-        command: ["sh", "-lc", "for b in grim wl-copy; do p=$(command -v $b) && echo \"$b $p\"; done; true"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const map = {}
-                for (const line of text.trim().split("\n")) {
-                    if (!line)
-                        continue
-                    const i = line.indexOf(" ")
-                    if (i > 0)
-                        map[line.slice(0, i)] = line.slice(i + 1)
-                }
-                root.grimBin = map["grim"] || ""
-                root.copyBin = map["wl-copy"] || ""
-                if (root.open)
-                    root.refresh()
-            }
+        names: ["grim", "wl-copy"]
+        onDone: {
+            root.grimBin = found["grim"] || ""
+            root.copyBin = found["wl-copy"] || ""
+            if (root.open)
+                root.refresh()
         }
     }
 
     Process {
         id: proc
-        onExited: settle.restart()
+        onExited: {
+            root.holding = false
+            settle.restart()
+        }
     }
 
     Process {
@@ -388,6 +395,7 @@ Singleton {
     }
 
     Component.onCompleted: {
+        Modal.register("screenshot", root)
         Quickshell.execDetached(["mkdir", "-p", Theme.screenshotDir])
         detect.running = true
     }

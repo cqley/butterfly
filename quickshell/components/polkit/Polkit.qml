@@ -7,6 +7,7 @@ import Quickshell.Services.Polkit
 
 Singleton {
     id: root
+    Component.onCompleted: Modal.register("polkit", root)
     readonly property bool open: agent.isActive
     readonly property alias flow: agent.flow
     readonly property alias registered: agent.isRegistered

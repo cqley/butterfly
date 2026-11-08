@@ -6,6 +6,7 @@ import Quickshell.Io
 
 Singleton {
     id: root
+    Component.onCompleted: Modal.register("wallpaper", root)
     property bool open: false
 
     onOpenChanged: if (open)

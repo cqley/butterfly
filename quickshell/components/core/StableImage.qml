@@ -43,6 +43,10 @@ Item {
         const other = root.under
         const empty = String(root.source) === ""
         cross.stop()
+        if (root.fade > 0 && !empty && cur.status !== Image.Ready && other.opacity > 0 && other.status === Image.Ready) {
+            cur.source = root.source
+            return
+        }
         if (root.fade > 0 && !empty && cur.status === Image.Ready) {
             cur.opacity = 1
             cur.z = 0

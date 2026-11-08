@@ -165,7 +165,7 @@ Item {
     Spring {
         id: morph
         target: root.dashFace ? 1 : 0
-        hold: Theme.springHold
+        hold: Theme.dashMorphHold
         response: root.dashFace ? Theme.dashMorphResponse : Theme.islandResponse
         damping: root.dashFace ? Theme.dashMorphDamping : Theme.islandDamping
         epsilon: Theme.springUnitEps
@@ -328,17 +328,6 @@ Item {
     Component.onCompleted: {
         sync()
         Modal.register("island", islandPop)
-        Modal.register("launcher", Launcher)
-        Modal.register("power", Power)
-        Modal.register("wallpaper", Wallpaper)
-        Modal.register("polkit", Polkit)
-        Modal.register("record", Record)
-        Modal.register("screenshot", Screenshot)
-        Modal.register("net", Net)
-        Modal.register("mixer", Mixer)
-        Modal.register("bluetooth", Bt)
-        Modal.register("tray", Tray)
-        Modal.register("notifs", Notifs)
     }
 
     function sync() {
@@ -405,7 +394,7 @@ Item {
     Binding {
         target: Net
         property: "pinLink"
-        value: Theme.wifiOn
+        value: Theme.wifiOn && Net.available
     }
 
     SystemClock {
@@ -415,79 +404,49 @@ Item {
 
     readonly property real idleRowW: leftRow.targetWidth + clockSlot.wantW + rightRow.targetWidth
 
-    readonly property var leftModules: [
-        {
-            key: "ws", component: wsLeftContent,
-            shownFn: () => root.wsLeft && !root.hideIdleIcons,
-            morphsFn: () => root.wsMorphs,
-            sizeFn: () => Theme.h, contentWidthFn: () => Workspaces.span,
-            clockGapFn: () => Theme.wsClockGap,
-            offsetXFn: () => Theme.wsOffsetX, offsetYFn: () => Theme.wsOffsetY
-        },
-        {
-            key: "battery", component: batteryContent,
-            shownFn: () => Battery.shown && Battery.available && Theme.batPlace === "left" && !root.hideIdleIcons,
-            morphsFn: () => Theme.dashBattery && Battery.available,
-            sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
-            offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
-        },
-        {
-            key: "wifi", component: wifiContent,
-            shownFn: () => root.wifiShown && Theme.wifiPlace === "left" && !root.hideIdleIcons,
-            morphsFn: () => Theme.dashNet,
-            sizeFn: () => Theme.sigRowH, contentWidthFn: () => Theme.sigRowW,
-            offsetXFn: () => Theme.wifiOffsetX, offsetYFn: () => Theme.wifiOffsetY
-        },
-        {
-            key: "mic", component: micContent,
-            shownFn: () => Mic.muted && Theme.micPlace === "left" && !root.hideIdleIcons,
-            sizeFn: () => Theme.micS,
-            offsetXFn: () => Theme.micOffsetX, offsetYFn: () => Theme.micOffsetY
-        },
-        {
-            key: "record", component: recordContent,
-            shownFn: () => Record.active && Theme.recPlace === "left" && !root.hideIdleIcons,
-            sizeFn: () => Theme.recordDot,
-            offsetXFn: () => Theme.recordOffsetX, offsetYFn: () => Theme.recordOffsetY
-        }
-    ]
+    function modulesFor(side) {
+        const on = (ok, place) => ok && place === side && !root.hideIdleIcons
+        const list = [
+            {
+                key: "ws", component: side === "left" ? wsLeftContent : wsRightContent,
+                shownFn: () => (side === "left" ? root.wsLeft : root.wsRight) && !root.hideIdleIcons,
+                morphsFn: () => root.wsMorphs,
+                sizeFn: () => Theme.h, contentWidthFn: () => Workspaces.span,
+                clockGapFn: () => Theme.wsClockGap,
+                offsetXFn: () => Theme.wsOffsetX, offsetYFn: () => Theme.wsOffsetY
+            },
+            {
+                key: "battery", component: batteryContent,
+                shownFn: () => on(Battery.shown && Battery.available, Theme.batPlace),
+                morphsFn: () => Theme.dashBattery && Battery.available,
+                sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
+                offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
+            },
+            {
+                key: "wifi", component: wifiContent,
+                shownFn: () => on(root.wifiShown, Theme.wifiPlace),
+                morphsFn: () => Theme.dashNet,
+                sizeFn: () => Theme.sigRowH, contentWidthFn: () => Theme.sigRowW,
+                offsetXFn: () => Theme.wifiOffsetX, offsetYFn: () => Theme.wifiOffsetY
+            },
+            {
+                key: "mic", component: micContent,
+                shownFn: () => on(Mic.muted, Theme.micPlace),
+                sizeFn: () => Theme.micS,
+                offsetXFn: () => Theme.micOffsetX, offsetYFn: () => Theme.micOffsetY
+            },
+            {
+                key: "record", component: recordContent,
+                shownFn: () => on(Record.active, Theme.recPlace),
+                sizeFn: () => Theme.recordDot,
+                offsetXFn: () => Theme.recordOffsetX, offsetYFn: () => Theme.recordOffsetY
+            }
+        ]
+        return side === "left" ? list : list.reverse()
+    }
 
-    readonly property var rightModules: [
-        {
-            key: "record", component: recordContent,
-            shownFn: () => Record.active && Theme.recPlace === "right" && !root.hideIdleIcons,
-            sizeFn: () => Theme.recordDot,
-            offsetXFn: () => Theme.recordOffsetX, offsetYFn: () => Theme.recordOffsetY
-        },
-        {
-            key: "mic", component: micContent,
-            shownFn: () => Mic.muted && Theme.micPlace === "right" && !root.hideIdleIcons,
-            sizeFn: () => Theme.micS,
-            offsetXFn: () => Theme.micOffsetX, offsetYFn: () => Theme.micOffsetY
-        },
-        {
-            key: "wifi", component: wifiContent,
-            shownFn: () => root.wifiShown && Theme.wifiPlace === "right" && !root.hideIdleIcons,
-            morphsFn: () => Theme.dashNet,
-            sizeFn: () => Theme.sigRowH, contentWidthFn: () => Theme.sigRowW,
-            offsetXFn: () => Theme.wifiOffsetX, offsetYFn: () => Theme.wifiOffsetY
-        },
-        {
-            key: "battery", component: batteryContent,
-            shownFn: () => Battery.shown && Battery.available && Theme.batPlace === "right" && !root.hideIdleIcons,
-            morphsFn: () => Theme.dashBattery && Battery.available,
-            sizeFn: () => Theme.h, contentWidthFn: () => Theme.batW + Theme.batNubGap + Theme.batNubW,
-            offsetXFn: () => Theme.batteryOffsetX, offsetYFn: () => Theme.batteryOffsetY
-        },
-        {
-            key: "ws", component: wsRightContent,
-            shownFn: () => root.wsRight && !root.hideIdleIcons,
-            morphsFn: () => root.wsMorphs,
-            sizeFn: () => Theme.h, contentWidthFn: () => Workspaces.span,
-            clockGapFn: () => Theme.wsClockGap,
-            offsetXFn: () => Theme.wsOffsetX, offsetYFn: () => Theme.wsOffsetY
-        }
-    ]
+    readonly property var leftModules: root.modulesFor("left")
+    readonly property var rightModules: root.modulesFor("right")
 
     Component {
         id: wsLeftContent
@@ -676,6 +635,12 @@ Item {
         radius: Math.min(Math.min(width, height) / 2, Launcher.open ? Theme.launchRadius : Theme.radius)
         antialiasing: true
         color: "transparent"
+        Component.onCompleted: body.contentItem.transform = [bodyShift]
+
+        Translate {
+            id: bodyShift
+            y: yMotion.value - body.y
+        }
 
         HoverHandler {
             id: hover
@@ -931,7 +896,7 @@ Item {
     Fade {
         id: idle
         x: body.x
-        y: body.y + Theme.idleTopOffsetY + root.idleCenterDrop
+        y: yMotion.value + Theme.idleTopOffsetY + root.idleCenterDrop
         width: body.width
         height: Theme.h
         clip: true

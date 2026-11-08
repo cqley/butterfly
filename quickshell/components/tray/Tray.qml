@@ -53,7 +53,10 @@ Singleton {
             closeMenu()
     }
 
-    Component.onCompleted: rebuild()
+    Component.onCompleted: {
+        Modal.register("tray", root)
+        rebuild()
+    }
 
     Connections {
         target: SystemTray.items

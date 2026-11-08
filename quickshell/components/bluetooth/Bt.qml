@@ -70,7 +70,10 @@ Singleton {
         items = result.items
     }
 
-    Component.onCompleted: rebuild()
+    Component.onCompleted: {
+        Modal.register("bluetooth", root)
+        rebuild()
+    }
 
     Connections {
         target: root.available ? root.adapter.devices : null

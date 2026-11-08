@@ -114,7 +114,10 @@ Singleton {
         monitor.running = false
     }
 
-    Component.onCompleted: probe()
+    Component.onCompleted: {
+        Modal.register("net", root)
+        probe()
+    }
 
     onOpenChanged: if (open) {
         Modal.claim("net")

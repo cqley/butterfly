@@ -10,7 +10,7 @@ Singleton {
 
     FrameAnimation {
         running: root.on
-        onTriggered: console.log("PROBE", root.seq++, Math.round(frameTime * 1e6))
+        onTriggered: console.info("PROBE", root.seq++, Math.round(frameTime * 1e6))
     }
 
     IpcHandler {
