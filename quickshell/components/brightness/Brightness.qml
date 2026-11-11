@@ -10,6 +10,8 @@ Singleton {
     property int screenCount: 0
     property bool probed: false
     property bool backlit: false
+    property bool waiting: false
+    property int unwritten: 0
     property int fetchBus: 0
     property var queue: []
     property alias devices: devs
@@ -181,7 +183,15 @@ Singleton {
         pump()
     }
 
+    function flash() {
+        flashWait.stop()
+        root.unwritten = 0
+        Osd.flashBright(devs.get(home()).value)
+    }
+
     function onSettled(kind, bus, ok) {
+        if (flashWait.running && --root.unwritten <= 0)
+            flash()
         if (ok) {
             rest.restart()
             return
@@ -209,7 +219,31 @@ Singleton {
     Timer {
         id: rest
         interval: Theme.brightSettle
-        onTriggered: root.reread()
+        onTriggered: {
+            if (Osd.open)
+                root.waiting = true
+            else
+                root.reread()
+        }
+    }
+
+    Timer {
+        id: flashWait
+        interval: Theme.brightFlashMax
+        onTriggered: root.flash()
+    }
+
+    Connections {
+        target: Osd
+        function onOpenChanged() {
+            if (Osd.open && rest.running) {
+                rest.stop()
+                root.waiting = true
+            } else if (!Osd.open && root.waiting) {
+                root.waiting = false
+                rest.restart()
+            }
+        }
     }
 
     Timer {
@@ -244,8 +278,28 @@ Singleton {
         onRunningChanged: if (!running) root.onFetch(stdout.text)
     }
 
+    function step(d) {
+        if (devs.count === 0)
+            return
+        let changed = 0
+        for (let i = 0; i < devs.count; i++) {
+            const was = devs.get(i).value
+            nudge(i, d)
+            if (devs.get(i).value !== was)
+                changed++
+        }
+        if (Osd.open || changed === 0) {
+            flash()
+            return
+        }
+        root.unwritten = Math.max(root.unwritten, changed)
+        flashWait.restart()
+    }
+
     IpcHandler {
         target: "brightness"
+        function up(): void { root.step(Theme.mixerStep) }
+        function down(): void { root.step(-Theme.mixerStep) }
         function status(): string {
             if (root.count === 0)
                 return root.scanned ? "unavailable" : "not probed"
