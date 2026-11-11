@@ -649,7 +649,6 @@ Singleton {
     readonly property int brightMin: 1
     readonly property int brightSettle: 1200
     readonly property int brightRetry: 400
-    readonly property int brightFlashMax: 300
     readonly property string brightSunPath: "M12 7A5 5 0 1 1 12 17A5 5 0 1 1 12 7ZM12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22"
 
     // audio
@@ -692,20 +691,6 @@ Singleton {
     readonly property int mixerAppIcon: 18
     readonly property color mixerMutedFill: mix(bg, fg, 0.22)
     readonly property real mixerZeroDim: 0.3
-
-    // osd
-    readonly property int osdW: 260
-    readonly property int osdH: 36
-    readonly property int osdIcon: 14
-    readonly property int osdIconX: 15
-    readonly property int osdSunX: 18
-    readonly property int osdTrackX: 42
-    readonly property int osdTrackH: 6
-    readonly property int osdPctGap: 14
-    readonly property int osdPctW: 28
-    readonly property int osdPadR: 16
-    readonly property int osdLinger: 1200
-    readonly property real osdHold: 0.06
 
     // screenshot
     readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"

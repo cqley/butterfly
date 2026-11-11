@@ -184,18 +184,6 @@ Singleton {
 
     IpcHandler {
         target: "audio"
-        function up(): void {
-            root.nudge(0, Theme.mixerStep)
-            Osd.flash("volume")
-        }
-        function down(): void {
-            root.nudge(0, -Theme.mixerStep)
-            Osd.flash("volume")
-        }
-        function mute(): void {
-            root.toggleMute(0)
-            Osd.flash("volume")
-        }
         function status(): string {
             const out = []
             for (let i = 0; i < root.count; i++) {

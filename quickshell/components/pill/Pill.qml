@@ -529,7 +529,6 @@ Item {
         { cond: () => Record.open, w: () => rec.width + 2 * Theme.pwPad, h: () => rec.y + rec.height + Theme.pwPad },
         { cond: () => Screenshot.open, w: () => shot.width + 2 * Theme.pwPad, h: () => shot.y + shot.height + Theme.pwPad },
         { cond: () => Net.open, w: () => Theme.netW, h: () => net.y + net.height + Theme.netPad },
-        { cond: () => Osd.open, w: () => Theme.osdW, h: () => Theme.osdH },
         { cond: () => Mixer.open, w: () => mixer.width + 2 * Theme.mixerPad, h: () => mixer.y + mixer.height + Theme.mixerPad },
         { cond: () => Bt.open, w: () => Theme.btW, h: () => bt.y + bt.height + Theme.btPad },
         { cond: () => Tray.open && Tray.menuItem, w: () => Theme.trayMenuW, h: () => trayCtx.y + trayCtx.height + Theme.trayMenuPad },
@@ -830,14 +829,6 @@ Item {
             y: Theme.netPad
             shown: Net.open
             ready: root.faceReady("net")
-            rise: root.panelRise
-        }
-
-        OsdPanel {
-            x: root.centerX(width)
-            y: 0
-            shown: Osd.open
-            ready: root.panelReveal
             rise: root.panelRise
         }
 
