@@ -105,6 +105,6 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         text: root.label
         font.pixelSize: Theme.settingsSidebarPx
-        color: Theme.fg
+        color: Theme.settingsInk
     }
 }

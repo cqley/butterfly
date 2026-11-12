@@ -77,7 +77,7 @@ Rectangle {
                     text: seg.modelData
                     font.pixelSize: Theme.settingsLabelPx
                     font.weight: root.current === seg.index ? Font.DemiBold : Font.Normal
-                    color: Theme.fg
+                    color: Theme.settingsInk
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                 }

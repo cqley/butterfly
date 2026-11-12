@@ -113,7 +113,7 @@ Item {
         text: root.label
         font.pixelSize: Theme.settingsLabelPx
         font.weight: Font.Medium
-        color: Theme.fg
+        color: Theme.settingsInk
         elide: Text.ElideRight
     }
 

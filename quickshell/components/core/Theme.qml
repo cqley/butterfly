@@ -102,6 +102,8 @@ Singleton {
     readonly property bool whiteClock: cfg("whiteClock", true)
     readonly property color knobInk: whiteKnobs ? white : accent
     readonly property color clockInk: whiteClock ? white : fg
+    readonly property bool whiteText: cfg("whiteText", true)
+    readonly property color settingsInk: whiteText ? white : fg
     readonly property var primarySwatches: [bgAuto, "#000000", "#0d0d0f", "#17171a", "#202024", "#141a22", "#1c1526", "#101c17"]
     readonly property var accentSwatches: [accentAuto, "#de8383", "#f2be8c", "#eef27c", "#bdfcc4", "#a3e4e8", "#9cb4d9", "#f2b8e2"]
 
@@ -911,10 +913,10 @@ Singleton {
     readonly property color settingsTrack: mix(settingsBg, fg, 0.2)
     readonly property color settingsDivider: Qt.rgba(1, 1, 1, 0.07)
     readonly property color settingsRowHover: Qt.rgba(1, 1, 1, 0.045)
-    readonly property color settingsValueInk: mix(fg, settingsBg, 0.45)
+    readonly property color settingsValueInk: mix(settingsInk, settingsBg, 0.45)
     readonly property int settingsRowH: 35
     readonly property int settingsSectionPx: fs(10)
-    readonly property color settingsSectionInk: mix(fg, settingsBg, 0.5)
+    readonly property color settingsSectionInk: mix(settingsInk, settingsBg, 0.5)
     readonly property int settingsRowPadX: 12
     readonly property int settingsValueGap: 6
     readonly property int settingsGroupGap: 9

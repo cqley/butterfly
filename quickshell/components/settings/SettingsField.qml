@@ -40,7 +40,7 @@ Rectangle {
         verticalAlignment: TextInput.AlignVCenter
         text: root.text
         maximumLength: root.limit > 0 ? root.limit : 32767
-        color: Theme.fg
+        color: Theme.settingsInk
         selectionColor: Theme.accent
         selectedTextColor: Theme.settingsBg
         selectByMouse: true

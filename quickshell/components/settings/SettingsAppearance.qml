@@ -105,6 +105,19 @@ Column {
                 }
             }
         }
+
+        SettingsRow {
+            label: "white text"
+            token: "whiteText"
+
+            SettingsToggle {
+                checked: Theme.whiteText
+                onToggled: on => {
+                    Cfg.set("whiteText", on)
+                    Cfg.flush()
+                }
+            }
+        }
     }
 
     SettingsGroup {
