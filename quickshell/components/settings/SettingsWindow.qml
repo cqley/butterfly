@@ -5,23 +5,23 @@ import Quickshell.Widgets
 Item {
     id: popup
     property bool shown: Settings.open
-    readonly property bool alive: pop.value > 0.001 || popup.shown
+    readonly property bool alive: pop.shaped > 0 || popup.shown
     readonly property int sidebarContentH: Settings.categories.length * Theme.settingsSidebarItemH
         + Math.max(0, Settings.categories.length - 1) * Theme.settingsSidebarGap
-    readonly property real settle: Math.max(0, Math.min(1, pop.value / (1 - Theme.settingsSettleHold)))
+    readonly property real settle: Math.max(0, Math.min(1, pop.shaped))
     readonly property real contentProgress: Math.max(0, Math.min(1,
         (popup.settle - Theme.settingsContentDelay) / (1 - Theme.settingsContentDelay)))
 
     width: Theme.settingsW
     height: popup.sidebarContentH + Theme.settingsPad + Theme.settingsPadBottom
-    x: parent ? Math.round((parent.width - width) / 2) : 0
-    y: parent ? Math.round((parent.height - height) / 2) : 0
+    x: parent ? Theme.mid(parent.width, width) : 0
+    y: parent ? Theme.mid(parent.height, height) : 0
     visible: popup.alive
-    opacity: Math.max(0, Math.min(1, pop.value / Theme.settingsBoxFadeIn))
+    opacity: Math.max(0, Math.min(1, popup.settle / Theme.settingsBoxFadeIn))
 
     transform: Scale {
         origin.x: popup.width / 2
-        origin.y: Theme.gap + Theme.h / 2 - popup.y
+        origin.y: popup.height / 2
         xScale: Theme.settingsScaleFrom + (1 - Theme.settingsScaleFrom) * popup.settle
         yScale: Theme.settingsScaleFrom + (1 - Theme.settingsScaleFrom) * popup.settle
     }
@@ -29,6 +29,7 @@ Item {
     Spring {
         id: pop
         target: popup.shown ? 1 : 0
+        hold: popup.shown ? Theme.settingsSettleHold : Theme.settingsCloseHold
         response: Theme.settingsPopResponse
         damping: Theme.settingsPopDamping
         epsilon: Theme.springUnitEps
@@ -57,10 +58,6 @@ Item {
             focus: popup.shown
             opacity: popup.contentProgress
             scale: Theme.settingsContentScaleFrom + (1 - Theme.settingsContentScaleFrom) * popup.contentProgress
-
-            transform: Translate {
-                y: (1 - popup.contentProgress) * Theme.settingsContentRise
-            }
 
             Keys.onPressed: e => {
                 Settings.keyNav = true

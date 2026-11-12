@@ -12,7 +12,7 @@ Shape {
     property color tone: Theme.accent
 
     readonly property real inset: Theme.batRingGap + Theme.batRingWidth / 2
-    readonly property real rad: Math.max(0, pillRadius - inset)
+    readonly property real rad: Theme.inner(pillRadius, inset)
     readonly property real charge: Math.max(0, Math.min(1, pct))
     readonly property real perimeter: 2 * Math.max(0, width - 2 * rad)
         + 2 * Math.max(0, height - 2 * rad) + 2 * Math.PI * rad

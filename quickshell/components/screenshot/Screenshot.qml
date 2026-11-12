@@ -5,9 +5,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-Singleton {
+Menu {
     id: root
-    property bool open: false
+    name: "screenshot"
+    ipc: false
     property bool picking: false
     property bool targeting: false
     property string targetKind: ""
@@ -21,7 +22,6 @@ Singleton {
     readonly property bool busy: proc.running || picking || targeting || holding || settle.running || check.running || copy.running || clientsQuery.running || activeQuery.running || pickQuery.running
 
     onOpenChanged: if (open) {
-        Modal.claim("screenshot")
         refresh()
     }
 
@@ -395,7 +395,6 @@ Singleton {
     }
 
     Component.onCompleted: {
-        Modal.register("screenshot", root)
         Quickshell.execDetached(["mkdir", "-p", Theme.screenshotDir])
         detect.running = true
     }
@@ -421,6 +420,6 @@ Singleton {
             root.cancelRegion()
             root.cancelTargetPick()
         }
-        function status(): string { return (root.open ? "open" : "closed") + " · " + root.report() }
+        function status(): string { return root.status() }
     }
 }

@@ -2,12 +2,10 @@ pragma Singleton
 import "../core"
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
-Singleton {
+Menu {
     id: root
-    Component.onCompleted: Modal.register("power", root)
-    property bool open: false
+    name: "power"
     readonly property var items: [
         { dx: 0, cmd: ["sh", "-c", "pidof hyprlock swaylock >/dev/null && exit; for l in $0 $1; do command -v $l >/dev/null && exec $l; done",
             Compositor.isHyprland ? "hyprlock" : "swaylock", Compositor.isHyprland ? "swaylock" : "hyprlock"], icon: Theme.lockGlyphPath },
@@ -17,19 +15,10 @@ Singleton {
         { dx: 0, cmd: ["systemctl", "poweroff"], icon: Theme.pwOffPath }
     ]
 
-    onOpenChanged: if (open)
-        Modal.claim("power")
-
     function run(i) {
         if (i < 0 || i >= items.length)
             return
         Quickshell.execDetached(items[i].cmd)
         root.open = false
-    }
-
-    IpcHandler {
-        target: "power"
-        function toggle(): void { root.open = !root.open }
-        function status(): string { return root.open ? "open" : "closed" }
     }
 }

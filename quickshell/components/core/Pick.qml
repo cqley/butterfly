@@ -1,6 +1,6 @@
 import QtQuick
 
-Fade {
+Panel {
     id: root
     property int n: 0
     property int rows: 5
@@ -12,7 +12,6 @@ Fade {
     property var view: []
     property bool churn: false
     readonly property bool settled: !root.churn
-    readonly property int dur: Theme.glide
 
     Timer {
         id: release

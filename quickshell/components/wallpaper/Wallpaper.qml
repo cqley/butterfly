@@ -2,26 +2,15 @@ pragma Singleton
 import "../core"
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
-Singleton {
+Menu {
     id: root
-    Component.onCompleted: Modal.register("wallpaper", root)
-    property bool open: false
-
-    onOpenChanged: if (open)
-        Modal.claim("wallpaper")
+    name: "wallpaper"
 
     function set(path) {
         if (!path)
             return
         Quickshell.execDetached(Theme.wallCmd.concat([path]))
         root.open = false
-    }
-
-    IpcHandler {
-        target: "wallpaper"
-        function toggle(): void { root.open = !root.open }
-        function status(): string { return root.open ? "open" : "closed" }
     }
 }

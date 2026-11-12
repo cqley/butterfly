@@ -1,6 +1,6 @@
 import QtQuick
 
-Fade {
+Panel {
     id: root
     property int n: 0
     property int sel: 0

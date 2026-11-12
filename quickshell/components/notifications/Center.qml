@@ -11,6 +11,7 @@ Pick {
 
     n: view.length
     rows: Theme.centerRows
+    pad: Theme.centerPad
     width: Theme.centerW - 2 * Theme.centerPad
     height: col.height
     focus: shown
@@ -145,7 +146,7 @@ Pick {
                     : dndArea.containsMouse ? Theme.tile : Theme.chip
                 border.width: Theme.surfaceBorderWidth
                 border.color: dndArea.containsMouse ? Theme.surfaceBorderHover : Theme.surfaceBorder
-                scale: dndArea.pressed ? Theme.feedbackPressScale : dndArea.containsMouse ? Theme.feedbackHoverScale : 1
+                scale: dndScale.shaped
                 antialiasing: true
 
                 Behavior on color {
@@ -156,8 +157,10 @@ Pick {
                     ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
                 }
 
-                Behavior on scale {
-                    NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+                ScaleSpring {
+                    id: dndScale
+                    size: Theme.centerBtn
+                    target: dndArea.pressed ? Theme.feedbackPressScale : dndArea.containsMouse ? Theme.feedbackHoverScale : 1
                 }
 
                 Shape {
@@ -221,7 +224,7 @@ Pick {
                 border.width: Theme.surfaceBorderWidth
                 border.color: clearArea.containsMouse ? Theme.surfaceBorderHover : Theme.surfaceBorder
                 opacity: root.n === 0 ? Theme.dimHint : 1
-                scale: clearArea.pressed ? Theme.feedbackPressScale : clearArea.containsMouse ? Theme.feedbackHoverScale : 1
+                scale: clearScale.shaped
                 antialiasing: true
 
                 Behavior on color {
@@ -236,8 +239,10 @@ Pick {
                     NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
                 }
 
-                Behavior on scale {
-                    NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+                ScaleSpring {
+                    id: clearScale
+                    size: Theme.centerBtn
+                    target: clearArea.pressed ? Theme.feedbackPressScale : clearArea.containsMouse ? Theme.feedbackHoverScale : 1
                 }
 
                 Shape {
@@ -277,158 +282,125 @@ Pick {
             width: parent.width
             height: root.n > 0 ? Math.min(root.n, Theme.centerRows) * Theme.centerRowH : Theme.centerEmptyH
 
-            Item {
+            PickList {
+                id: list
+                pick: root
+                rowH: Theme.centerRowH
+                values: root.view
+                key: "key"
                 anchors.fill: parent
                 visible: root.n > 0
-                clip: true
 
                 HoverHandler { id: pointer }
 
-                ScriptModel {
-                    id: noteModel
-                    values: root.view
-                    objectProp: "key"
-                }
+                delegate: Item {
+                    id: row
+                    required property var modelData
+                    required property int index
+                    readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
+                    readonly property bool fresh: root.now - row.modelData.time < Theme.centerFresh
 
-                Item {
-                    id: list
-                    width: parent.width
-                    height: root.n * Theme.centerRowH
-                    y: -root.start * Theme.centerRowH
+                    y: row.index * Theme.centerRowH
+                    width: list.width
+                    height: Theme.centerRowH
 
-                    Behavior on y {
-                        NumberAnimation { duration: root.snap ? 0 : root.dur; easing.type: Theme.ease }
-                    }
-
-                    Rectangle {
-                        x: Theme.selInset
-                        y: root.sel * Theme.centerRowH + Theme.selGap / 2
-                        width: list.width - Theme.selInset * 2
-                        height: Theme.centerRowH - Theme.selGap
-                        radius: height / 2
-                        color: Theme.selFill
-                        border.width: Theme.surfaceBorderWidth
-                        border.color: Theme.surfaceBorder
-                        antialiasing: true
-
-                        Behavior on y {
-                            NumberAnimation { duration: root.snap ? 0 : root.dur; easing.type: Theme.ease }
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: row.onscreen
+                        hoverEnabled: row.onscreen
+                        cursorShape: Qt.PointingHandCursor
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
+                        onClicked: e => {
+                            root.sel = row.index
+                            if (e.button === Qt.RightButton)
+                                Notifs.focusEntry(row.modelData.key)
+                            else
+                                Notifs.forget(row.modelData.key)
                         }
                     }
 
-                    Repeater {
-                        model: noteModel
+                    Chip {
+                        id: icon
+                        x: Theme.centerIconX
+                        anchors.verticalCenter: parent.verticalCenter
+                        picture: row.modelData.picture
+                        mark: row.modelData.mark
+                        letter: row.modelData.letter
+                        kind: row.modelData.kind
+                        critical: row.modelData.critical
+                        on: row.modelData.on
+                        level: row.modelData.level
+                    }
 
-                        delegate: Item {
-                            id: row
-                            required property var modelData
-                            required property int index
-                            readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
-                            readonly property bool fresh: root.now - row.modelData.time < Theme.centerFresh
+                    Item {
+                        id: dot
+                        anchors.right: parent.right
+                        anchors.rightMargin: Theme.centerDotRight
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Theme.centerDot
+                        height: Theme.centerDot
+                        opacity: row.fresh ? 1 : 0
 
-                            y: row.index * Theme.centerRowH
-                            width: list.width
-                            height: Theme.centerRowH
+                        Behavior on opacity {
+                            NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                        }
 
-                            MouseArea {
-                                anchors.fill: parent
-                                enabled: row.onscreen
-                                hoverEnabled: row.onscreen
-                                cursorShape: Qt.PointingHandCursor
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
-                                onClicked: e => {
-                                    root.sel = row.index
-                                    if (e.button === Qt.RightButton)
-                                        Notifs.focusEntry(row.modelData.key)
-                                    else
-                                        Notifs.forget(row.modelData.key)
+                        Rectangle {
+                            property real pulse: 1
+
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: Theme.greenSoft
+                            antialiasing: true
+                            opacity: Theme.dotLow + (1 - Theme.dotLow) * pulse
+
+                            SequentialAnimation on pulse {
+                                running: row.fresh && root.shown
+                                loops: Animation.Infinite
+
+                                NumberAnimation {
+                                    from: 1
+                                    to: 0
+                                    duration: Theme.pulse
+                                    easing.type: Easing.InOutSine
+                                }
+
+                                NumberAnimation {
+                                    from: 0
+                                    to: 1
+                                    duration: Theme.pulse
+                                    easing.type: Easing.InOutSine
                                 }
                             }
+                        }
+                    }
 
-                            Chip {
-                                id: icon
-                                x: Theme.centerIconX
-                                anchors.verticalCenter: parent.verticalCenter
-                                picture: row.modelData.picture
-                                mark: row.modelData.mark
-                                letter: row.modelData.letter
-                                kind: row.modelData.kind
-                                critical: row.modelData.critical
-                                on: row.modelData.on
-                                level: row.modelData.level
-                            }
+                    Column {
+                        anchors.left: icon.right
+                        anchors.leftMargin: Theme.centerTextGap
+                        anchors.right: dot.left
+                        anchors.rightMargin: Theme.centerDotGap
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: Theme.centerLineGap
 
-                            Item {
-                                id: dot
-                                anchors.right: parent.right
-                                anchors.rightMargin: Theme.centerDotRight
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: Theme.centerDot
-                                height: Theme.centerDot
-                                opacity: row.fresh ? 1 : 0
+                        Txt {
+                            width: parent.width
+                            text: row.modelData.summary
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            font.weight: Font.DemiBold
+                        }
 
-                                Behavior on opacity {
-                                    NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
-                                }
-
-                                Rectangle {
-                                    property real pulse: 1
-
-                                    anchors.fill: parent
-                                    radius: width / 2
-                                    color: Theme.greenSoft
-                                    antialiasing: true
-                                    opacity: Theme.dotLow + (1 - Theme.dotLow) * pulse
-
-                                    SequentialAnimation on pulse {
-                                        running: row.fresh && root.shown
-                                        loops: Animation.Infinite
-
-                                        NumberAnimation {
-                                            from: 1
-                                            to: 0
-                                            duration: Theme.pulse
-                                            easing.type: Easing.InOutSine
-                                        }
-
-                                        NumberAnimation {
-                                            from: 0
-                                            to: 1
-                                            duration: Theme.pulse
-                                            easing.type: Easing.InOutSine
-                                        }
-                                    }
-                                }
-                            }
-
-                            Column {
-                                anchors.left: icon.right
-                                anchors.leftMargin: Theme.centerTextGap
-                                anchors.right: dot.left
-                                anchors.rightMargin: Theme.centerDotGap
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: Theme.centerLineGap
-
-                                Txt {
-                                    width: parent.width
-                                    text: row.modelData.summary
-                                    elide: Text.ElideRight
-                                    maximumLineCount: 1
-                                    font.weight: Font.DemiBold
-                                }
-
-                                Txt {
-                                    width: parent.width
-                                    text: row.modelData.body !== "" ? row.modelData.body : row.modelData.app
-                                    visible: text !== ""
-                                    elide: Text.ElideRight
-                                    wrapMode: Text.Wrap
-                                    maximumLineCount: Theme.centerBodyLines
-                                    opacity: Theme.dimSoft
-                                    font.pixelSize: Theme.fsS
-                                }
-                            }
+                        Txt {
+                            width: parent.width
+                            text: row.modelData.body !== "" ? row.modelData.body : row.modelData.app
+                            visible: text !== ""
+                            elide: Text.ElideRight
+                            wrapMode: Text.Wrap
+                            maximumLineCount: Theme.centerBodyLines
+                            opacity: Theme.dimSoft
+                            font.pixelSize: Theme.fsS
                         }
                     }
                 }

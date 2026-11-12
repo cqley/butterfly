@@ -3,7 +3,7 @@ import QtQuick
 import QtQuick.Shapes
 import Quickshell.Services.Notifications
 
-Fade {
+Panel {
     id: root
     property var n
     property var shownN: null
@@ -25,19 +25,40 @@ Fade {
     property bool dndOn: false
     property real level: -1
     readonly property bool hasLevel: bluetooth && level >= 0
-    readonly property real wanted: Math.max(Theme.noteH, more.y + more.height + Theme.noteTop)
     readonly property int sideReserve: hasLevel ? Theme.noteBtBadge + Theme.noteTextGap : 0
-    readonly property real shift: more.y - brief.y + (label.visible ? label.height + more.spacing : 0)
+    readonly property int textX: Theme.noteIconX + Theme.noteIcon + Theme.noteTextGap
+    readonly property int openTextW: Theme.noteOpenW - root.textX - Theme.noteTextRight - root.sideReserve
+    readonly property int briefTextW: Theme.noteW - root.textX - Theme.noteTextRight - root.sideReserve
+    property bool sized: true
+    readonly property bool hasBody: root.body !== ""
+    readonly property bool hasLabel: root.appLabel !== ""
+    readonly property real briefH: titleBrief.implicitHeight + (root.hasBody ? Theme.noteLineGap + bodyLine.implicitHeight : 0)
+    readonly property int briefY: Math.round(Theme.noteTop + (Theme.noteIcon - root.briefH) / 2)
+    readonly property int openY: Theme.noteTop + (root.hasLabel ? Math.round(label.implicitHeight) + Theme.noteLineGap : 0)
+    readonly property real openBottom: root.openY + titleBrief.implicitHeight + (root.hasBody ? Theme.noteLineGap + bodyFull.implicitHeight : 0)
+    readonly property real wanted: Math.max(Theme.noteH, Math.ceil(root.openBottom + Theme.noteTop))
+    readonly property bool grown: root.expanded && root.sized
+    readonly property int textY: Math.round(slide.shaped)
+    readonly property int bodyY: root.textY + Math.round(titleBrief.implicitHeight) + Theme.noteLineGap
 
-    width: root.expanded ? Theme.noteOpenW : Theme.noteW
-    height: root.expanded ? root.wanted : Theme.noteH
+    wantW: root.expanded ? Theme.noteOpenW : Theme.noteW
+    wantH: root.expanded ? root.wanted : Theme.noteH
+    width: root.wantW
+    height: heightMotion.shaped
 
-    Behavior on width {
-        NumberAnimation { duration: Theme.speed; easing.type: Theme.ease }
+    Spring {
+        id: heightMotion
+        response: Theme.speedResponse
+        settle: Theme.springSettle
+        target: root.wantH
     }
 
-    Behavior on height {
-        NumberAnimation { duration: Theme.speed; easing.type: Theme.ease }
+    Spring {
+        id: slide
+        response: Theme.islandResponse
+        damping: Theme.islandDamping
+        hold: Theme.dashMorphHold
+        target: root.expanded ? root.openY : root.briefY
     }
 
     function refresh() {
@@ -154,77 +175,47 @@ Fade {
         }
     }
 
-    Fade {
-        anchors.fill: parent
-        shown: !root.expanded
-        rise: Theme.speed
-        fall: Theme.speed
+    Item {
+        id: words
+        x: root.textX
+        width: root.openTextW
+        height: parent.height
 
-        Column {
-            id: brief
-            x: chip.x + chip.width + Theme.noteTextGap
-            y: Theme.noteTop + (Theme.noteIcon - height) / 2
-            width: Theme.noteW - x - Theme.noteTextRight - root.sideReserve
-            spacing: Theme.noteLineGap
-
-            transform: Translate {
-                y: root.expanded ? root.shift : 0
-
-                Behavior on y { NumberAnimation { duration: Theme.speed; easing.type: Theme.ease } }
-            }
-
-            Txt {
-                width: parent.width
-                text: root.summary
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                font.pixelSize: Theme.fsM
-                font.weight: Font.DemiBold
-            }
-
-            Txt {
-                width: parent.width
-                text: root.body
-                visible: text !== ""
-                elide: Text.ElideRight
-                maximumLineCount: Theme.noteBodyLines
-                opacity: Theme.dimSoft
-                font.pixelSize: Theme.fsS
-            }
-        }
-    }
-
-    Fade {
-        anchors.fill: parent
-        shown: root.expanded
-
-        Column {
-            id: more
-            x: chip.x + chip.width + Theme.noteTextGap
-            y: Theme.noteTop
-            width: Theme.noteOpenW - x - Theme.noteTextRight - root.sideReserve
-            spacing: Theme.noteLineGap
-
-            transform: Translate {
-                y: root.expanded ? 0 : -root.shift
-
-                Behavior on y { NumberAnimation { duration: Theme.speed; easing.type: Theme.ease } }
-            }
+        Fade {
+            shown: root.grown
+            rise: Theme.speed
 
             Txt {
                 id: label
-                width: parent.width
+                y: Theme.noteTop
+                width: words.width
                 text: root.appLabel
-                visible: text !== ""
+                visible: root.hasLabel
                 elide: Text.ElideRight
                 maximumLineCount: 1
                 opacity: Theme.dimEmpty
                 font.pixelSize: Theme.fsXS
                 font.weight: Font.Medium
             }
+        }
+
+        Item {
+            id: lineFade
+            opacity: root.expanded && fullFade.opacity >= 1 ? 0 : 1
+
+            Behavior on opacity {
+                id: lineEase
+
+                NumberAnimation {
+                    duration: lineEase.targetValue > 0 ? Theme.fall : Theme.speed
+                    easing.type: Theme.ease
+                }
+            }
 
             Txt {
-                width: parent.width
+                id: titleBrief
+                y: root.textY
+                width: root.briefTextW
                 text: root.summary
                 elide: Text.ElideRight
                 maximumLineCount: 1
@@ -233,13 +224,52 @@ Fade {
             }
 
             Txt {
-                width: parent.width
+                id: bodyLine
+                y: root.bodyY
+                width: root.briefTextW
                 text: root.body
-                visible: text !== ""
+                visible: root.hasBody
+                elide: Text.ElideRight
+                maximumLineCount: Theme.noteBodyLines
+                color: Theme.mix(Theme.bg, Theme.fg, Theme.dimSoft)
+                font.pixelSize: Theme.fsS
+            }
+        }
+
+        Item {
+            id: fullFade
+            opacity: (root.expanded ? root.grown : lineFade.opacity < 1) ? 1 : 0
+            visible: opacity > 0
+
+            Behavior on opacity {
+                id: fullEase
+
+                NumberAnimation {
+                    duration: fullEase.targetValue > 0 ? Theme.speed : Theme.fall
+                    easing.type: Theme.ease
+                }
+            }
+
+            Txt {
+                y: root.textY
+                width: root.openTextW
+                text: root.summary
+                elide: Text.ElideRight
+                maximumLineCount: 1
+                font.pixelSize: Theme.fsM
+                font.weight: Font.DemiBold
+            }
+
+            Txt {
+                id: bodyFull
+                y: root.bodyY
+                width: root.openTextW
+                text: root.body
+                visible: root.hasBody
                 elide: Text.ElideRight
                 wrapMode: Text.Wrap
                 maximumLineCount: Theme.noteOpenBodyLines
-                opacity: Theme.dimSoft
+                color: Theme.mix(Theme.bg, Theme.fg, Theme.dimSoft)
                 font.pixelSize: Theme.fsS
             }
         }

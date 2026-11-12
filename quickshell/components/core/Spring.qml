@@ -10,20 +10,44 @@ Item {
     property real value: 0
     property real velocity: 0
     property real hold: 0
+    property real settle: 0
+    property bool snap: false
     property real origin: 0
+    property real peak: 0
+    property bool landed: false
+    property bool crossed: false
+    property real reach: 0
     readonly property bool moving: drive.running
     property real shaped: 0
 
     function shape() {
-        const s = root.target - root.origin
-        if (root.hold <= 0 || Math.abs(s) < 1e-6)
+        const s = Math.abs(root.target - root.origin)
+        const h = Math.min(s / 10, root.hold * s + root.settle)
+        if (h <= 0)
             return root.value
-        return root.origin + s * Math.min(1, Math.max(0, (root.value - root.origin) / s) / (1 - root.hold))
+        const e = root.value - root.target
+        if (root.damping < 1) {
+            if (root.landed)
+                return root.target
+            if (root.peak === 0)
+                return e * (root.target - root.origin) > 0 ? root.target + root.soft(e) : root.value
+            const u = Math.max(0, e / root.peak)
+            return root.target + root.soft(root.peak) * u * u
+        }
+        const out = root.target + Math.sign(e) * Math.max(0, Math.abs(e) - h) * s / (s - h)
+        return Math.max(Math.min(root.origin, root.target), Math.min(Math.max(root.origin, root.target), out))
+    }
+
+    function soft(e) {
+        return root.reach > 0 ? root.reach * Math.tanh(e / root.reach) : e
     }
 
     function land(v) {
         drive.stop()
         root.velocity = 0
+        root.peak = 0
+        root.landed = false
+        root.crossed = false
         root.value = v
         root.origin = v
         root.shaped = v
@@ -67,15 +91,29 @@ Item {
             root.land(root.target)
             return
         }
+        const d = root.target - root.origin
+        if (!root.crossed && x * d >= 0)
+            root.crossed = true
+        if (root.peak === 0 && root.damping < 1 && x * d > 0 && v * d <= 0)
+            root.peak = x
+        else if (root.peak !== 0 && x * root.peak <= 0)
+            root.landed = true
         root.value = root.target + x
         root.velocity = v
         root.shaped = root.shape()
     }
 
     onTargetChanged: {
-        if (root.hold > 0)
+        if (root.snap) {
+            root.land(root.target)
+            return
+        }
+        if (root.hold > 0 || root.settle > 0)
             root.value = root.shaped
         root.origin = root.value
+        root.peak = 0
+        root.landed = false
+        root.crossed = false
         root.shaped = root.value
         drive.start()
     }

@@ -69,21 +69,6 @@ Column {
                 onCommitted: Cfg.flush()
             }
         }
-
-        SettingsRow {
-            label: "days before today"
-            token: "islandWeekLead"
-            value: Theme.islandWeekLead + ""
-
-            SettingsSlider {
-                from: 0
-                to: 5
-                step: 1
-                value: Theme.islandWeekLead
-                onMoved: v => Cfg.set("islandWeekLead", Math.round(v))
-                onCommitted: Cfg.flush()
-            }
-        }
     }
 
     SettingsGroup {

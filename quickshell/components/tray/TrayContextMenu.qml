@@ -15,6 +15,7 @@ Pick {
 
     n: layout.items.length
     rows: Theme.trayMenuRows
+    pad: Theme.trayMenuPad
     width: Theme.trayMenuW - 2 * Theme.trayMenuPad
     height: back.height + (root.n > 0 ? list.height : Theme.trayMenuRowH)
     focus: shown
@@ -182,14 +183,16 @@ Pick {
             opacity: backArea.containsMouse ? 1 : Theme.dimMuted
             color: Theme.accent
             transformOrigin: Item.Left
-            scale: backArea.pressed ? Theme.feedbackPressScale : 1
+            scale: backScale.shaped
 
             Behavior on opacity {
                 NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
             }
 
-            Behavior on scale {
-                NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+            ScaleSpring {
+                id: backScale
+                size: 2 * parent.width
+                target: backArea.pressed ? Theme.feedbackPressScale : 1
             }
         }
 
@@ -202,133 +205,95 @@ Pick {
         }
     }
 
-    Item {
+    PickList {
         id: list
-        width: parent.width
+        pick: root
+        rowH: Theme.trayMenuRowH
+        values: root.layout.items
         y: back.height
-        height: Math.min(root.n, Theme.trayMenuRows) * Theme.trayMenuRowH
-        clip: true
         visible: root.n > 0
+        highlightShown: !!root.items[root.sel]
+        marked: true
+        mark: root.label(root.items[root.sel])
 
-        ScriptModel {
-            id: entryModel
-            values: root.layout.items
-        }
+        delegate: Item {
+            id: row
+            required property var modelData
+            required property int index
+            readonly property bool selected: root.sel === row.index
+            readonly property bool live: !!row.modelData && row.modelData.enabled
+            readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
+            readonly property bool checked: !!row.modelData && row.modelData.buttonType !== QsMenuButtonType.None && row.modelData.checkState === Qt.Checked
 
-        Item {
-            id: inner
-            width: parent.width
-            height: root.n * Theme.trayMenuRowH
-            y: -root.start * Theme.trayMenuRowH
+            y: row.index * Theme.trayMenuRowH
+            width: list.width
+            height: Theme.trayMenuRowH
 
-            Behavior on y {
-                NumberAnimation { duration: root.snap ? 0 : root.dur; easing.type: Theme.ease }
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: Theme.trayMenuSepW
+                height: Theme.surfaceBorderWidth
+                color: Theme.surfaceBorder
+                visible: !!root.layout.seps[row.index]
+                opacity: row.index === root.sel || row.index === root.sel + 1 ? 0 : 1
+
+                Behavior on opacity {
+                    NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                }
             }
 
             Rectangle {
-                x: Theme.selInset
-                y: root.sel * Theme.trayMenuRowH + Theme.selGap / 2
-                width: inner.width - Theme.selInset * 2
-                height: Theme.trayMenuRowH - Theme.selGap
-                radius: height / 2
-                color: Theme.selFill
-                border.width: Theme.surfaceBorderWidth
-                border.color: Theme.surfaceBorder
-                antialiasing: true
-                visible: !!root.items[root.sel]
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.rowX
+                anchors.verticalCenter: parent.verticalCenter
+                width: Theme.trayMenuMarkD
+                height: Theme.trayMenuMarkD
+                radius: row.modelData && row.modelData.buttonType === QsMenuButtonType.RadioButton ? width / 2 : 2
+                color: Theme.accent
+                visible: row.checked
+            }
 
-                Mark {
-                    label: root.label(root.items[root.sel])
+            Txt {
+                anchors.left: parent.left
+                anchors.leftMargin: row.checked ? Theme.rowX + Theme.trayMenuMarkD + Theme.rowGap : Theme.rowX
+                anchors.right: chevron.left
+                anchors.rightMargin: Theme.rowGap
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.verticalCenterOffset: Theme.rowTextY
+                text: root.label(row.modelData)
+                elide: Text.ElideRight
+                font.pixelSize: Theme.fsL
+                color: row.selected ? Theme.accent : Theme.fg
+                opacity: row.live ? 1 : Theme.dimMid
+
+                Behavior on color {
+                    ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
                 }
 
-                Behavior on y {
-                    NumberAnimation { duration: root.snap ? 0 : root.dur; easing.type: Theme.ease }
+                Behavior on opacity {
+                    NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
                 }
             }
 
-            Repeater {
-                model: entryModel
+            Txt {
+                id: chevron
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.trayMenuChevronGap
+                anchors.verticalCenter: parent.verticalCenter
+                text: "›"
+                visible: !!row.modelData && row.modelData.hasChildren
+                opacity: Theme.dimMuted
+            }
 
-                delegate: Item {
-                    id: row
-                    required property var modelData
-                    required property int index
-                    readonly property bool selected: root.sel === row.index
-                    readonly property bool live: !!row.modelData && row.modelData.enabled
-                    readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
-                    readonly property bool checked: !!row.modelData && row.modelData.buttonType !== QsMenuButtonType.None && row.modelData.checkState === Qt.Checked
-
-                    y: row.index * Theme.trayMenuRowH
-                    width: inner.width
-                    height: Theme.trayMenuRowH
-
-                    Rectangle {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: Theme.trayMenuSepW
-                        height: Theme.surfaceBorderWidth
-                        color: Theme.surfaceBorder
-                        visible: !!root.layout.seps[row.index]
-                        opacity: row.index === root.sel || row.index === root.sel + 1 ? 0 : 1
-
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
-                        }
-                    }
-
-                    Rectangle {
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.rowX
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Theme.trayMenuMarkD
-                        height: Theme.trayMenuMarkD
-                        radius: row.modelData && row.modelData.buttonType === QsMenuButtonType.RadioButton ? width / 2 : 2
-                        color: Theme.accent
-                        visible: row.checked
-                    }
-
-                    Txt {
-                        anchors.left: parent.left
-                        anchors.leftMargin: row.checked ? Theme.rowX + Theme.trayMenuMarkD + Theme.rowGap : Theme.rowX
-                        anchors.right: chevron.left
-                        anchors.rightMargin: Theme.rowGap
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.verticalCenterOffset: Theme.rowTextY
-                        text: root.label(row.modelData)
-                        elide: Text.ElideRight
-                        font.pixelSize: Theme.fsL
-                        color: row.selected ? Theme.accent : Theme.fg
-                        opacity: row.live ? 1 : Theme.dimMid
-
-                        Behavior on color {
-                            ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
-                        }
-
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
-                        }
-                    }
-
-                    Txt {
-                        id: chevron
-                        anchors.right: parent.right
-                        anchors.rightMargin: Theme.trayMenuChevronGap
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "›"
-                        visible: !!row.modelData && row.modelData.hasChildren
-                        opacity: Theme.dimMuted
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: row.live && row.onscreen
-                        hoverEnabled: row.live && row.onscreen
-                        cursorShape: row.live ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
-                        onClicked: {
-                            root.sel = row.index
-                            root.run()
-                        }
-                    }
+            MouseArea {
+                anchors.fill: parent
+                enabled: row.live && row.onscreen
+                hoverEnabled: row.live && row.onscreen
+                cursorShape: row.live ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
+                onClicked: {
+                    root.sel = row.index
+                    root.run()
                 }
             }
         }

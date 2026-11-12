@@ -4,19 +4,16 @@ import "../brightness"
 import "../audio"
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
-Singleton {
+Menu {
     id: root
-    Component.onCompleted: Modal.register("mixer", root)
-    property bool open: false
+    name: "mixer"
 
     onOpenChanged: {
         Brightness.refresh()
         if (root.open) {
             closeHold.stop()
             Audio.watch = true
-            Modal.claim("mixer")
         } else {
             closeHold.restart()
         }
@@ -39,11 +36,5 @@ Singleton {
             parts.push(name + " " + Theme.pctOrUnavailable(Audio.node(i) !== null, Audio.level(i), Audio.muted(i) ? " muted" : ""))
         }
         return parts.join(", ")
-    }
-
-    IpcHandler {
-        target: "mixer"
-        function toggle(): void { root.open = !root.open }
-        function status(): string { return (root.open ? "open" : "closed") + " · " + root.report() }
     }
 }

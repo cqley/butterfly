@@ -8,6 +8,7 @@ Tiles {
     readonly property var items: Screenshot.items
 
     n: items.length
+    pad: Theme.pwPad
     width: n > 0 ? n * Theme.pwW + (n - 1) * Theme.pwGap : empty.implicitWidth
     height: Theme.pwH
 
@@ -65,16 +66,18 @@ Tiles {
 
                 width: Theme.pwW
                 height: Theme.pwH
-                radius: Theme.radius - Theme.pwPad
+                radius: Theme.inner(Theme.radius, Theme.pwPad)
                 antialiasing: true
                 color: on ? Theme.accent : Theme.chip
                 border.width: Theme.launchIconBorderWidth
                 border.color: on ? Theme.accent : Theme.launchIconBorder
                 transformOrigin: Item.Center
-                scale: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
+                scale: scaleMotion.shaped
 
-                Behavior on scale {
-                    NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+                ScaleSpring {
+                    id: scaleMotion
+                    size: Theme.pwW
+                    target: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
                 }
                 Behavior on color {
                     ColorAnimation { duration: root.snap ? 0 : Theme.glide; easing.type: Theme.ease }

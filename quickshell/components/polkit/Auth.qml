@@ -2,7 +2,7 @@ import "../core"
 import QtQuick
 import QtQuick.Shapes
 
-Fade {
+Panel {
     id: root
     property var flow: Polkit.flow
     property bool slip: false
@@ -22,6 +22,7 @@ Fade {
 
     Behavior on leg { NumberAnimation { duration: Theme.authLockGlide; easing.type: Theme.ease } }
 
+    pad: Theme.authPad
     width: Theme.authW - 2 * Theme.authPad
     height: col.height
     focus: shown
@@ -356,11 +357,16 @@ Fade {
                     height: Theme.authBtnH
                     radius: height / 2
                     color: cancelArea.containsMouse ? Theme.tile : Theme.chip
-                    scale: cancelArea.pressed ? Theme.feedbackPressScale : cancelArea.containsMouse ? Theme.feedbackHoverScale : 1
+                    scale: cancelScale.shaped
                     antialiasing: true
                     transformOrigin: Item.Center
 
-                    Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
+                    ScaleSpring {
+                        id: cancelScale
+                        size: Theme.authBtnH
+                        target: cancelArea.pressed ? Theme.feedbackPressScale : cancelArea.containsMouse ? Theme.feedbackHoverScale : 1
+                    }
+
                     Behavior on color { ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
 
                     Shape {
@@ -398,11 +404,16 @@ Fade {
                     radius: height / 2
                     color: Theme.accent
                     opacity: live ? (okArea.pressed ? Theme.authPressed : 1) : Theme.authDisabled
-                    scale: live && okArea.pressed ? Theme.feedbackPressScale : live && okArea.containsMouse ? Theme.feedbackHoverScale : 1
+                    scale: okScale.shaped
                     antialiasing: true
                     transformOrigin: Item.Center
 
-                    Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
+                    ScaleSpring {
+                        id: okScale
+                        size: Theme.authBtnH
+                        target: parent.live && okArea.pressed ? Theme.feedbackPressScale : parent.live && okArea.containsMouse ? Theme.feedbackHoverScale : 1
+                    }
+
                     Behavior on opacity { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
 
                     Shape {

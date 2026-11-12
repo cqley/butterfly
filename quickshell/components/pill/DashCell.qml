@@ -11,7 +11,8 @@ Item {
     property bool fades: false
     property bool hoverable: false
     property bool togglable: false
-    property bool stages: false
+    property bool stages: true
+    property bool bounces: true
     property var lead: null
     signal activated
     signal toggled
@@ -19,6 +20,8 @@ Item {
     default property alias content: holder.data
 
     readonly property real t: parent && parent.t !== undefined ? parent.t : 1
+    readonly property real tFlat: parent && parent.tFlat !== undefined ? parent.tFlat : 1
+    readonly property real travelT: cell.bounces ? cell.t : cell.tFlat
     readonly property real reveal: parent && parent.reveal !== undefined ? parent.reveal : 1
     readonly property real late: parent && parent.late !== undefined ? parent.late : 1
     readonly property real originY: parent && parent.originY !== undefined ? parent.originY : 0
@@ -31,25 +34,17 @@ Item {
     readonly property real reach: cell.morphs ? cell.origin - cell.homeCx : 0
     readonly property bool locked: cell.morphs && !!cell.lead && cell.lead.morphs && cell.lead.shown
     readonly property real travelX: !cell.morphs ? 0
-        : cell.locked ? cell.lead.travelX + Math.pow(Math.max(0, 1 - cell.t), Theme.dashColumnLock) * (cell.reach - cell.lead.reach)
-        : (1 - cell.t) * cell.reach
-    readonly property real travelY: cell.morphs ? (1 - cell.t) * (cell.originY - cell.rowCy) : 0
+        : cell.locked ? cell.lead.travelX + Math.pow(Math.max(0, 1 - cell.travelT), Theme.dashColumnLock) * (cell.reach - cell.lead.reach)
+        : (1 - cell.travelT) * cell.reach
+    readonly property real travelY: cell.morphs ? (1 - cell.travelT) * (cell.originY - cell.rowCy) : 0
     readonly property bool hovered: hit.containsMouse
     readonly property bool pressed: hit.pressed
-    property real touchScale: cell.pressed ? Theme.feedbackPressScale : cell.hovered ? Theme.feedbackHoverScale : 1
+    readonly property real touchScale: touch.shaped
 
-    Behavior on touchScale {
-        NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
-    }
-
-    width: cell.shown ? Math.round(cell.gap + cell.contentW) : 0
+    width: widthMotion.shaped
     height: parent ? parent.height : 0
     visible: cell.width > 0.5
     opacity: cell.shown && cell.morphs && !cell.fades ? 1 : cell.shown ? cell.reveal * cell.hold : 0
-
-    Behavior on width {
-        NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
-    }
 
     transform: Translate {
         x: cell.travelX
@@ -63,6 +58,27 @@ Item {
         height: cell.height * 3
         clip: cell.travelX === 0 && cell.travelY === 0
 
+        ScaleSpring {
+            id: touch
+            size: cell.contentW
+            target: cell.pressed ? Theme.feedbackPressScale : cell.hovered ? Theme.feedbackHoverScale : 1
+        }
+
+        ScaleSpring {
+            id: pop
+            size: cell.contentW
+            response: Theme.dashMorphResponse
+            damping: pop.target < 1 ? 1 : Theme.dashMorphDamping
+            target: cell.stages && !cell.morphs && cell.hold <= 0.001 ? Theme.dashPopFrom : 1
+        }
+
+        Spring {
+            id: widthMotion
+            response: Theme.glideResponse
+            settle: Theme.springSettle
+            target: cell.shown ? Math.round(cell.gap + cell.contentW) : 0
+        }
+
         Item {
             id: holder
             x: cell.gap
@@ -70,7 +86,7 @@ Item {
             width: cell.contentW
             height: cell.height
             transformOrigin: Item.Center
-            scale: cell.touchScale
+            scale: cell.touchScale * pop.shaped
         }
     }
 

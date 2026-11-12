@@ -4,12 +4,13 @@ import QtQuick
 import Quickshell
 import Quickshell.Widgets
 
-Fade {
+Panel {
     id: root
     property int cursor: 0
     property bool snap: false
-    property real trackX: 0
-    property real focusPos: cursor
+    property real trackTo: 0
+    readonly property real trackX: trackMotion.shaped
+    readonly property real focusPos: focusMotion.shaped
     property real vel: Theme.wallVelocity
     property int trackDur: Theme.glide
     property var files: []
@@ -21,20 +22,25 @@ Fade {
     readonly property real centerIndex: n ? ((viewW - Theme.thumbW) / 2 - trackX) / step : 0
     readonly property int winStart: n ? Math.round(centerIndex) - Math.floor(win / 2) : 0
 
-    Behavior on trackX {
-        NumberAnimation {
-            duration: root.snap ? 0 : root.trackDur
-            easing.type: Theme.ease
-        }
+    Spring {
+        id: trackMotion
+        response: Theme.springFor(root.trackDur)
+        settle: Theme.springSettle
+        snap: root.snap
+        target: root.trackTo
     }
 
-    Behavior on focusPos {
-        NumberAnimation {
-            duration: root.snap ? 0 : Theme.feedbackDuration
-            easing.type: Theme.ease
-        }
+    Spring {
+        id: focusMotion
+        response: Theme.feedbackResponse
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
+        settle: Theme.scaleSettle(Theme.thumbW) / (Theme.wallFocusScale - 1)
+        snap: root.snap
+        target: root.cursor
     }
 
+    pad: Theme.wallPad
     width: viewW
     height: Theme.wallTrackH
     focus: shown
@@ -73,7 +79,7 @@ Fade {
         const dist = Math.abs(x - trackX)
         vel = Math.max(Theme.wallVelocity, (dist - Theme.wallCatchupSteps * step) * Theme.wallCatchup)
         trackDur = dist > 0 ? Math.round(dist / vel * 1000) : Theme.fast
-        trackX = x
+        trackTo = x
         snap = false
     }
 
@@ -184,7 +190,7 @@ Fade {
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: Theme.wallBleed
-                            radius: Theme.wallRadius - Theme.wallBleed
+                            radius: Theme.inner(Theme.wallRadius, Theme.wallBleed)
                             color: Theme.chip
                             antialiasing: true
                         }

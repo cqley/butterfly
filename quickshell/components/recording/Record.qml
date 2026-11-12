@@ -5,9 +5,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-Singleton {
+Menu {
     id: root
-    property bool open: false
+    name: "record"
+    ipc: false
     readonly property bool active: proc.running || pending !== null
     property string backend: ""
     property string bin: ""
@@ -49,7 +50,6 @@ Singleton {
     }
 
     onOpenChanged: if (open) {
-        Modal.claim("record")
         refresh()
     }
 
@@ -261,7 +261,6 @@ Singleton {
     }
 
     Component.onCompleted: {
-        Modal.register("record", root)
         root.ensureDir()
         if (Theme.recordBin !== "") {
             root.bin = Theme.recordBin
@@ -287,6 +286,6 @@ Singleton {
         target: "record"
         function toggle(): void { root.toggle() }
         function stop(): void { root.stop() }
-        function status(): string { return (root.open ? "open" : "closed") + " · " + root.report() }
+        function status(): string { return root.status() }
     }
 }

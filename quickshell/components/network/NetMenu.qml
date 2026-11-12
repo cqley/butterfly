@@ -9,6 +9,7 @@ Pick {
 
     n: items ? items.length : 0
     rows: Theme.netRows
+    pad: Theme.netPad
     width: Theme.netW - 2 * Theme.netPad
     height: col.height
     focus: shown
@@ -162,75 +163,97 @@ Pick {
         width: parent.width
         spacing: Theme.listGap
 
-        Item {
-            width: parent.width
-            height: Math.min(root.n, Theme.netRows) * Theme.netRowH
-            clip: true
+        PickList {
+            id: list
+            pick: root
+            rowH: Theme.netRowH
+            values: root.items
+            key: "ssid"
             visible: Net.available && Net.enabled && root.n > 0
+            highlightShown: !root.ask
+            marked: true
+            mark: root.items && root.items[root.sel] ? root.items[root.sel].ssid : ""
 
-            ScriptModel {
-                id: netModel
-                values: root.items
-                objectProp: "ssid"
-            }
+            delegate: Item {
+                id: row
+                required property var modelData
+                required property int index
+                readonly property bool on: !!modelData && !!modelData.active
+                readonly property bool aimed: !!modelData && Net.pending === modelData.ssid
+                readonly property bool busy: aimed && Net.phase !== ""
+                readonly property string status: root.statusOf(modelData)
+                readonly property real sig: modelData ? modelData.signal : 0
+                readonly property bool locked: !!modelData && !!modelData.locked
+                readonly property bool selected: !root.ask && root.selKey !== "" && !!modelData && root.selKey === modelData.ssid
+                readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
 
-            Item {
-                id: list
-                width: parent.width
-                height: root.n * Theme.netRowH
-                y: -root.start * Theme.netRowH
+                y: row.index * Theme.netRowH
+                width: list.width
+                height: Theme.netRowH
+                opacity: root.ask && Net.asking !== (modelData ? modelData.ssid : "") ? Theme.dimHint : 1
 
-                Behavior on y {
+                Behavior on opacity {
                     NumberAnimation {
-                        duration: root.snap ? 0 : root.dur
+                        duration: Theme.glide
                         easing.type: Theme.ease
                     }
                 }
 
-                Rectangle {
-                    x: Theme.selInset
-                    y: root.sel * Theme.netRowH + Theme.selGap / 2
-                    width: list.width - Theme.selInset * 2
-                    height: Theme.netRowH - Theme.selGap
-                    radius: height / 2
-                    color: Theme.selFill
-                    border.width: Theme.surfaceBorderWidth
-                    border.color: Theme.surfaceBorder
-                    antialiasing: true
-                    visible: !root.ask
+                Txt {
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.rowX
+                    anchors.right: meta.left
+                    anchors.rightMargin: Theme.rowGap
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: Theme.rowTextY
+                    text: row.modelData ? row.modelData.ssid : ""
+                    elide: Text.ElideRight
+                    font.pixelSize: Theme.fsL
+                    font.weight: row.on || row.aimed ? Font.DemiBold : Font.Normal
+                    color: row.on || row.aimed || row.selected ? Theme.accent : Theme.fg
 
-                    Mark {
-                        label: root.items && root.items[root.sel] ? root.items[root.sel].ssid : ""
-                    }
-
-                    Behavior on y {
-                        NumberAnimation {
-                            duration: root.snap ? 0 : root.dur
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: root.snap ? 0 : Theme.glide
                             easing.type: Theme.ease
                         }
                     }
                 }
 
-                Repeater {
-                    model: netModel
+                Row {
+                    id: meta
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.netMetaR
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.rowGap
 
-                    delegate: Item {
-                        id: row
-                        required property var modelData
-                        required property int index
-                        readonly property bool on: !!modelData && !!modelData.active
-                        readonly property bool aimed: !!modelData && Net.pending === modelData.ssid
-                        readonly property bool busy: aimed && Net.phase !== ""
-                        readonly property string status: root.statusOf(modelData)
-                        readonly property real sig: modelData ? modelData.signal : 0
-                        readonly property bool locked: !!modelData && !!modelData.locked
-                        readonly property bool selected: !root.ask && root.selKey !== "" && !!modelData && root.selKey === modelData.ssid
-                        readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
+                    Txt {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: row.status
+                        font.pixelSize: Theme.fsS
+                        color: Theme.accent
+                        opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : 0
+                        visible: text !== ""
+                    }
 
-                        y: row.index * Theme.netRowH
-                        width: list.width
-                        height: Theme.netRowH
-                        opacity: root.ask && Net.asking !== (modelData ? modelData.ssid : "") ? Theme.dimHint : 1
+                    Lock {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: row.locked && !row.on && row.status === ""
+                        opacity: Theme.dimMuted
+                    }
+
+                    Sig {
+                        anchors.verticalCenter: parent.verticalCenter
+                        level: Math.round(row.sig * Theme.sigBars)
+                        tint: row.on || row.aimed ? Theme.accent : Theme.fg
+                        opacity: row.busy ? Theme.dimHint : 1
+
+                        Behavior on tint {
+                            ColorAnimation {
+                                duration: Theme.glide
+                                easing.type: Theme.ease
+                            }
+                        }
 
                         Behavior on opacity {
                             NumberAnimation {
@@ -238,92 +261,27 @@ Pick {
                                 easing.type: Theme.ease
                             }
                         }
+                    }
+                }
 
-                        Txt {
-                            anchors.left: parent.left
-                            anchors.leftMargin: Theme.rowX
-                            anchors.right: meta.left
-                            anchors.rightMargin: Theme.rowGap
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.verticalCenterOffset: Theme.rowTextY
-                            text: row.modelData ? row.modelData.ssid : ""
-                            elide: Text.ElideRight
-                            font.pixelSize: Theme.fsL
-                            font.weight: row.on || row.aimed ? Font.DemiBold : Font.Normal
-                            color: row.on || row.aimed || row.selected ? Theme.accent : Theme.fg
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: root.snap ? 0 : Theme.glide
-                                    easing.type: Theme.ease
-                                }
-                            }
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: row.onscreen
+                    hoverEnabled: row.onscreen
+                    cursorShape: Qt.PointingHandCursor
+                    onPositionChanged: m => {
+                        if (!root.ask)
+                            root.aim(mapToItem(null, m.x, m.y), row.index)
+                    }
+                    onClicked: {
+                        if (root.ask) {
+                            const same = Net.asking === row.modelData.ssid
+                            Net.cancelAsk()
+                            if (same)
+                                return
                         }
-
-                        Row {
-                            id: meta
-                            anchors.right: parent.right
-                            anchors.rightMargin: Theme.netMetaR
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: Theme.rowGap
-
-                            Txt {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: row.status
-                                font.pixelSize: Theme.fsS
-                                color: Theme.accent
-                                opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : 0
-                                visible: text !== ""
-                            }
-
-                            Lock {
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: row.locked && !row.on && row.status === ""
-                                opacity: Theme.dimMuted
-                            }
-
-                            Sig {
-                                anchors.verticalCenter: parent.verticalCenter
-                                level: Math.round(row.sig * Theme.sigBars)
-                                tint: row.on || row.aimed ? Theme.accent : Theme.fg
-                                opacity: row.busy ? Theme.dimHint : 1
-
-                                Behavior on tint {
-                                    ColorAnimation {
-                                        duration: Theme.glide
-                                        easing.type: Theme.ease
-                                    }
-                                }
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.glide
-                                        easing.type: Theme.ease
-                                    }
-                                }
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: row.onscreen
-                            hoverEnabled: row.onscreen
-                            cursorShape: Qt.PointingHandCursor
-                            onPositionChanged: m => {
-                                if (!root.ask)
-                                    root.aim(mapToItem(null, m.x, m.y), row.index)
-                            }
-                            onClicked: {
-                                if (root.ask) {
-                                    const same = Net.asking === row.modelData.ssid
-                                    Net.cancelAsk()
-                                    if (same)
-                                        return
-                                }
-                                root.sel = row.index
-                                root.run()
-                            }
-                        }
+                        root.sel = row.index
+                        root.run()
                     }
                 }
             }

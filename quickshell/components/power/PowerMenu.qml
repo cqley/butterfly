@@ -7,6 +7,7 @@ Tiles {
     readonly property var items: Power.items
 
     n: items.length
+    pad: Theme.pwPad
     width: Theme.powerW - 2 * Theme.pwPad
     height: Theme.pwH
 
@@ -51,16 +52,18 @@ Tiles {
 
                 width: Theme.pwW
                 height: Theme.pwH
-                radius: Theme.radius - Theme.pwPad
+                radius: Theme.inner(Theme.radius, Theme.pwPad)
                 antialiasing: true
                 color: on ? Theme.accent : Theme.chip
                 border.width: Theme.launchIconBorderWidth
                 border.color: on ? Theme.accent : Theme.launchIconBorder
                 transformOrigin: Item.Center
-                scale: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
+                scale: scaleMotion.shaped
 
-                Behavior on scale {
-                    NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+                ScaleSpring {
+                    id: scaleMotion
+                    size: Theme.pwW
+                    target: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
                 }
 
                 Behavior on color {
@@ -74,8 +77,8 @@ Tiles {
                 }
 
                 Shape {
-                    x: Math.round((tile.width - width) / 2) + tile.modelData.dx
-                    y: Math.round((tile.height - height) / 2)
+                    x: Theme.mid(tile.width, width) + tile.modelData.dx
+                    y: Theme.mid(tile.height, height)
                     width: Theme.iconGrid
                     height: Theme.iconGrid
                     preferredRendererType: Shape.CurveRenderer

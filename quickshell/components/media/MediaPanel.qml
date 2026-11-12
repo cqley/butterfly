@@ -4,7 +4,7 @@ import QtQuick.Effects
 import QtQuick.Shapes
 import Quickshell.Widgets
 
-Fade {
+Panel {
     id: root
     readonly property var p: Media.player
     readonly property real len: p && p.lengthSupported && p.length > 0 && p.length <= Theme.mediaLenCap ? p.length : 0
@@ -180,10 +180,15 @@ Fade {
         radius: Theme.artR
         color: Theme.chip
         transformOrigin: Item.Center
-        scale: (root.on ? 1 : Theme.mediaPausedArt)
-            * (artArea.pressed ? Theme.feedbackPressScale : artArea.containsMouse ? Theme.feedbackHoverScale : 1)
+        scale: artScale.shaped
 
-        Behavior on scale { NumberAnimation { duration: Theme.mediaArtDuration; easing.type: Theme.ease } }
+        ScaleSpring {
+            id: artScale
+            size: Theme.artS
+            response: Theme.springFor(Theme.mediaArtDuration)
+            target: (root.on ? 1 : Theme.mediaPausedArt)
+                * (artArea.pressed ? Theme.feedbackPressScale : artArea.containsMouse ? Theme.feedbackHoverScale : 1)
+        }
 
         StableImage {
             id: img
@@ -197,8 +202,8 @@ Fade {
         }
 
         Shape {
-            x: Math.round((art.width - width) / 2)
-            y: Math.round((art.height - height) / 2)
+            x: Theme.mid(art.width, width)
+            y: Theme.mid(art.height, height)
             width: Theme.iconGrid
             height: Theme.iconGrid
             scale: Theme.artGlyph / Theme.iconGrid
@@ -369,7 +374,7 @@ Fade {
 
         Rectangle {
             id: bar
-            y: parent.height - height - (Theme.mediaTimes ? Theme.mediaTimeGap + Theme.mediaTimeH : 0)
+            y: barLift.shaped
             x: Theme.mediaCover ? Theme.mediaCoverBarInset : 0
             width: parent.width - 2 * x
             height: Theme.barH
@@ -377,8 +382,11 @@ Fade {
             color: Theme.mediaTrack
             antialiasing: true
 
-            Behavior on y {
-                NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+            Spring {
+                id: barLift
+                response: Theme.glideResponse
+                settle: Theme.springSettle
+                target: bar.parent.height - bar.height - (Theme.mediaTimes ? Theme.mediaTimeGap + Theme.mediaTimeH : 0)
             }
 
             Rectangle {

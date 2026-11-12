@@ -8,6 +8,7 @@ Pick {
 
     n: items.length
     rows: Theme.btRows
+    pad: Theme.btPad
     width: Theme.btW - 2 * Theme.btPad
     height: col.height
     focus: shown
@@ -119,143 +120,100 @@ Pick {
         width: parent.width
         spacing: Theme.listGap
 
-        Item {
-            width: parent.width
-            height: Math.min(root.n, Theme.btRows) * Theme.btRowH
-            clip: true
+        PickList {
+            id: list
+            pick: root
+            rowH: Theme.btRowH
+            values: root.items
+            key: "address"
             visible: Bt.enabled && root.n > 0
+            marked: true
+            mark: Bt.displayName(root.items[root.sel])
 
-            ScriptModel {
-                id: btModel
-                values: root.items
-                objectProp: "address"
-            }
+            delegate: Item {
+                id: row
+                required property var modelData
+                required property int index
+                readonly property bool on: !!modelData && !!modelData.connected
+                readonly property string status: Bt.statusOf(modelData)
+                readonly property bool busy: status !== ""
+                readonly property bool selected: root.selKey !== "" && !!modelData && root.selKey === modelData.address
+                readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
 
-            Item {
-                id: list
-                width: parent.width
-                height: root.n * Theme.btRowH
-                y: -root.start * Theme.btRowH
+                y: row.index * Theme.btRowH
+                width: list.width
+                height: Theme.btRowH
 
-                Behavior on y {
-                    NumberAnimation {
-                        duration: root.snap ? 0 : root.dur
-                        easing.type: Theme.ease
-                    }
-                }
+                Txt {
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.rowX
+                    anchors.right: meta.left
+                    anchors.rightMargin: Theme.rowGap
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: Theme.rowTextY
+                    text: Bt.displayName(row.modelData)
+                    elide: Text.ElideRight
+                    font.pixelSize: Theme.fsL
+                    font.weight: row.on ? Font.DemiBold : Font.Normal
+                    color: row.on || row.selected ? Theme.accent : Theme.fg
 
-                Rectangle {
-                    x: Theme.selInset
-                    y: root.sel * Theme.btRowH + Theme.selGap / 2
-                    width: list.width - Theme.selInset * 2
-                    height: Theme.btRowH - Theme.selGap
-                    radius: height / 2
-                    color: Theme.selFill
-                    border.width: Theme.surfaceBorderWidth
-                    border.color: Theme.surfaceBorder
-                    antialiasing: true
-
-                    Mark {
-                        label: Bt.displayName(root.items[root.sel])
-                    }
-
-                    Behavior on y {
-                        NumberAnimation {
-                            duration: root.snap ? 0 : root.dur
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: root.snap ? 0 : Theme.glide
                             easing.type: Theme.ease
                         }
                     }
                 }
 
-                Repeater {
-                    model: btModel
+                Row {
+                    id: meta
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.btMetaR
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.rowGap
 
-                    delegate: Item {
-                        id: row
-                        required property var modelData
-                        required property int index
-                        readonly property bool on: !!modelData && !!modelData.connected
-                        readonly property string status: Bt.statusOf(modelData)
-                        readonly property bool busy: status !== ""
-                        readonly property bool selected: root.selKey !== "" && !!modelData && root.selKey === modelData.address
-                        readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
+                    Txt {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: row.modelData && row.modelData.batteryAvailable ? Math.round(row.modelData.battery * 100) + "%" : ""
+                        font.pixelSize: Theme.fsS
+                        color: row.on ? Theme.accent : Theme.fg
+                        opacity: row.busy ? Theme.dimHint : Theme.dimMuted
+                        visible: text !== ""
 
-                        y: row.index * Theme.btRowH
-                        width: list.width
-                        height: Theme.btRowH
-
-                        Txt {
-                            anchors.left: parent.left
-                            anchors.leftMargin: Theme.rowX
-                            anchors.right: meta.left
-                            anchors.rightMargin: Theme.rowGap
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.verticalCenterOffset: Theme.rowTextY
-                            text: Bt.displayName(row.modelData)
-                            elide: Text.ElideRight
-                            font.pixelSize: Theme.fsL
-                            font.weight: row.on ? Font.DemiBold : Font.Normal
-                            color: row.on || row.selected ? Theme.accent : Theme.fg
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: root.snap ? 0 : Theme.glide
-                                    easing.type: Theme.ease
-                                }
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: Theme.glide
+                                easing.type: Theme.ease
                             }
                         }
 
-                        Row {
-                            id: meta
-                            anchors.right: parent.right
-                            anchors.rightMargin: Theme.btMetaR
-                            anchors.verticalCenter: parent.verticalCenter
-                            spacing: Theme.rowGap
-
-                            Txt {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: row.modelData && row.modelData.batteryAvailable ? Math.round(row.modelData.battery * 100) + "%" : ""
-                                font.pixelSize: Theme.fsS
-                                color: row.on ? Theme.accent : Theme.fg
-                                opacity: row.busy ? Theme.dimHint : Theme.dimMuted
-                                visible: text !== ""
-
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Theme.glide
-                                        easing.type: Theme.ease
-                                    }
-                                }
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: Theme.glide
-                                        easing.type: Theme.ease
-                                    }
-                                }
-                            }
-
-                            Txt {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: row.status
-                                font.pixelSize: Theme.fsS
-                                color: Theme.accent
-                                opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : 0
-                                visible: text !== ""
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Theme.glide
+                                easing.type: Theme.ease
                             }
                         }
+                    }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: row.onscreen
-                            hoverEnabled: row.onscreen
-                            cursorShape: Qt.PointingHandCursor
-                            onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
-                            onClicked: {
-                                root.sel = row.index
-                                root.run()
-                            }
-                        }
+                    Txt {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: row.status
+                        font.pixelSize: Theme.fsS
+                        color: Theme.accent
+                        opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : 0
+                        visible: text !== ""
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    enabled: row.onscreen
+                    hoverEnabled: row.onscreen
+                    cursorShape: Qt.PointingHandCursor
+                    onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
+                    onClicked: {
+                        root.sel = row.index
+                        root.run()
                     }
                 }
             }

@@ -5,9 +5,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-Singleton {
+Menu {
     id: root
-    property bool open: false
+    name: "net"
+    ipc: false
     property bool enabled: true
     property string active: ""
     property string error: ""
@@ -114,13 +115,9 @@ Singleton {
         monitor.running = false
     }
 
-    Component.onCompleted: {
-        Modal.register("net", root)
-        probe()
-    }
+    Component.onCompleted: probe()
 
     onOpenChanged: if (open) {
-        Modal.claim("net")
         probe()
         asking = ""
         error = ""
@@ -688,7 +685,7 @@ Singleton {
             return on ? "shown" : "hidden"
         }
 
-        function status(): string { return (root.open ? "open" : "closed") + " · " + root.report() }
+        function status(): string { return root.status() }
     }
 }
 

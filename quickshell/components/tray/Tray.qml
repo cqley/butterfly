@@ -2,12 +2,11 @@ pragma Singleton
 import "../core"
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.SystemTray
 
-Singleton {
+Menu {
     id: root
-    property bool open: false
+    name: "tray"
 
     property var order: []
     property var items: []
@@ -53,17 +52,14 @@ Singleton {
             closeMenu()
     }
 
-    Component.onCompleted: {
-        Modal.register("tray", root)
-        rebuild()
-    }
+    Component.onCompleted: rebuild()
 
     Connections {
         target: SystemTray.items
         function onValuesChanged() { root.rebuild() }
     }
 
-    function toggle(): void {
+    function toggle() {
         if (!open && !items.length)
             return
         open = !open
@@ -71,7 +67,6 @@ Singleton {
 
     onOpenChanged: {
         if (open) {
-            Modal.claim("tray")
             order = []
             rebuild()
         } else {
@@ -79,9 +74,7 @@ Singleton {
         }
     }
 
-    IpcHandler {
-        target: "tray"
-        function toggle(): void { root.toggle() }
-        function status(): string { return (root.open ? "open" : "closed") + " · " + root.items.length + " icons" }
+    function report() {
+        return root.items.length + " icons"
     }
 }

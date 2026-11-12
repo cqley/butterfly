@@ -1,7 +1,7 @@
 import "../core"
 import QtQuick
 
-Fade {
+Panel {
     id: root
     property date now
     property int months: 0

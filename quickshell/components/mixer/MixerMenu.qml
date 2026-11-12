@@ -3,7 +3,7 @@ import "../brightness"
 import "../audio"
 import QtQuick
 
-Fade {
+Panel {
     id: root
     property int sel: 0
     readonly property int bn: Brightness.count
@@ -11,6 +11,7 @@ Fade {
     readonly property int sn: Theme.mixerApps ? Audio.streamCount : 0
     readonly property int total: bn + an + sn
 
+    pad: Theme.mixerPad
     width: Math.max(0, total * Theme.mixerColW + Math.max(0, total - 1) * Theme.mixerColGap)
     height: rail.height
     focus: shown

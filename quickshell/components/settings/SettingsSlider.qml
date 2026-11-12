@@ -95,10 +95,12 @@ Item {
         radius: width / 2
         color: Theme.knobInk
         antialiasing: true
-        scale: drag.pressed ? Theme.feedbackPressScale : 1
+        scale: knobScale.shaped
 
-        Behavior on scale {
-            NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+        ScaleSpring {
+            id: knobScale
+            size: Theme.settingsSliderKnobD
+            target: drag.pressed ? Theme.feedbackPressScale : 1
         }
     }
 

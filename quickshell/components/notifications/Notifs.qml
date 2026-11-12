@@ -6,19 +6,17 @@ import Quickshell.Io
 import Quickshell.Services.Notifications
 import Quickshell.Wayland
 
-Singleton {
+Menu {
     id: root
-    Component.onCompleted: Modal.register("notifs", root)
+    name: "notifs"
+    ipc: false
     property var current: null
     property var queue: []
     property bool hovered: false
     property bool veiled: false
-    property bool open: false
     property bool dnd: false
     property var history: []
     property int seq: 0
-
-    onOpenChanged: if (open) Modal.claim("notifs")
 
     function plain(text) {
         return String(text || "")
@@ -421,13 +419,15 @@ Singleton {
         onNotification: n => root.push(n)
     }
 
+    function report() {
+        return (root.dnd ? "dnd" : "on") + " · " + root.history.length
+    }
+
     IpcHandler {
         target: "notifications"
         function toggle(): void { root.open = !root.open }
         function clear(): void { root.clear() }
-        function status(): string {
-            return (root.open ? "open" : "closed") + " · " + (root.dnd ? "dnd" : "on") + " · " + root.history.length
-        }
+        function status(): string { return root.status() }
     }
 
     IpcHandler {

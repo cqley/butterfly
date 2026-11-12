@@ -27,6 +27,14 @@ Singleton {
         return Math.max(1, Math.round(px * fontScale))
     }
 
+    function inner(outer, inset) {
+        return Math.max(0, outer - inset)
+    }
+
+    function mid(outer, size) {
+        return Math.round((outer - size) / 2)
+    }
+
     function cfg(key, fallback) {
         Cfg.remember(key, fallback)
         const store = Cfg.v
@@ -157,7 +165,24 @@ Singleton {
     readonly property real springUnitStop: 0.05
     readonly property real springMaxFrame: 1 / 30
     readonly property real springHold: 0.01
+    readonly property real springSettle: 0.5
+    readonly property real springMatch: 0.866
+    readonly property real feedbackResponse: springFor(feedbackDuration)
+    readonly property real glideResponse: springFor(glide)
+    readonly property real speedResponse: springFor(speed)
     readonly property int pulse: 1400
+
+    function springFor(ms) {
+        return ms / 1000 * root.springMatch
+    }
+
+    function scaleSettle(size) {
+        return 2 * root.springSettle / Math.max(1, size)
+    }
+
+    function turnSettle(size) {
+        return root.scaleSettle(size) * 180 / Math.PI
+    }
     readonly property real settleEps: 0.5
 
     // dim & opacity
@@ -767,6 +792,12 @@ Singleton {
     readonly property int islandDuration: 200
     readonly property real islandResponse: springResponse
     readonly property real islandDamping: springDamping
+    readonly property bool menuBounce: cfg("menuBounce", true)
+    readonly property real menuBounceResponse: cfg("menuBounceResponse", 0.42)
+    readonly property real menuBounceDamping: cfg("menuBounceDamping", 0.6)
+    readonly property real menuBounceReach: cfg("menuBounceReach", 28)
+    readonly property real menuBounceDip: cfg("menuBounceDip", 0.08)
+    readonly property bool menuSwitchDip: cfg("menuSwitchDip", true)
     readonly property real islandDropResponse: 0.24
     readonly property real islandDropDamping: 0.92
     readonly property real islandContentResponse: islandResponse
@@ -795,7 +826,7 @@ Singleton {
     readonly property int islandMediaH: islandMediaTopPad + artS + islandMediaPad
 
     // dashboard
-    readonly property int dashW: cfg("dashW", 420)
+    readonly property int dashW: cfg("dashW", 360)
     readonly property int dashMinW: 360
     readonly property int dashMaxW: 760
     readonly property int dashPad: 12
@@ -819,12 +850,14 @@ Singleton {
     readonly property string dashWeekdayFormat: cfg("dashWeekdayFormat", "ddd")
     readonly property bool dashWeekday: cfg("dashWeekday", true)
     readonly property real dashDim: dimSoft
-    readonly property real dashMorphResponse: cfg("dashMorphResponse", springResponse)
-    readonly property real dashMorphDamping: cfg("dashMorphDamping", 1)
+    readonly property real dashMorphResponse: cfg("dashMorphResponse", 0.42)
+    readonly property real dashMorphDamping: cfg("dashMorphDamping", 0.6)
     readonly property real dashRevealAt: 0.35
     readonly property real dashLateAt: 0.85
     readonly property real dashSizeHold: 0.06
     readonly property real dashMorphHold: 0.06
+    readonly property real dashBounceHold: 0.004
+    readonly property real dashPopFrom: 0.5
     readonly property real dashColumnLock: 3
     readonly property bool dashWs: cfg("dashWs", true)
     readonly property bool dashDate: cfg("dashDate", true)
@@ -865,7 +898,7 @@ Singleton {
     readonly property int settingsRadius: launchRadius
     readonly property int settingsPad: 14
     readonly property int settingsPadBottom: 16
-    readonly property int settingsCardRadius: settingsRadius - 6
+    readonly property int settingsCardRadius: inner(settingsRadius, 6)
     readonly property int settingsSidebarW: 156
     readonly property int settingsGap: 24
     readonly property int settingsBorderWidth: pillBorderWidth
@@ -917,13 +950,13 @@ Singleton {
     readonly property string settingsStylePath: "M9.06 11.9L17.13 3.84A2.85 2.85 0 1 1 21.16 7.87L13.1 15.95M7.07 14.94C5.41 14.94 4.07 16.29 4.07 17.96C4.07 19.29 1.57 19.48 2.07 19.98C3.15 21.08 4.56 22 6.07 22C8.27 22 10.07 20.2 10.07 17.96A3.01 3.01 0 0 0 7.07 14.94Z"
     readonly property string settingsMotionPath: "M3 12C5 6 7 6 9 12C11 18 13 18 15 12C17 6 19 6 21 12"
     readonly property string settingsRecordPath: "M6 6H13A3 3 0 0 1 16 9V15A3 3 0 0 1 13 18H6A3 3 0 0 1 3 15V9A3 3 0 0 1 6 6Z M16 11L21 8V16L16 13"
-    readonly property real settingsScaleFrom: 0.86
+    readonly property real settingsScaleFrom: 0.9
     readonly property real settingsPopResponse: 0.3
     readonly property real settingsPopDamping: springDamping
     readonly property real settingsSettleHold: 0.02
+    readonly property real settingsCloseHold: 0.06
     readonly property real settingsBoxFadeIn: 0.3
     readonly property real settingsContentDelay: 0.35
-    readonly property int settingsContentRise: 6
     readonly property real settingsContentScaleFrom: 0.97
     readonly property real settingsMoveResponse: 0.2
     readonly property real settingsMoveDamping: springDamping
@@ -943,7 +976,7 @@ Singleton {
     readonly property int settingsSliderW: 120
     readonly property int settingsSegW: 190
     readonly property int settingsSegH: settingsRowH - 10
-    readonly property int settingsSegRadius: settingsCardRadius - 4
+    readonly property int settingsSegRadius: inner(settingsCardRadius, 4)
     readonly property int settingsSegPadX: 10
     readonly property color settingsSegBg: mix(settingsBg, fg, 0.04)
     readonly property real settingsFocusWidth: 1.5

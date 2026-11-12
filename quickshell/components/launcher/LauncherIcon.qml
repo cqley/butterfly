@@ -22,9 +22,15 @@ Item {
         border.width: Theme.launchIconBorderWidth
         antialiasing: true
         transformOrigin: Item.Center
-        scale: root.pressed ? Theme.feedbackPressScale : root.selected ? Theme.launchIconSelectedScale : root.hovered ? Theme.feedbackHoverScale : 1
+        scale: iconScale.shaped
 
-        Behavior on scale { NumberAnimation { duration: root.snap ? 0 : Theme.feedbackDuration; easing.type: Theme.ease } }
+        ScaleSpring {
+            id: iconScale
+            size: Theme.launchIconBox
+            snap: root.snap
+            target: root.pressed ? Theme.feedbackPressScale : root.selected ? Theme.launchIconSelectedScale : root.hovered ? Theme.feedbackHoverScale : 1
+        }
+
         Behavior on color { ColorAnimation { duration: root.snap ? 0 : Theme.feedbackDuration; easing.type: Theme.ease } }
         Behavior on border.color { ColorAnimation { duration: root.snap ? 0 : Theme.feedbackDuration; easing.type: Theme.ease } }
     }

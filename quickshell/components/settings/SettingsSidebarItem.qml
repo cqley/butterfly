@@ -62,20 +62,22 @@ Item {
     Rectangle {
         id: iconBg
         x: Theme.settingsSidebarPadX
-        y: Math.round((root.height - height) / 2)
+        y: Theme.mid(root.height, height)
         width: Theme.settingsSidebarIconD
         height: Theme.settingsSidebarIconD
         radius: width / 2
         color: root.selected ? Theme.settingsIconOnBg : Theme.settingsIconOffBg
-        scale: touch.pressed ? Theme.feedbackPressScale : (touch.containsMouse ? Theme.feedbackHoverScale : 1)
+        scale: iconScale.shaped
         antialiasing: true
 
         Behavior on color {
             ColorAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
         }
 
-        Behavior on scale {
-            NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+        ScaleSpring {
+            id: iconScale
+            size: Theme.settingsSidebarIconD
+            target: touch.pressed ? Theme.feedbackPressScale : (touch.containsMouse ? Theme.feedbackHoverScale : 1)
         }
 
         Shape {

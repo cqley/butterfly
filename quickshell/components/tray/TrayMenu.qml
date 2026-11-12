@@ -10,6 +10,7 @@ Pick {
 
     n: items.length
     rows: Theme.trayRows
+    pad: Theme.trayPad
     width: n > 0 ? Math.min(n, Theme.trayRows) * Theme.trayCellW : Theme.trayEmptyW
     height: n > 0 ? Theme.trayRowH : empty.implicitHeight + Theme.emptyPad
     focus: shown
@@ -113,15 +114,19 @@ Pick {
             id: inner
             width: root.n * Theme.trayCellW
             height: parent.height
-            x: -root.start * Theme.trayCellW
+            x: scroll.shaped
 
-            Behavior on x {
-                NumberAnimation { duration: root.snap ? 0 : root.dur; easing.type: Theme.ease }
+            Spring {
+                id: scroll
+                response: Theme.glideResponse
+                settle: Theme.springSettle
+                snap: root.snap
+                target: -root.start * Theme.trayCellW
             }
 
             Rectangle {
                 id: selector
-                x: root.sel * Theme.trayCellW + (Theme.trayCellW - Theme.traySelD) / 2
+                x: slide.shaped
                 y: (Theme.trayRowH - Theme.traySelD) / 2
                 width: Theme.traySelD
                 height: Theme.traySelD
@@ -131,8 +136,12 @@ Pick {
                 border.color: Theme.surfaceBorder
                 antialiasing: true
 
-                Behavior on x {
-                    NumberAnimation { duration: root.snap ? 0 : root.dur; easing.type: Theme.ease }
+                Spring {
+                    id: slide
+                    response: Theme.glideResponse
+                    settle: Theme.springSettle
+                    snap: root.snap
+                    target: root.sel * Theme.trayCellW + (Theme.trayCellW - Theme.traySelD) / 2
                 }
             }
 
@@ -155,10 +164,12 @@ Pick {
                     Item {
                         anchors.fill: parent
                         transformOrigin: Item.Center
-                        scale: area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1
+                        scale: cellScale.shaped
 
-                        Behavior on scale {
-                            NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+                        ScaleSpring {
+                            id: cellScale
+                            size: Theme.trayCellW
+                            target: area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1
                         }
 
                         ClippingRectangle {

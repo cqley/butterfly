@@ -17,5 +17,5 @@ Item {
         text: root.text
     }
 
-    readonly property real shift: (fm.descent - fm.ascent) / 2 - (tm.tightBoundingRect.y + tm.tightBoundingRect.height / 2)
+    readonly property real shift: Math.round((fm.descent - fm.ascent) / 2 - (tm.tightBoundingRect.y + tm.tightBoundingRect.height / 2))
 }

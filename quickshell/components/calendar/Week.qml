@@ -1,11 +1,11 @@
 import "../core"
 import QtQuick
 
-Fade {
+Panel {
     id: root
     property date now
     property int target: 0
-    property real pos: target
+    readonly property real pos: posMotion.shaped
     property int cells: Theme.weekCells
     property int lead: Theme.weekLead
     property real fadeSpan: Theme.weekFadeSpan
@@ -22,7 +22,14 @@ Fade {
 
     onVisibleChanged: if (!visible) target = 0
 
-    Behavior on pos { NumberAnimation { duration: Theme.glide; easing.type: Theme.ease } }
+    Spring {
+        id: posMotion
+        response: Theme.glideResponse
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
+        settle: Theme.springSettle / Theme.cellW
+        target: root.target
+    }
 
     transform: Translate {
         y: slideMotion.value

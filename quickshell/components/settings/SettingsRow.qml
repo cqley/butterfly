@@ -173,7 +173,7 @@ Item {
         width: Theme.settingsArrowSize
         height: Theme.settingsArrowSize
         x: Math.round(root.width - Theme.settingsRowPadX - width)
-        y: Math.round((root.height - height) / 2)
+        y: Theme.mid(root.height, height)
 
         Shape {
             anchors.centerIn: parent

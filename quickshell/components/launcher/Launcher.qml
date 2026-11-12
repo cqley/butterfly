@@ -4,13 +4,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-Singleton {
+Menu {
     id: root
-    property bool open: false
+    name: "launcher"
     property var counts: Object.create(null)
-
-    onOpenChanged: if (open)
-        Modal.claim("launcher")
 
     function bump(id) {
         if (!id)
@@ -22,7 +19,6 @@ Singleton {
     }
 
     Component.onCompleted: {
-        Modal.register("launcher", root)
         Quickshell.execDetached(["mkdir", "-p", Quickshell.stateDir])
         try {
             const parsed = JSON.parse(store.text())
@@ -39,11 +35,5 @@ Singleton {
         path: Quickshell.statePath("launcher.json")
         blockLoading: true
         printErrors: false
-    }
-
-    IpcHandler {
-        target: "launcher"
-        function toggle(): void { root.open = !root.open }
-        function status(): string { return root.open ? "open" : "closed" }
     }
 }

@@ -36,9 +36,13 @@ Item {
     width: primary ? Theme.playS : Theme.ctlS
     height: width
     transformOrigin: Item.Center
-    scale: !live ? 1 : area.pressed ? Theme.btnPressScale : area.containsMouse ? Theme.btnHoverScale : 1
+    scale: pressScale.shaped
 
-    Behavior on scale { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }
+    ScaleSpring {
+        id: pressScale
+        size: root.width
+        target: !live ? 1 : area.pressed ? Theme.btnPressScale : area.containsMouse ? Theme.btnHoverScale : 1
+    }
 
     NumberAnimation {
         id: morphAnim
@@ -79,8 +83,8 @@ Item {
         transform: Translate { x: root.bump + root.dx }
 
         Shape {
-            x: Math.round((root.width - width) / 2)
-            y: Math.round((root.height - height) / 2)
+            x: Theme.mid(root.width, width)
+            y: Theme.mid(root.height, height)
             width: Theme.iconGrid
             height: Theme.iconGrid
             scale: root.glyph / Theme.iconGrid
@@ -101,8 +105,8 @@ Item {
         }
 
         Shape {
-            x: Math.round((root.width - width) / 2)
-            y: Math.round((root.height - height) / 2)
+            x: Theme.mid(root.width, width)
+            y: Theme.mid(root.height, height)
             width: Theme.iconGrid
             height: Theme.iconGrid
             scale: root.glyph / Theme.iconGrid

@@ -6,9 +6,10 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Bluetooth
 
-Singleton {
+Menu {
     id: root
-    property bool open: false
+    name: "bluetooth"
+    ipc: false
 
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property bool available: !!adapter
@@ -70,10 +71,7 @@ Singleton {
         items = result.items
     }
 
-    Component.onCompleted: {
-        Modal.register("bluetooth", root)
-        rebuild()
-    }
+    Component.onCompleted: rebuild()
 
     Connections {
         target: root.available ? root.adapter.devices : null
@@ -148,7 +146,6 @@ Singleton {
 
     onOpenChanged: {
         if (open) {
-            Modal.claim("bluetooth")
             order = []
             rebuild()
         }
@@ -256,6 +253,6 @@ Singleton {
             }
             root.toggleAdapter()
         }
-        function status(): string { return (root.open ? "open" : "closed") + " · " + root.report() }
+        function status(): string { return root.status() }
     }
 }

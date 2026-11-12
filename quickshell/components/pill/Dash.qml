@@ -18,6 +18,7 @@ Item {
     property bool staged: false
     property bool ready: true
     property real t: 0
+    property real tFlat: 0
     property bool live: false
     property bool morphs: false
     property real calm: 0
@@ -35,7 +36,7 @@ Item {
 
     readonly property int row1y: 0
     readonly property int row2y: Theme.dashRowH + Theme.dashRowGap
-    readonly property real clockT: Math.max(0, Math.min(1, root.t))
+    readonly property real clockT: Math.max(0, Math.min(1, root.tFlat))
     readonly property real sizeT: Math.max(0, Math.min(1,
         (root.clockT - Theme.dashSizeHold) / (1 - 2 * Theme.dashSizeHold)))
     readonly property real clockSize: Theme.clockPx + (Theme.dashClockPx - Theme.clockPx) * root.sizeT
@@ -58,7 +59,6 @@ Item {
     }
 
     readonly property bool wifiHands: root.origin("wifi") !== null
-    readonly property bool wifiTravels: Theme.dashNet && root.wifiHands
     property real netLit: Net.enabled ? 1 : 0
     readonly property color wifiInk: Theme.mix(root.dim, Theme.accent, root.netLit)
     readonly property color wifiIdleInk: Theme.mix(Theme.mix(Theme.bg, Theme.accent, Theme.dimMid), Theme.accent, root.netLit)
@@ -75,6 +75,8 @@ Item {
 
     width: Theme.dashW - 2 * Theme.dashPadX
     height: Theme.dashRowH + Theme.dashRowGap + Theme.dashRow2H
+    readonly property real wantW: width + 2 * Theme.dashPadX
+    readonly property real wantH: y + height + Theme.dashPad
     visible: root.present && root.opacity > 0.004
     opacity: 0
 
@@ -170,13 +172,10 @@ Item {
             hoverable: true
             onActivated: Mixer.open = true
 
-            BatteryIcon {
+            BatteryModule {
                 id: bat
                 anchors.centerIn: parent
                 height: Theme.h
-                pct: Battery.pct
-                tone: Battery.tone
-                pluggedIn: Battery.pluggedIn
             }
         }
     }
@@ -192,17 +191,11 @@ Item {
             contentW: Workspaces.span
             origin: root.origin("ws")
 
-            WorkspaceStrip {
+            WsModule {
                 id: strip
                 x: (parent.width - width) / 2
-                y: Math.round((parent.height - height) / 2)
+                y: Theme.mid(parent.height, height)
                 live: Theme.dashWs && Workspaces.available
-                vert: Theme.wsVertical
-                layoutFade: Workspaces.layoutFade
-                index: Workspaces.index
-                count: Workspaces.count
-                total: Workspaces.total
-                filled: Workspaces.filled
 
                 MouseArea {
                     anchors.fill: parent
@@ -222,7 +215,7 @@ Item {
 
     DashRow {
         id: centre
-        x: Math.round((root.width - width) / 2)
+        x: Theme.mid(root.width, width)
         y: clockLift.shaped
         height: Theme.dashRowH
 
@@ -230,6 +223,8 @@ Item {
             contentW: 2 * Math.ceil(ghost.width / 2)
             origin: root.origin("clock")
             fades: !root.hands
+            bounces: false
+            stages: false
 
             RollTxt {
                 id: clockText
@@ -245,12 +240,13 @@ Item {
     }
 
     DashRow {
-        x: Math.round((root.width - width) / 2)
+        x: Theme.mid(root.width, width)
         y: root.row2y
         height: Theme.dashRow2H
 
         DashCell {
             shown: root.dateText !== ""
+            stages: false
             contentW: 2 * Math.ceil(date.implicitWidth / 2)
 
             InkTxt {
@@ -287,10 +283,13 @@ Item {
                 ink: Theme.accent
                 paths: [Theme.bellPath, Theme.bellClapperPath]
                 opacity: Notifs.dnd ? 0 : 1
-                scale: Notifs.dnd ? Theme.dashSwapScale : 1
+                scale: bellScale.shaped
 
-                Behavior on scale {
-                    NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                ScaleSpring {
+                    id: bellScale
+                    size: Theme.dashGlyph
+                    response: Theme.glideResponse
+                    target: Notifs.dnd ? Theme.dashSwapScale : 1
                 }
 
                 Behavior on opacity {
@@ -330,15 +329,21 @@ Item {
                 fill: true
                 paths: [Theme.moonPath]
                 opacity: Notifs.dnd ? 1 : 0
-                scale: Notifs.dnd ? 1 : Theme.dashSwapScale
-                rotation: Notifs.dnd ? 0 : Theme.dashSwapTurn
+                scale: moonScale.shaped
+                rotation: moonTurn.shaped
 
-                Behavior on scale {
-                    NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                ScaleSpring {
+                    id: moonScale
+                    size: Theme.dashGlyph
+                    response: Theme.glideResponse
+                    target: Notifs.dnd ? 1 : Theme.dashSwapScale
                 }
 
-                Behavior on rotation {
-                    NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                Spring {
+                    id: moonTurn
+                    response: Theme.glideResponse
+                    settle: Theme.turnSettle(Theme.dashGlyph)
+                    target: Notifs.dnd ? 0 : Theme.dashSwapTurn
                 }
 
                 Behavior on opacity {
@@ -363,10 +368,9 @@ Item {
             onActivated: Net.open = true
             onToggled: Net.requestPower()
 
-            Sig {
+            WifiModule {
                 id: sig
                 anchors.centerIn: parent
-                level: Net.bars
                 tint: Theme.mix(root.wifiIdleInk, root.wifiInk, root.wifiHands ? root.clockT : 1)
             }
         }
@@ -375,7 +379,6 @@ Item {
             shown: Theme.dashBt
             gap: Theme.dashStatusGap
             contentW: Theme.dashGlyph
-            stages: root.wifiTravels
             hoverable: true
             togglable: true
             onActivated: Bt.open = true
@@ -393,7 +396,6 @@ Item {
             shown: Theme.dashVolume
             gap: Theme.dashStatusGap
             contentW: Theme.dashVolW
-            stages: root.wifiTravels
             hoverable: true
             onActivated: Mixer.open = true
 
