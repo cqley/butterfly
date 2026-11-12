@@ -7,6 +7,19 @@ Column {
 
     SettingsGroup {
         SettingsRow {
+            label: "artwork background"
+            token: "mediaCover"
+
+            SettingsToggle {
+                checked: Theme.mediaCover
+                onToggled: on => {
+                    Cfg.set("mediaCover", on)
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
             label: "scrolling title"
             token: "mediaScroll"
 

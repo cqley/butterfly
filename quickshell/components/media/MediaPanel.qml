@@ -1,5 +1,6 @@
 import "../core"
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Shapes
 import Quickshell.Widgets
 
@@ -118,8 +119,62 @@ Fade {
         onTriggered: if (root.p && root.p.positionSupported) root.p.positionChanged()
     }
 
+    Item {
+        x: -Theme.mediaCoverInset
+        y: -Theme.mediaCoverInset
+        width: Theme.mediaW + 2 * Theme.mediaCoverInset
+        height: Theme.artS + 2 * Theme.mediaCoverInset
+        visible: Theme.mediaCover
+
+        ClippingRectangle {
+            anchors.fill: parent
+            radius: Theme.mediaCoverR
+            color: Theme.chip
+            antialiasing: true
+
+            Item {
+                x: -Theme.mediaCoverBleed
+                y: -Theme.mediaCoverBleed
+                width: parent.width + 2 * Theme.mediaCoverBleed
+                height: parent.height + 2 * Theme.mediaCoverBleed
+
+                StableImage {
+                    anchors.fill: parent
+                    source: Theme.mediaCover ? root.artSource : ""
+                    fade: Theme.artFade
+                    opaque: true
+                    fillMode: Image.PreserveAspectCrop
+                    sourceSize: Qt.size(Theme.mediaCoverSource, Theme.mediaCoverSource)
+                    layer.enabled: Theme.mediaCover
+                    layer.effect: MultiEffect {
+                        autoPaddingEnabled: false
+                        blurEnabled: true
+                        blur: 1
+                        blurMax: Theme.mediaCoverBlurMax
+                    }
+                }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: Theme.bg
+                opacity: Theme.mediaCoverDim
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Theme.mediaCoverR
+            color: "transparent"
+            border.width: Theme.surfaceBorderWidth
+            border.color: Theme.surfaceBorder
+            antialiasing: true
+        }
+    }
+
     ClippingRectangle {
         id: art
+        visible: !Theme.mediaCover
         width: Theme.artS
         height: Theme.artS
         radius: Theme.artR
@@ -136,6 +191,7 @@ Fade {
             source: root.artSource
             retries: 2
             fade: Theme.artFade
+            opaque: true
             fillMode: Image.PreserveAspectCrop
             sourceSize: Qt.size(Theme.artS * 2, Theme.artS * 2)
         }
@@ -162,6 +218,7 @@ Fade {
     }
 
     Rectangle {
+        visible: !Theme.mediaCover
         width: art.width
         height: art.height
         radius: art.radius
@@ -177,6 +234,7 @@ Fade {
 
     MouseArea {
         id: artArea
+        visible: !Theme.mediaCover
         width: art.width
         height: art.height
         hoverEnabled: true
@@ -187,7 +245,7 @@ Fade {
 
     Item {
         id: side
-        x: Theme.artS + Theme.mediaGap
+        x: Theme.mediaCover ? 0 : Theme.artS + Theme.mediaGap
         width: Theme.mediaW - x
         height: Theme.artS
 
@@ -228,6 +286,7 @@ Fade {
                     height: parent.height
                     verticalAlignment: Text.AlignVCenter
                     text: root.title
+                    horizontalAlignment: Theme.mediaCover && !titleBox.rolling ? Text.AlignHCenter : Text.AlignLeft
                     onTextChanged: titleBox.rewind()
                     elide: titleBox.rolling ? Text.ElideNone : Text.ElideRight
                     maximumLineCount: 1
@@ -267,6 +326,7 @@ Fade {
                 height: Theme.mediaArtistH
                 verticalAlignment: Text.AlignVCenter
                 text: root.artist
+                horizontalAlignment: Theme.mediaCover ? Text.AlignHCenter : Text.AlignLeft
                 visible: text !== ""
                 elide: Text.ElideRight
                 maximumLineCount: 1
@@ -310,7 +370,8 @@ Fade {
         Rectangle {
             id: bar
             y: parent.height - height - (Theme.mediaTimes ? Theme.mediaTimeGap + Theme.mediaTimeH : 0)
-            width: parent.width
+            x: Theme.mediaCover ? Theme.mediaCoverBarInset : 0
+            width: parent.width - 2 * x
             height: Theme.barH
             radius: height / 2
             color: Theme.mediaTrack
@@ -352,6 +413,7 @@ Fade {
         }
 
         Txt {
+            x: bar.x
             y: parent.height - Theme.mediaTimeH
             height: Theme.mediaTimeH
             verticalAlignment: Text.AlignVCenter
@@ -367,6 +429,7 @@ Fade {
 
         Txt {
             anchors.right: parent.right
+            anchors.rightMargin: bar.x
             y: parent.height - Theme.mediaTimeH
             height: Theme.mediaTimeH
             verticalAlignment: Text.AlignVCenter

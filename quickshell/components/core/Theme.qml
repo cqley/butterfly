@@ -556,6 +556,14 @@ Singleton {
     readonly property string artNotePath: "M9 18V5L21 3V16M9 18A3 3 0 0 1 3 18A3 3 0 0 1 9 18ZM21 16A3 3 0 0 1 15 16A3 3 0 0 1 21 16Z"
     readonly property bool mediaTimes: cfg("mediaTimes", false)
     readonly property bool mediaScroll: cfg("mediaScroll", false)
+    readonly property bool mediaCover: cfg("mediaCover", false)
+    readonly property int mediaCoverSource: 128
+    readonly property int mediaCoverBlurMax: 48
+    readonly property int mediaCoverBleed: 48
+    readonly property real mediaCoverDim: 0.45
+    readonly property int mediaCoverInset: 8
+    readonly property int mediaCoverR: radius - (islandMediaPad - mediaCoverInset)
+    readonly property int mediaCoverBarInset: 12
     readonly property int mediaScrollSpeed: 24
     readonly property int mediaScrollHold: 1600
     readonly property real mediaPausedArt: 0.97

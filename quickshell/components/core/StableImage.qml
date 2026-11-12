@@ -13,6 +13,7 @@ Item {
     property int tried: 0
     property int fade: 0
     property bool flip: false
+    property bool opaque: false
     readonly property Image face: flip ? second : first
     readonly property Image under: flip ? first : second
     readonly property int status: face.status
@@ -79,12 +80,18 @@ Item {
             easing.type: Theme.ease
         }
 
-        NumberAnimation {
-            target: root.under
-            property: "opacity"
-            to: 0
-            duration: root.fade
-            easing.type: Theme.ease
+        SequentialAnimation {
+            PauseAnimation {
+                duration: root.opaque ? root.fade : 0
+            }
+
+            NumberAnimation {
+                target: root.under
+                property: "opacity"
+                to: 0
+                duration: root.opaque ? 0 : root.fade
+                easing.type: Theme.ease
+            }
         }
     }
 
