@@ -668,7 +668,7 @@ Item {
             present: morph.live
             leaving: morph.leaving
             staged: morph.staged
-            ready: root.islandReady
+            ready: root.islandReady && (!morph.staged || root.faceReady("island"))
             t: morph.t
             tFlat: morph.tFlat
             hands: root.idleClock

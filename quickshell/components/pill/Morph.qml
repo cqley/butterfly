@@ -28,7 +28,7 @@ Item {
     readonly property real wsVeil: root.wsMorphs ? root.veil : root.orphanVeil
 
     function arm() {
-        root.wasClosed = !root.islandOpen
+        root.wasClosed = root.bare
         root.heldVis = root.visualizer
         if (!root.face) {
             drive.land(0)
