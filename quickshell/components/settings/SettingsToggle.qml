@@ -57,8 +57,12 @@ Rectangle {
         width: Theme.settingsToggleKnob
         height: Theme.settingsToggleKnob
         radius: width / 2
-        color: Theme.fg
+        color: root.checked && !Theme.whiteKnobs ? Theme.settingsBg : Theme.knobInk
         antialiasing: true
+
+        Behavior on color {
+            ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
+        }
     }
 
     MouseArea {

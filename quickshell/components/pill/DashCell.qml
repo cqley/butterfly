@@ -12,6 +12,7 @@ Item {
     property bool hoverable: false
     property bool togglable: false
     property bool stages: false
+    property var lead: null
     signal activated
     signal toggled
 
@@ -27,7 +28,11 @@ Item {
     readonly property bool morphs: cell.origin !== null && cell.origin !== undefined
     readonly property real hold: cell.stages && !cell.morphs ? Math.min(cell.calm, cell.late) : 1
     readonly property real homeCx: (parent ? parent.x : 0) + cell.x + cell.gap + cell.contentW / 2
-    readonly property real travelX: cell.morphs ? (1 - cell.t) * (cell.origin - cell.homeCx) : 0
+    readonly property real reach: cell.morphs ? cell.origin - cell.homeCx : 0
+    readonly property bool locked: cell.morphs && !!cell.lead && cell.lead.morphs && cell.lead.shown
+    readonly property real travelX: !cell.morphs ? 0
+        : cell.locked ? cell.lead.travelX + Math.pow(Math.max(0, 1 - cell.t), Theme.dashColumnLock) * (cell.reach - cell.lead.reach)
+        : (1 - cell.t) * cell.reach
     readonly property real travelY: cell.morphs ? (1 - cell.t) * (cell.originY - cell.rowCy) : 0
     readonly property bool hovered: hit.containsMouse
     readonly property bool pressed: hit.pressed

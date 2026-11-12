@@ -496,7 +496,7 @@ Item {
         Sig {
             anchors.centerIn: parent
             level: Net.bars
-            tint: Net.enabled ? Theme.fg : Theme.mix(Theme.bg, Theme.fg, Theme.dimMid)
+            tint: Net.enabled ? Theme.accent : Theme.mix(Theme.bg, Theme.accent, Theme.dimMid)
 
             Behavior on tint {
                 ColorAnimation { duration: Theme.glide; easing.type: Theme.ease }
@@ -983,6 +983,7 @@ Item {
                         anchors.fill: parent
                         horizontalAlignment: Text.AlignHCenter
                         text: Theme.clockText(root.clockNow)
+                        color: Theme.clockInk
                         font.pixelSize: Theme.clockPx
                         font.features: Theme.tabular
                         dx: Theme.clockOffsetX

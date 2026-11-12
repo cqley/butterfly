@@ -81,20 +81,8 @@ Singleton {
 
         if (connection !== "" && connection !== previousConnection) {
             root.lastPowerConnection = connection
-            if (previousConnection !== "") {
-                Notifs.pushSystem(
-                    connection === "external" ? "charger connected" : "charger disconnected",
-                    connection === "external"
-                        ? percent >= 100
-                            ? `battery full · ${percent}%`
-                            : `battery charging · ${percent}%`
-                        : `running on battery · ${percent}%`,
-                    connection === "external",
-                    "battery",
-                    false,
-                    root.pct
-                )
-            }
+            if (previousConnection !== "")
+                root.notifyConnection(connection)
             if (connection === "battery") {
                 root.chargingSeen = false
                 root.fullNotified = false
@@ -107,10 +95,30 @@ Singleton {
         if (reachedFull) {
             root.chargingSeen = false
             root.fullNotified = true
-            Notifs.pushSystem("battery full", `charging complete · ${percent}%`, true, "battery", false, root.pct)
+            root.notifyFull()
         }
 
         root.lastPercent = percent
+    }
+
+    function notifyConnection(connection) {
+        const plugged = connection === "external"
+        Notifs.pushSystem(
+            plugged ? "charger connected" : "charger disconnected",
+            plugged
+                ? root.percent >= 100
+                    ? `battery full · ${root.percent}%`
+                    : `battery charging · ${root.percent}%`
+                : `running on battery · ${root.percent}%`,
+            plugged,
+            "battery",
+            false,
+            root.pct
+        )
+    }
+
+    function notifyFull() {
+        Notifs.pushSystem("battery full", `charging complete · ${root.percent}%`, true, "battery", false, root.pct)
     }
 
     function resetPowerConnection() {
@@ -157,5 +165,8 @@ Singleton {
         function testUp(): void { root.testPct = Math.min(1, root.testPct + 0.1) }
         function testDown(): void { root.testPct = Math.max(0, root.testPct - 0.1) }
         function testCharging(): void { root.testCharging = !root.testCharging }
+        function testNotifyPlug(): void { root.notifyConnection("external") }
+        function testNotifyUnplug(): void { root.notifyConnection("battery") }
+        function testNotifyFull(): void { root.notifyFull() }
     }
 }

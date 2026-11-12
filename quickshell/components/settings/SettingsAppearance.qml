@@ -79,6 +79,32 @@ Column {
                 }
             }
         }
+
+        SettingsRow {
+            label: "white knobs"
+            token: "whiteKnobs"
+
+            SettingsToggle {
+                checked: Theme.whiteKnobs
+                onToggled: on => {
+                    Cfg.set("whiteKnobs", on)
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
+            label: "white clock"
+            token: "whiteClock"
+
+            SettingsToggle {
+                checked: Theme.whiteClock
+                onToggled: on => {
+                    Cfg.set("whiteClock", on)
+                    Cfg.flush()
+                }
+            }
+        }
     }
 
     SettingsGroup {

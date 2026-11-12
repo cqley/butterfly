@@ -61,7 +61,7 @@ Item {
     readonly property bool wifiTravels: Theme.dashNet && root.wifiHands
     property real netLit: Net.enabled ? 1 : 0
     readonly property color wifiInk: Theme.mix(root.dim, Theme.accent, root.netLit)
-    readonly property color wifiIdleInk: Theme.mix(Theme.mix(Theme.bg, Theme.fg, Theme.dimMid), Theme.fg, root.netLit)
+    readonly property color wifiIdleInk: Theme.mix(Theme.mix(Theme.bg, Theme.accent, Theme.dimMid), Theme.accent, root.netLit)
 
     Behavior on netLit {
         NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
@@ -166,6 +166,7 @@ Item {
             shown: Theme.dashBattery && root.onBattery
             contentW: bat.width
             origin: root.origin("battery")
+            lead: wsCell
             hoverable: true
             onActivated: Mixer.open = true
 
@@ -235,6 +236,7 @@ Item {
                 anchors.fill: parent
                 horizontalAlignment: Text.AlignHCenter
                 text: Theme.clockText(root.now)
+                color: Theme.clockInk
                 font.pixelSize: root.clockPixel
                 font.features: Theme.tabular
                 scale: root.clockScale

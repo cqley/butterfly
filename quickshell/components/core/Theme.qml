@@ -90,8 +90,12 @@ Singleton {
     readonly property color accentAuto: pal && pal.special && pal.special.accent ? pal.special.accent : "#f2b8e2"
     readonly property string accentOverride: cfg("accent", "")
     readonly property color accent: isHex(accentOverride) ? accentOverride : accentAuto
+    readonly property bool whiteKnobs: cfg("whiteKnobs", true)
+    readonly property bool whiteClock: cfg("whiteClock", true)
+    readonly property color knobInk: whiteKnobs ? white : accent
+    readonly property color clockInk: whiteClock ? white : fg
     readonly property var primarySwatches: [bgAuto, "#000000", "#0d0d0f", "#17171a", "#202024", "#141a22", "#1c1526", "#101c17"]
-    readonly property var accentSwatches: [accentAuto, "#e5534b", "#f2994a", "#f2c94c", "#6fcf97", "#56ccd0", "#5b8def", "#bb6bd9"]
+    readonly property var accentSwatches: [accentAuto, "#de8383", "#f2be8c", "#eef27c", "#bdfcc4", "#a3e4e8", "#9cb4d9", "#f2b8e2"]
 
     function onTone(c) {
         return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b > 0.5 ? "#000000" : "#ffffff"
@@ -293,7 +297,7 @@ Singleton {
     readonly property bool wsOn: cfg("wsOn", false)
     readonly property string wsPlace: cfg("wsPlace", "left")
     readonly property bool wsVertical: cfg("wsVertical", false)
-    readonly property bool wsAccent: cfg("wsAccent", false)
+    readonly property bool wsAccent: cfg("wsAccent", true)
     readonly property bool wsClick: cfg("wsClick", false)
     readonly property real wsHotLift: 0.45
     readonly property int wsCount: cfg("wsCount", 5)
@@ -320,32 +324,28 @@ Singleton {
     readonly property int wsOffsetY: 0
 
     // battery
-    readonly property int batRowH: 16
-    readonly property int batW: 21
-    readonly property int batH: 11
-    readonly property int batBorder: 1
+    readonly property int batW: 18
+    readonly property int batH: 10
+    readonly property real batRadius: 3
     readonly property int batNubW: 2
-    readonly property int batNubH: 5
+    readonly property int batNubH: 4
     readonly property int batNubGap: 1
-    readonly property color batNubColor: batOutline
-    readonly property int batRadius: 4
-    readonly property int batFillRadius: 3
     readonly property int batFillMin: 2
+    readonly property real batTrack: 0.3
     readonly property int batBoltW: 9
     readonly property int batBoltH: 12
     readonly property string batBoltPath: "M5.66 0L1.2 6.7H3.94L2.91 12L7.37 5.3H4.63Z"
     readonly property real batGlyphStroke: 1.4
     readonly property real batGlyphSoften: 0.9
     readonly property real batBoltYOffset: 0.1
+    readonly property color batBoltColor: accent
+    readonly property color batBoltOutline: bg
     readonly property real batBoltScale: 0.75
     readonly property real batBoltResponse: springResponse
     readonly property real batBoltDamping: springDamping
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"
-    readonly property color batGreen: green
-    readonly property color batOutline: "#ffffff"
-    readonly property color batBoltColor: "#ffffff"
-    readonly property color batBoltOutline: "#000000"
+    readonly property color batOk: accent
     readonly property real batRedAt: cfg("batRedAt", 0.15)
     readonly property real batYellowAt: cfg("batYellowAt", 0.25)
     readonly property bool batOn: cfg("batOn", true)
@@ -357,7 +357,7 @@ Singleton {
     readonly property int batRingFall: 0
 
     function batTone(pct) {
-        return pct <= batRedAt ? batRed : pct <= batYellowAt ? batYellow : batGreen
+        return pct <= batRedAt ? batRed : pct <= batYellowAt ? batYellow : batOk
     }
 
     // notifications
@@ -817,6 +817,7 @@ Singleton {
     readonly property real dashLateAt: 0.85
     readonly property real dashSizeHold: 0.06
     readonly property real dashMorphHold: 0.06
+    readonly property real dashColumnLock: 3
     readonly property bool dashWs: cfg("dashWs", true)
     readonly property bool dashDate: cfg("dashDate", true)
     readonly property bool dashNotes: cfg("dashNotes", true)

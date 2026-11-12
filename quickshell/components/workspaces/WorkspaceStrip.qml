@@ -38,9 +38,10 @@ Item {
     readonly property real scroll: Math.max(0, Math.min(root.limit, slide.value - root.bias))
     readonly property int rendered: Math.max(root.total, Math.ceil(slide.value) + 2)
 
-    readonly property color dimInk: Theme.mix(Theme.bg, Theme.fg, Theme.wsDotDim)
-    readonly property color liveInk: Theme.mix(Theme.bg, Theme.fg, Theme.wsDotLive)
-    readonly property color activeInk: Theme.wsAccent ? Theme.accent : Theme.fg
+    readonly property color ink: Theme.wsAccent ? Theme.accent : Theme.fg
+    readonly property color dimInk: Theme.mix(Theme.bg, root.ink, Theme.wsDotDim)
+    readonly property color liveInk: Theme.mix(Theme.bg, root.ink, Theme.wsDotLive)
+    readonly property color activeInk: root.ink
 
     width: spanMotion.value
     height: Theme.h

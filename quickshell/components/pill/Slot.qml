@@ -13,17 +13,17 @@ Item {
     property bool pinEnd: false
     readonly property bool pinned: root.shown ? root.pinEnd : !root.pinEnd
     property int viewWidth: 0
-    readonly property real contentNow: contentMotion.value
+    readonly property real contentNow: contentMotion.shaped
     readonly property real homeX: root.pinned
         ? root.width - root.trailingGap - root.contentNow
         : root.leadingGap
     property real veil: 1
     readonly property int targetWidth: shown ? settledGap + contentWidth + settledTrailingGap : 0
-    readonly property real enter: enterMotion.value
+    readonly property real enter: enterMotion.shaped
     readonly property real exitRaw: Math.max(0, Math.min(1, (root.enter - Theme.slotExitAt) / (1 - Theme.slotExitAt)))
     readonly property real ink: root.shown ? root.enter : root.exitRaw * root.exitRaw * (3 - 2 * root.exitRaw)
     readonly property real contentX: holder.x
-    readonly property bool settled: root.enter >= 1 && !contentMotion.moving
+    readonly property bool settled: root.enter >= 1 && root.contentNow === root.viewWidth
     default property alias content: holder.data
 
     width: (leadingGap + contentNow + trailingGap) * enter
@@ -61,6 +61,7 @@ Item {
         damping: Theme.idlePopDamping
         epsilon: Theme.springUnitEps
         rest: Theme.springUnitStop
+        hold: Theme.springHold
     }
 
     Spring {
@@ -69,6 +70,7 @@ Item {
         response: Theme.idlePopResponse
         damping: Theme.idlePopDamping
         epsilon: Theme.settleEps
+        hold: Theme.springHold
     }
 
     Item {

@@ -93,7 +93,7 @@ Item {
         width: Theme.settingsSliderKnobD
         height: Theme.settingsSliderKnobD
         radius: width / 2
-        color: Theme.fg
+        color: Theme.knobInk
         antialiasing: true
         scale: drag.pressed ? Theme.feedbackPressScale : 1
 
