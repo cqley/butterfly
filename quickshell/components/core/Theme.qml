@@ -327,7 +327,8 @@ Singleton {
     readonly property bool wsAccent: cfg("wsAccent", true)
     readonly property bool wsClick: cfg("wsClick", false)
     readonly property real wsHotLift: 0.45
-    readonly property int wsCount: cfg("wsCount", 5)
+    readonly property int wsCountMax: 5
+    readonly property int wsCount: Math.min(cfg("wsCount", 5), wsCountMax)
     readonly property int wsGap: cfg("wsGap", 8)
     readonly property int wsPad: cfg("wsPad", 7)
     readonly property int wsClockGap: cfg("wsClockGap", 11)
@@ -346,6 +347,7 @@ Singleton {
     readonly property real wsSpread: cfg("wsSpread", 0.3)
     readonly property int wsSpreadCap: 8
     readonly property int wsMax: 24
+    readonly property int wsBleed: 2
     readonly property int wsSwap: cfg("wsSwap", 150)
     readonly property int wsOffsetX: 0
     readonly property int wsOffsetY: 0

@@ -86,7 +86,7 @@ Column {
 
             SettingsSlider {
                 from: 3
-                to: 10
+                to: Theme.wsCountMax
                 step: 1
                 value: Theme.wsCount
                 onMoved: v => Cfg.set("wsCount", Math.round(v))

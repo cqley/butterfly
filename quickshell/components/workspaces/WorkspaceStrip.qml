@@ -45,7 +45,6 @@ Item {
 
     width: spanMotion.value
     height: Theme.h
-    clip: true
 
     function settle() {
         reachRun.stop()
@@ -157,11 +156,16 @@ Item {
 
     Fade {
         id: reveal
-        anchors.fill: parent
+        x: -Theme.wsBleed
+        width: root.width + 2 * Theme.wsBleed
+        height: parent.height
+        clip: true
         shown: root.live
 
         Item {
-            anchors.fill: parent
+            x: Theme.wsBleed
+            width: root.width
+            height: parent.height
             opacity: (1 - root.layoutFade) * root.veil
 
             // dots
