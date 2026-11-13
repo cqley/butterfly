@@ -13,6 +13,7 @@ Item {
     property bool togglable: false
     property bool stages: true
     property bool bounces: true
+    property bool pops: true
     property var lead: null
     signal activated
     signal toggled
@@ -69,7 +70,7 @@ Item {
             size: cell.contentW
             response: Theme.dashMorphResponse
             damping: pop.target < 1 ? 1 : Theme.dashMorphDamping
-            target: cell.stages && !cell.morphs && cell.hold <= 0.001 ? Theme.dashPopFrom : 1
+            target: cell.pops && cell.stages && !cell.morphs && cell.hold <= 0.001 ? Theme.dashPopFrom : 1
         }
 
         Spring {

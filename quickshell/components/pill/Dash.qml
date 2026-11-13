@@ -247,7 +247,7 @@ Item {
 
         DashCell {
             shown: root.dateText !== ""
-            stages: false
+            pops: false
             contentW: 2 * Math.ceil(date.implicitWidth / 2)
 
             InkTxt {
