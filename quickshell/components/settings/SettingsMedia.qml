@@ -20,6 +20,19 @@ Column {
         }
 
         SettingsRow {
+            label: "white text"
+            token: "mediaWhiteText"
+
+            SettingsToggle {
+                checked: Theme.mediaWhiteText
+                onToggled: on => {
+                    Cfg.set("mediaWhiteText", on)
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
             label: "scrolling title"
             token: "mediaScroll"
 

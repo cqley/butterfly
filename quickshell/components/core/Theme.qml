@@ -586,6 +586,8 @@ Singleton {
     readonly property bool mediaTimes: cfg("mediaTimes", false)
     readonly property bool mediaScroll: cfg("mediaScroll", false)
     readonly property bool mediaCover: cfg("mediaCover", false)
+    readonly property bool mediaWhiteText: cfg("mediaWhiteText", true)
+    readonly property color mediaInk: mediaWhiteText ? white : fg
     readonly property int mediaCoverSource: 128
     readonly property int mediaCoverBlurMax: 48
     readonly property int mediaCoverBleed: 48

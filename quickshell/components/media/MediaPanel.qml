@@ -286,6 +286,7 @@ Panel {
 
                 Txt {
                     id: label
+                    color: Theme.mediaInk
                     x: titleBox.rolling ? -titleBox.over * titleBox.roll : 0
                     width: parent.width
                     height: parent.height
@@ -329,6 +330,7 @@ Panel {
             Txt {
                 width: parent.width
                 height: Theme.mediaArtistH
+                color: Theme.mediaInk
                 verticalAlignment: Text.AlignVCenter
                 text: root.artist
                 horizontalAlignment: Theme.mediaCover ? Text.AlignHCenter : Text.AlignLeft
@@ -422,6 +424,7 @@ Panel {
 
         Txt {
             x: bar.x
+            color: Theme.mediaInk
             y: parent.height - Theme.mediaTimeH
             height: Theme.mediaTimeH
             verticalAlignment: Text.AlignVCenter
@@ -437,6 +440,7 @@ Panel {
 
         Txt {
             anchors.right: parent.right
+            color: Theme.mediaInk
             anchors.rightMargin: bar.x
             y: parent.height - Theme.mediaTimeH
             height: Theme.mediaTimeH
