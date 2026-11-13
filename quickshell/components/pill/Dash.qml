@@ -93,7 +93,7 @@ Item {
             root.opacity = 1
             return
         }
-        if (root.leaving) {
+        if (root.leaving || !root.staged && !root.morphs) {
             root.retarget(0, Theme.fall)
             return
         }
@@ -109,6 +109,7 @@ Item {
     onLeavingChanged: root.sync()
     onStagedChanged: root.sync()
     onReadyChanged: root.sync()
+    onMorphsChanged: root.sync()
 
     onComposedChanged: {
         calmRun.stop()
@@ -325,7 +326,7 @@ Item {
             DashGlyph {
                 anchors.centerIn: parent
                 size: Theme.dashGlyph
-                ink: Theme.dndGlyph
+                ink: Theme.accent
                 fill: true
                 paths: [Theme.moonPath]
                 opacity: Notifs.dnd ? 1 : 0
