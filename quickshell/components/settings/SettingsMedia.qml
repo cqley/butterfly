@@ -7,6 +7,7 @@ Column {
     width: parent ? parent.width : 0
     spacing: Theme.settingsGroupGap
 
+    readonly property var visModes: ["off", "hover", "always"]
     readonly property var sources: Media.sources.indexOf(Theme.mediaSource) < 0 && Theme.mediaSource !== ""
         ? Media.sources.concat([Theme.mediaSource]) : Media.sources
 
@@ -114,13 +115,27 @@ Column {
 
     SettingsGroup {
         SettingsRow {
+            label: "visualizer"
+            token: "visIdle"
+
+            SettingsSegmented {
+                options: root.visModes
+                current: Math.max(0, root.visModes.indexOf(Theme.visIdle))
+                onPicked: i => {
+                    Cfg.set("visIdle", root.visModes[i])
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
             label: "bars"
             token: "visBars"
             value: Theme.visBars + ""
 
             SettingsSlider {
                 from: 3
-                to: 16
+                to: Theme.visBarsMax
                 step: 1
                 value: Theme.visBars
                 onMoved: v => Cfg.set("visBars", Math.round(v))

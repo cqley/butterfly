@@ -96,19 +96,4 @@ Column {
             }
         }
     }
-
-    SettingsGroup {
-        SettingsRow {
-            label: "visualizer on hover"
-            token: "visPeek"
-
-            SettingsToggle {
-                checked: Theme.visPeek
-                onToggled: on => {
-                    Cfg.set("visPeek", on)
-                    Cfg.flush()
-                }
-            }
-        }
-    }
 }

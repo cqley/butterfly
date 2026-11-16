@@ -881,8 +881,11 @@ Singleton {
     readonly property bool dashBattery: cfg("dashBattery", cfg("dashPower", true))
 
     // visualizer
-    readonly property bool visPeek: cfg("visPeek", false)
-    readonly property int visBars: cfg("visBars", 6)
+    readonly property string visIdle: cfg("visIdle", "off")
+    readonly property bool visPeek: visIdle === "hover"
+    readonly property bool visAlways: visIdle === "always"
+    readonly property int visBars: Math.min(cfg("visBars", 6), visBarsMax)
+    readonly property int visBarsMax: 16
     readonly property int visBarW: cfg("visBarW", 3)
     readonly property int visGap: 3
     readonly property int visMinH: 4

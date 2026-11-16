@@ -62,8 +62,8 @@ QtObject {
         if (root.open && root.at.level === 0) {
             root.go(root.at.mode, 1)
         } else if (!root.open && root.at.level > 0) {
-            root.go(root.at.mode, 0)
             root.armed = !root.hovered
+            root.go(root.at.mode, 0)
         }
     }
 }

@@ -68,7 +68,7 @@ Item {
     readonly property bool idleShowing: root.idleRowActive && (!root.panelOpen || root.mediaPanelShown)
     readonly property bool idleBare: root.idleRowActive && !root.panelOpen
     readonly property real idleRowCy: Theme.idleTopOffsetY + root.idleCenterDrop + Theme.h / 2
-    readonly property bool showVisualizer: Visualizer.on || (root.mediaPeek && Theme.visPeek) || root.mediaPanelShown
+    readonly property bool showVisualizer: Visualizer.on || (Theme.visAlways && Visualizer.active) || (root.mediaPeek && Theme.visPeek) || root.mediaPanelShown
     readonly property bool wifiShown: Theme.wifiOn && (Net.linkKnown || Net.available)
     readonly property bool wsAvailable: Theme.wsOn && Workspaces.available
     readonly property bool wsOnly: root.wsAvailable && Workspaces.place === "only"
@@ -94,11 +94,17 @@ Item {
     property real holdW: Theme.w
     property real holdH: Theme.h
     property bool media: false
+    property bool visRevealed: false
+    readonly property bool visGate: root.slotVis && root.panelReveal && !swapGate.running
     readonly property real wAnim: wMotion.shaped
     readonly property real hAnim: hMotion.shaped
 
     onEngagedChanged: sync()
-    onSlotVisChanged: swapGate.restart()
+    onSlotVisChanged: {
+        swapGate.restart()
+        root.visRevealed = false
+    }
+    onVisGateChanged: if (root.visGate) root.visRevealed = true
     onWsOnlyChanged: swapGate.restart()
     onFaceChanged: {
         swapped = root.wasMenu && root.modal
@@ -277,6 +283,7 @@ Item {
 
     Component.onCompleted: {
         sync()
+        root.visRevealed = root.visGate
         Modal.register("island", islandPop)
     }
 
@@ -499,7 +506,7 @@ Item {
         return root.activePanel === null ? dip : Math.min(dip, room)
     }
 
-    readonly property real idleCenterDrop: dropMotion.value
+    readonly property real idleCenterDrop: dropMotion.shaped
     readonly property real bodyDrop: Theme.gap + (islandPop.popped ? Theme.islandPopDrop : 0)
 
     Spring {
@@ -545,6 +552,7 @@ Item {
         response: Theme.islandDropResponse
         damping: Theme.islandDropDamping
         epsilon: Theme.settleEps
+        hold: Theme.springHold
     }
 
     readonly property int cornerCap: Launcher.open ? Theme.launchRadius : Theme.radius
@@ -873,10 +881,11 @@ Item {
             Item {
                 id: clockSlot
                 readonly property real restW: root.wsOnly ? wsOnlyStrip.span : clockText.implicitWidth
-                readonly property real wantW: Math.ceil(Math.max(clockSlot.restW, vbars.width,
+                readonly property real wantW: 2 * Math.ceil(Math.max(clockSlot.restW,
+                    root.slotVis ? vbars.restWidth : 0,
                     clockFade.visible ? clockText.implicitWidth : 0,
-                    wsOnlyFade.visible ? wsOnlyStrip.span : 0))
-                width: slotMotion.value
+                    wsOnlyFade.visible ? wsOnlyStrip.span : 0) / 2)
+                width: slotMotion.shaped
                 height: parent.height
 
                 Spring {
@@ -885,6 +894,7 @@ Item {
                     response: Theme.idlePopResponse
                     damping: Theme.idlePopDamping
                     epsilon: Theme.settleEps
+                    hold: Theme.springHold
                 }
 
                 Timer {
@@ -894,7 +904,7 @@ Item {
 
                 Fade {
                     id: clockFade
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    x: (clockSlot.width - width) / 2 + Math.round((clockSlot.wantW - width) / 2) - (clockSlot.wantW - width) / 2
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: Theme.clockOffsetY
                     anchors.alignWhenCentered: Theme.idleAlignWhenCentered
@@ -902,15 +912,14 @@ Item {
                     height: parent.height
                     shown: !root.slotVis && !root.wsOnly && root.idleSlotVisible
                     ready: !swapGate.running
-                    scale: Theme.slotScale + (1 - Theme.slotScale) * clockScale.value
+                    scale: Theme.slotScale + (1 - Theme.slotScale) * clockScale.shaped
 
-                    Spring {
+                    ScaleSpring {
                         id: clockScale
+                        size: clockText.implicitWidth
                         target: clockFade.active ? 1 : 0
                         response: Theme.idlePopResponse
                         damping: Theme.idlePopDamping
-                        epsilon: Theme.springUnitEps
-                        rest: Theme.springUnitStop
                     }
 
                     RollTxt {
@@ -935,15 +944,14 @@ Item {
                     height: parent.height
                     shown: root.wsOnly && !root.slotVis && root.idleSlotVisible
                     ready: !swapGate.running
-                    scale: Theme.slotScale + (1 - Theme.slotScale) * wsOnlyScale.value
+                    scale: Theme.slotScale + (1 - Theme.slotScale) * wsOnlyScale.shaped
 
-                    Spring {
+                    ScaleSpring {
                         id: wsOnlyScale
+                        size: wsOnlyStrip.width
                         target: wsOnlyFade.active ? 1 : 0
                         response: Theme.idlePopResponse
                         damping: Theme.idlePopDamping
-                        epsilon: Theme.springUnitEps
-                        rest: Theme.springUnitStop
                     }
 
                     transform: Translate {
@@ -966,17 +974,16 @@ Item {
                     width: vbars.width
                     height: parent.height
                     shown: root.slotVis && root.idleSlotVisible
-                    ready: root.idleHeld || (root.panelReveal && !swapGate.running)
+                    ready: root.idleHeld || root.visRevealed || root.visGate
                     rise: root.panelRise
-                    scale: Theme.slotScale + (1 - Theme.slotScale) * visScale.value
+                    scale: Theme.slotScale + (1 - Theme.slotScale) * visScale.shaped
 
-                    Spring {
+                    ScaleSpring {
                         id: visScale
+                        size: vbars.restWidth
                         target: visFade.active ? 1 : 0
                         response: Theme.idlePopResponse
                         damping: Theme.idlePopDamping
-                        epsilon: Theme.springUnitEps
-                        rest: Theme.springUnitStop
                     }
 
                     VisualizerBars {

@@ -7,6 +7,8 @@ import Quickshell.Io
 Singleton {
     id: root
     property bool on: false
+    property bool heard: false
+    readonly property bool active: Media.playing || (root.heard && offTimer.running)
     property string cavaBin: ""
     readonly property bool real: cavaBin !== ""
     property var levels: []
@@ -18,20 +20,25 @@ Singleton {
     }
 
     function sync() {
-        if (Media.playing)
+        if (Media.playing) {
+            root.heard = true
             offTimer.stop()
-        else
+        } else {
             offTimer.restart()
+        }
         cava.running = root.real && (Media.playing || offTimer.running)
     }
 
     onRealChanged: root.sync()
-    onConfigTextChanged: config.setText(root.configText)
+    onConfigTextChanged: {
+        config.setText(root.configText)
+        reload.restart()
+    }
 
     readonly property string configText: {
         return "[general]\nbars = " + Theme.visBars + "\nframerate = " + Theme.visFps
-            + "\nautosens = 1\nsensitivity = 100\nchannels = mono\n\n[input]\nmethod = pulse\nsource = auto"
-            + "\n\n[output]\nmethod = raw\nraw_target = /dev/stdout\ndata_format = ascii\nascii_max_range = 100"
+            + "\nautosens = 1\nsensitivity = 100\n\n[input]\nmethod = pulse\nsource = auto"
+            + "\n\n[output]\nmethod = raw\nchannels = mono\nraw_target = /dev/stdout\ndata_format = ascii\nascii_max_range = 100"
             + "\n\n[smoothing]\nnoise_reduction = " + Theme.visNoiseReduction + "\n"
     }
 
@@ -45,7 +52,17 @@ Singleton {
         interval: Theme.visOffDelay
         onTriggered: {
             root.on = false
+            root.heard = false
             root.sync()
+        }
+    }
+
+    Timer {
+        id: reload
+        interval: 250
+        onTriggered: if (cava.running) {
+            cava.reloading = true
+            cava.running = false
         }
     }
 
@@ -53,6 +70,7 @@ Singleton {
         id: config
         path: root.configPath
         blockLoading: true
+        blockWrites: true
         printErrors: false
     }
 
@@ -64,6 +82,7 @@ Singleton {
 
     Process {
         id: cava
+        property bool reloading: false
         running: false
         command: [root.cavaBin, "-p", root.configPath]
         stdout: SplitParser {
@@ -72,7 +91,13 @@ Singleton {
                 root.levels = parts.map(p => Math.min(1, Math.max(0, Number(p) / 100)))
             }
         }
-        onExited: root.levels = []
+        onExited: {
+            root.levels = []
+            if (cava.reloading) {
+                cava.reloading = false
+                cava.running = true
+            }
+        }
     }
 
     Component.onCompleted: {

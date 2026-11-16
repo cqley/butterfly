@@ -26,7 +26,10 @@ Item {
             return
         }
         cv.loadImage(source)
-        wait.restart()
+        if (cv.isImageLoaded(source))
+            cv.requestPaint()
+        else
+            wait.restart()
     }
 
     function reset() {
@@ -65,6 +68,7 @@ Item {
         visible: false
 
         onImageLoaded: requestPaint()
+        onAvailableChanged: if (available) requestPaint()
 
         onPaint: {
             const src = root.source

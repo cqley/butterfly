@@ -32,13 +32,13 @@ Panel {
     readonly property string artSource: artUrl === "" ? ""
         : artUrl.indexOf("file:") === 0 ? artUrl + "#" + Qt.md5(artKey) : artUrl
 
-    onLenChanged: if (p) dur = len
-    onSrcOnChanged: if (p) on = srcOn
-    onSrcTitleChanged: if (p) title = srcTitle
-    onSrcArtistChanged: if (p) artist = srcArtist
-    onSrcArtChanged: if (p) artUrl = srcArt
-    onSrcKeyChanged: if (p) artKey = srcKey
-    onSrcFracChanged: if (p) frac = srcFrac
+    onLenChanged: if (Media.player) dur = len
+    onSrcOnChanged: if (Media.player) on = srcOn
+    onSrcTitleChanged: if (Media.player) title = srcTitle
+    onSrcArtistChanged: if (Media.player) artist = srcArtist
+    onSrcArtChanged: if (Media.player) artUrl = srcArt
+    onSrcKeyChanged: if (Media.player) artKey = srcKey
+    onSrcFracChanged: if (Media.player) frac = srcFrac
 
     onPChanged: {
         scrubbing = false
@@ -186,9 +186,11 @@ Panel {
     ClippingRectangle {
         id: art
         visible: !Theme.mediaCover
-        width: Theme.artS
-        height: Theme.artS
-        radius: Theme.artR
+        x: Theme.surfaceBorderWidth
+        y: Theme.surfaceBorderWidth
+        width: Theme.artS - 2 * Theme.surfaceBorderWidth
+        height: Theme.artS - 2 * Theme.surfaceBorderWidth
+        radius: Theme.artR - Theme.surfaceBorderWidth
         color: Theme.chip
         transformOrigin: Item.Center
         scale: artScale.shaped
@@ -235,9 +237,9 @@ Panel {
 
     Rectangle {
         visible: !Theme.mediaCover
-        width: art.width
-        height: art.height
-        radius: art.radius
+        width: Theme.artS
+        height: Theme.artS
+        radius: Theme.artR
         scale: art.scale
         transformOrigin: Item.Center
         color: "transparent"
@@ -251,8 +253,8 @@ Panel {
     MouseArea {
         id: artArea
         visible: !Theme.mediaCover
-        width: art.width
-        height: art.height
+        width: Theme.artS
+        height: Theme.artS
         hoverEnabled: true
         acceptedButtons: root.raisable ? Qt.LeftButton : Qt.NoButton
         cursorShape: root.raisable ? Qt.PointingHandCursor : Qt.ArrowCursor

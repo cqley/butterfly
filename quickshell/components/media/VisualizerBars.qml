@@ -1,15 +1,30 @@
 import "../core"
 import QtQuick
 
-Row {
+Item {
     id: root
     property bool playing: false
     property bool shown: true
     property string artUrl: ""
     property real phase: 0
     property var smoothed: []
+    readonly property int pitch: Theme.visBarW + Theme.visGap
+    readonly property real reach: countMotion.shaped
+    readonly property int restWidth: Theme.visBars * root.pitch - Theme.visGap
+    width: Math.max(0, Math.ceil(root.reach * root.pitch - Theme.visGap))
     height: Theme.h
-    spacing: Theme.visGap
+
+    Spring {
+        id: countMotion
+        target: Theme.visBars
+        snap: !root.shown
+        response: Theme.idlePopResponse
+        damping: Theme.idlePopDamping
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
+        hold: Theme.springHold
+        settle: Theme.springSettle
+    }
 
     onPlayingChanged: if (!playing) {
         for (let i = 0; i < bars.count; i++)
@@ -48,18 +63,22 @@ Row {
 
     Repeater {
         id: bars
-        model: Theme.visBars
+        model: Theme.visBarsMax
 
         Rectangle {
             id: bar
             required property int index
+            readonly property real presence: Math.max(0, Math.min(1, root.reach - index))
             property real live: Theme.visMinH + (Theme.visMaxH - Theme.visMinH) * (root.smoothed[index] || 0)
             property real fallback: Theme.visIdleH
 
+            x: index * root.pitch
             anchors.verticalCenter: parent.verticalCenter
+            visible: presence > 0
+            opacity: presence
             width: Theme.visBarW
             radius: width / 2
-            color: Theme.mix(art.a, art.b, Theme.visBars > 1 ? index / (Theme.visBars - 1) : 0)
+            color: Theme.mix(art.a, art.b, root.reach > 1 ? Math.min(1, index / (root.reach - 1)) : 0)
             antialiasing: true
             height: Math.round(root.playing ? live : fallback)
 

@@ -38,6 +38,7 @@ Item {
 
     onFaceChanged: {
         if (!root.face) {
+            root.heldVis = root.visualizer
             exit.restart()
             return
         }
