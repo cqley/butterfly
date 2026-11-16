@@ -192,7 +192,6 @@ Item {
 
     IslandPop {
         id: islandPop
-        media: root.media
         onFaceChanged: stage.restart()
     }
 
@@ -622,10 +621,8 @@ Item {
                     return
                 }
                 if (islandPop.dashShown) {
-                    if (root.media) {
-                        morph.arm()
-                        islandPop.go("home", 2)
-                    }
+                    morph.arm()
+                    islandPop.go("home", 2)
                     return
                 }
                 if (islandPop.mediaShown) {

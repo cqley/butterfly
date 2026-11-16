@@ -1,4 +1,5 @@
 pragma Singleton
+import "../core"
 import QtQuick
 import Quickshell
 import Quickshell.Services.Mpris
@@ -8,8 +9,11 @@ Singleton {
     property var last: null
     property var live: null
     property var recent: null
-    readonly property var player: live || last
-    readonly property bool playing: live !== null
+    property var pinned: null
+    property var idle: null
+    property var sources: []
+    readonly property var player: pinned || live || last || idle
+    readonly property bool playing: pinned ? pinned.isPlaying : live !== null
     readonly property string title: player ? player.trackTitle || player.identity : ""
     readonly property string artUrl: artFor(player)
     readonly property string trackKey: keyFor(player)
@@ -49,8 +53,19 @@ Singleton {
         return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : ""
     }
 
+    function nameFor(p) {
+        return p ? String(p.identity || "").toLowerCase() : ""
+    }
+
     function pick() {
         const v = pool()
+        const names = []
+        for (let i = 0; i < v.length; i++)
+            if (names.indexOf(nameFor(v[i])) < 0 && nameFor(v[i]) !== "")
+                names.push(nameFor(v[i]))
+        sources = names
+        pinned = Theme.mediaSource === "" ? null : v.find(p => nameFor(p) === Theme.mediaSource) || null
+        idle = v.length > 0 ? v[0] : null
         if (recent && (v.indexOf(recent) < 0 || !usable(recent)))
             recent = null
         let found = null
@@ -77,6 +92,11 @@ Singleton {
         function onValuesChanged() { root.pick() }
     }
 
+    Connections {
+        target: Theme
+        function onMediaSourceChanged() { root.pick() }
+    }
+
     Instantiator {
         model: Mpris.players
         Connections {
@@ -88,6 +108,7 @@ Singleton {
                 root.pick()
             }
             function onTrackTitleChanged() { root.pick() }
+            function onIdentityChanged() { root.pick() }
         }
     }
 

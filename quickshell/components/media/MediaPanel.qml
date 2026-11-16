@@ -49,7 +49,8 @@ Panel {
     onVisibleChanged: if (!visible) {
         scrubbing = false
         scrub = 0
-    }
+    } else if (!Media.player)
+        clear()
 
     Component.onCompleted: hold()
 
@@ -77,6 +78,16 @@ Panel {
         artKey = srcKey
         frac = srcFrac
         dur = len
+    }
+
+    function clear() {
+        on = false
+        title = ""
+        artist = ""
+        artUrl = ""
+        artKey = ""
+        frac = 0
+        dur = 0
     }
 
     function seekTo(x, w) {
@@ -281,7 +292,7 @@ Panel {
                 TextMetrics {
                     id: metrics
                     font: label.font
-                    text: root.title
+                    text: label.text
                 }
 
                 Txt {
@@ -291,7 +302,7 @@ Panel {
                     width: parent.width
                     height: parent.height
                     verticalAlignment: Text.AlignVCenter
-                    text: root.title
+                    text: root.title !== "" ? root.title : "nothing playing"
                     horizontalAlignment: Theme.mediaCover && !titleBox.rolling ? Text.AlignHCenter : Text.AlignLeft
                     onTextChanged: titleBox.rewind()
                     elide: titleBox.rolling ? Text.ElideNone : Text.ElideRight

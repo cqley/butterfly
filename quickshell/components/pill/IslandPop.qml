@@ -5,7 +5,6 @@ QtObject {
     id: root
     property bool hovered: false
     property bool armed: true
-    property bool media: false
     property bool open: false
     property var at: ({ mode: "home", level: 0 })
 
@@ -42,8 +41,6 @@ QtObject {
             root.open = false
             return root.report
         }
-        if (name === "media" && !root.media)
-            return "no media"
         root.armed = true
         const dates = name === "week" || name === "calendar"
         root.go(dates ? "dates" : "home", name === "calendar" || name === "media" ? 2 : 1)

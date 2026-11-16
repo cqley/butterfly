@@ -1,9 +1,30 @@
 import "../core"
+import "../media"
 import QtQuick
 
 Column {
+    id: root
     width: parent ? parent.width : 0
     spacing: Theme.settingsGroupGap
+
+    readonly property var sources: Media.sources.indexOf(Theme.mediaSource) < 0 && Theme.mediaSource !== ""
+        ? Media.sources.concat([Theme.mediaSource]) : Media.sources
+
+    SettingsGroup {
+        SettingsRow {
+            label: "source"
+            token: "mediaSource"
+
+            SettingsSegmented {
+                options: ["auto"].concat(root.sources)
+                current: Theme.mediaSource === "" ? 0 : root.sources.indexOf(Theme.mediaSource) + 1
+                onPicked: i => {
+                    Cfg.set("mediaSource", i === 0 ? "" : root.sources[i - 1])
+                    Cfg.flush()
+                }
+            }
+        }
+    }
 
     SettingsGroup {
         SettingsRow {

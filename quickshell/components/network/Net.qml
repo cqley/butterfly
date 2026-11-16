@@ -101,7 +101,11 @@ Menu {
         repeat: true
         running: root.liveLink
         triggeredOnStart: true
-        onTriggered: linkFile.reload()
+        onTriggered: {
+            linkFile.reload()
+            if (!root.linkKnown)
+                root.refresh()
+        }
     }
 
     function startWatching() {
