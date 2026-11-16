@@ -201,7 +201,7 @@ Pick {
 
                 Keys.onPressed: e => {
                     if (e.isAutoRepeat) {
-                        e.accepted = e.key !== Qt.Key_Backspace && e.key !== Qt.Key_Delete
+                        e.accepted = e.key !== Qt.Key_Backspace && e.key !== Qt.Key_Delete && !/^[^\x00-\x1f\x7f]+$/.test(e.text)
                         return
                     }
                     const k = e.key

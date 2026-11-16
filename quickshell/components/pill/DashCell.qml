@@ -54,8 +54,9 @@ Item {
 
     Item {
         id: frame
+        x: -Theme.dashBleed
         y: -cell.height
-        width: cell.width
+        width: cell.width + 2 * Theme.dashBleed
         height: cell.height * 3
         clip: cell.travelX === 0 && cell.travelY === 0
 
@@ -82,7 +83,7 @@ Item {
 
         Item {
             id: holder
-            x: cell.gap
+            x: cell.gap + Theme.dashBleed
             y: cell.height
             width: cell.contentW
             height: cell.height

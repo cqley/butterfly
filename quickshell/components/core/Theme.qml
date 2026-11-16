@@ -846,6 +846,7 @@ Singleton {
     readonly property int dashPadX: cfg("dashPadX", 26)
     readonly property int dashRowH: 24
     readonly property int dashRow2H: 14
+    readonly property int dashBleed: 2
     readonly property int dashRowGap: 4
     readonly property int dashGap: 8
     readonly property int dashStatusGap: cfg("dashStatusGap", 10)
