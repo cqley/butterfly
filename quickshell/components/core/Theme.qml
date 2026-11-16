@@ -440,6 +440,12 @@ Singleton {
     readonly property int centerTick: 1000
     readonly property int centerBodyLines: 2
     readonly property int centerEmptyH: 72
+    readonly property int centerEnterDelay: 40
+    readonly property int centerExit: 600
+    readonly property real centerPopFrom: 0.8
+    readonly property real centerClear: 10
+    readonly property real centerClearFade: 0.12
+    readonly property real centerFaded: 0.02
     readonly property int centerEmptyGlyph: 32
     readonly property color centerEmptyTone: mix(bg, fg, dimHint)
     readonly property string bellPath: "M18 8.5A6 6 0 0 0 6 8.5C6 15 3 17 3 17H21S18 15 18 8.5Z"

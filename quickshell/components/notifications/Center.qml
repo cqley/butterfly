@@ -8,6 +8,11 @@ Pick {
     readonly property var items: Notifs.history
     property string selKey: ""
     property double now: Date.now()
+    property var gone: ({})
+    property var faded: ({})
+    property real selFade: root.n > 0 ? 1 : 0
+    property int shifting: 0
+    readonly property bool bellUp: root.n > 0 && bell.opacity > Theme.centerClearFade
 
     n: view.length
     rows: Theme.centerRows
@@ -27,14 +32,22 @@ Pick {
     }
 
     Timer {
-        id: swap
-        interval: Theme.fade
-        onTriggered: {
-            root.hold()
-            root.view = root.items
-            if (!root.aimSel())
-                root.syncSel()
-            root.churn = false
+        id: exit
+        interval: Theme.centerExit
+        onTriggered: root.apply()
+    }
+
+    function apply() {
+        exit.stop()
+        gone = ({})
+        faded = ({})
+        const top = start === 0
+        view = items
+        if (!aimSel())
+            syncSel()
+        if (top && sel > rows - 1) {
+            sel = rows - 1
+            start = 0
         }
     }
 
@@ -44,8 +57,39 @@ Pick {
             syncSel()
             return
         }
-        churn = true
-        swap.restart()
+        const live = {}
+        for (const it of items)
+            live[it.key] = true
+        const out = {}
+        let any = false
+        for (const it of view) {
+            if (!live[it.key]) {
+                out[it.key] = true
+                any = true
+            }
+        }
+        if (!any) {
+            apply()
+            return
+        }
+        gone = out
+        exit.restart()
+        const stay = []
+        for (let i = 0; i < view.length; i++)
+            if (!out[view[i].key])
+                stay.push(i)
+        if (stay.length > 0 && out[view[sel] ? view[sel].key : ""])
+            sel = stay.reduce((b, i) => Math.abs(i - sel) < Math.abs(b - sel) ? i : b, stay[0])
+    }
+
+    function settle(key) {
+        if (!gone[key])
+            return
+        faded[key] = true
+        for (const k in gone)
+            if (!faded[k])
+                return
+        apply()
     }
 
     function run() {
@@ -65,8 +109,9 @@ Pick {
     }
 
     function fresh() {
-        swap.stop()
-        churn = false
+        exit.stop()
+        gone = ({})
+        faded = ({})
         now = Date.now()
         view = items
         reset()
@@ -290,6 +335,18 @@ Pick {
                 key: "key"
                 anchors.fill: parent
                 visible: root.n > 0
+                highlightOpacity: selShow.shaped
+
+                Spring {
+                    id: selShow
+                    response: Theme.islandResponse
+                    damping: 1
+                    hold: Theme.springHold
+                    epsilon: Theme.springUnitEps
+                    rest: Theme.springUnitStop
+                    snap: !root.visible
+                    target: root.selFade
+                }
 
                 HoverHandler { id: pointer }
 
@@ -299,15 +356,86 @@ Pick {
                     required property int index
                     readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
                     readonly property bool fresh: root.now - row.modelData.time < Theme.centerFresh
+                    readonly property bool leaving: !!root.gone[row.modelData.key]
+                    readonly property bool far: Math.abs(rowY.value - rowY.target) > Theme.centerClear
+                    readonly property bool spent: row.leaving && body.opacity <= Theme.centerFaded
+                    property bool counted: false
+                    property bool popped: true
+                    property bool waited: true
 
-                    y: row.index * Theme.centerRowH
+                    function tryPop() {
+                        if (!row.popped && row.waited && root.shifting === 0 && !root.bellUp)
+                            row.popped = true
+                    }
+
+                    onFarChanged: {
+                        if (row.far === row.counted)
+                            return
+                        root.shifting += row.far ? 1 : -1
+                        row.counted = row.far
+                    }
+                    onSpentChanged: {
+                        if (!row.spent)
+                            return
+                        const key = row.modelData.key
+                        Qt.callLater(() => root.settle(key))
+                    }
+                    Component.onDestruction: if (row.counted) root.shifting -= 1
+
+                    Connections {
+                        target: root
+                        function onShiftingChanged() { row.tryPop() }
+                        function onBellUpChanged() { row.tryPop() }
+                    }
+
+                    Binding {
+                        target: root
+                        property: "selFade"
+                        value: body.opacity
+                        when: row.index === root.sel
+                    }
+
+                    y: rowY.shaped
                     width: list.width
                     height: Theme.centerRowH
 
+                    Spring {
+                        id: rowY
+                        response: Theme.glideResponse
+                        settle: Theme.springSettle
+                        target: row.index * Theme.centerRowH
+                    }
+
+                    ScaleSpring {
+                        id: pop
+                        size: row.width
+                        response: Theme.islandResponse
+                        damping: pop.target < 1 || !Theme.menuBounce ? Theme.islandDamping : Theme.menuBounceDamping
+                        target: row.popped && !row.leaving ? 1 : Theme.centerPopFrom
+                    }
+
+                    Timer {
+                        id: popWait
+                        interval: Theme.centerEnterDelay
+                        onTriggered: {
+                            row.waited = true
+                            row.tryPop()
+                        }
+                    }
+
+                    Component.onCompleted: {
+                        if (!root.visible)
+                            return
+                        row.popped = false
+                        row.waited = false
+                        pop.land(Theme.centerPopFrom)
+                        popWait.start()
+                    }
+
                     MouseArea {
                         anchors.fill: parent
-                        enabled: row.onscreen
-                        hoverEnabled: row.onscreen
+                        enabled: row.onscreen && !row.leaving
+                        hoverEnabled: row.onscreen && !row.leaving
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
@@ -320,95 +448,118 @@ Pick {
                         }
                     }
 
-                    Chip {
-                        id: icon
-                        x: Theme.centerIconX
-                        anchors.verticalCenter: parent.verticalCenter
-                        picture: row.modelData.picture
-                        mark: row.modelData.mark
-                        letter: row.modelData.letter
-                        kind: row.modelData.kind
-                        critical: row.modelData.critical
-                        on: row.modelData.on
-                        level: row.modelData.level
-                    }
-
                     Item {
-                        id: dot
-                        anchors.right: parent.right
-                        anchors.rightMargin: Theme.centerDotRight
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Theme.centerDot
-                        height: Theme.centerDot
-                        opacity: row.fresh ? 1 : 0
+                        id: body
+                        width: row.width
+                        height: row.height
+                        transformOrigin: Item.Center
+                        scale: pop.shaped
+                        opacity: Math.max(0, Math.min(1, (pop.shaped - Theme.centerPopFrom) / (1 - Theme.centerPopFrom)))
 
-                        Behavior on opacity {
-                            NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                        Chip {
+                            id: icon
+                            x: Theme.centerIconX
+                            anchors.verticalCenter: parent.verticalCenter
+                            picture: row.modelData.picture
+                            mark: row.modelData.mark
+                            letter: row.modelData.letter
+                            kind: row.modelData.kind
+                            critical: row.modelData.critical
+                            on: row.modelData.on
+                            level: row.modelData.level
                         }
 
-                        Rectangle {
-                            property real pulse: 1
+                        Item {
+                            id: dot
+                            anchors.right: parent.right
+                            anchors.rightMargin: Theme.centerDotRight
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Theme.centerDot
+                            height: Theme.centerDot
+                            opacity: row.fresh ? 1 : 0
 
-                            anchors.fill: parent
-                            radius: width / 2
-                            color: Theme.greenSoft
-                            antialiasing: true
-                            opacity: Theme.dotLow + (1 - Theme.dotLow) * pulse
+                            Behavior on opacity {
+                                NumberAnimation { duration: Theme.glide; easing.type: Theme.ease }
+                            }
 
-                            SequentialAnimation on pulse {
-                                running: row.fresh && root.shown
-                                loops: Animation.Infinite
+                            Rectangle {
+                                property real pulse: 1
 
-                                NumberAnimation {
-                                    from: 1
-                                    to: 0
-                                    duration: Theme.pulse
-                                    easing.type: Easing.InOutSine
-                                }
+                                anchors.fill: parent
+                                radius: width / 2
+                                color: Theme.greenSoft
+                                antialiasing: true
+                                opacity: Theme.dotLow + (1 - Theme.dotLow) * pulse
 
-                                NumberAnimation {
-                                    from: 0
-                                    to: 1
-                                    duration: Theme.pulse
-                                    easing.type: Easing.InOutSine
+                                SequentialAnimation on pulse {
+                                    running: row.fresh && root.shown
+                                    loops: Animation.Infinite
+
+                                    NumberAnimation {
+                                        from: 1
+                                        to: 0
+                                        duration: Theme.pulse
+                                        easing.type: Easing.InOutSine
+                                    }
+
+                                    NumberAnimation {
+                                        from: 0
+                                        to: 1
+                                        duration: Theme.pulse
+                                        easing.type: Easing.InOutSine
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    Column {
-                        anchors.left: icon.right
-                        anchors.leftMargin: Theme.centerTextGap
-                        anchors.right: dot.left
-                        anchors.rightMargin: Theme.centerDotGap
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: Theme.centerLineGap
+                        Column {
+                            anchors.left: icon.right
+                            anchors.leftMargin: Theme.centerTextGap
+                            anchors.right: dot.left
+                            anchors.rightMargin: Theme.centerDotGap
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: Theme.centerLineGap
 
-                        Txt {
-                            width: parent.width
-                            text: row.modelData.summary
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                            font.weight: Font.DemiBold
-                        }
+                            Txt {
+                                width: parent.width
+                                text: row.modelData.summary
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                font.weight: Font.DemiBold
+                            }
 
-                        Txt {
-                            width: parent.width
-                            text: row.modelData.body !== "" ? row.modelData.body : row.modelData.app
-                            visible: text !== ""
-                            elide: Text.ElideRight
-                            wrapMode: Text.Wrap
-                            maximumLineCount: Theme.centerBodyLines
-                            opacity: Theme.dimSoft
-                            font.pixelSize: Theme.fsS
+                            Txt {
+                                width: parent.width
+                                text: row.modelData.body !== "" ? row.modelData.body : row.modelData.app
+                                visible: text !== ""
+                                elide: Text.ElideRight
+                                wrapMode: Text.Wrap
+                                maximumLineCount: Theme.centerBodyLines
+                                opacity: Theme.dimSoft
+                                font.pixelSize: Theme.fsS
+                            }
                         }
                     }
                 }
             }
 
             Item {
-                anchors.fill: parent
-                visible: root.n === 0
+                id: bell
+                width: parent.width
+                height: Theme.centerEmptyH
+                transformOrigin: Item.Center
+                scale: bellPop.shaped
+                opacity: Math.max(0, Math.min(1, (bellPop.shaped - Theme.centerPopFrom) / (1 - Theme.centerPopFrom)))
+                visible: opacity > 0.004
+
+                ScaleSpring {
+                    id: bellPop
+                    size: Theme.centerEmptyGlyph
+                    snap: !root.visible
+                    response: Theme.islandResponse
+                    damping: bellPop.target < 1 || !Theme.menuBounce ? Theme.islandDamping : Theme.menuBounceDamping
+                    target: root.n === 0 ? 1 : Theme.centerPopFrom
+                }
 
                 Shape {
                     anchors.centerIn: parent

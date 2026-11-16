@@ -82,9 +82,7 @@ Item {
     readonly property bool idleClock: !root.slotVis && !root.wsOnly
     readonly property bool ringGeometryBase: root.calm && !root.hot && !root.hideIdleIcons
     readonly property bool ringBase: root.ringGeometryBase && Theme.batRingEnabled && Battery.ringShown && Battery.available
-    readonly property bool resizing:
-        Math.abs(root.wAnim - root.targetW) > Theme.settleEps && !root.arrived(wMotion) ||
-        Math.abs(root.hAnim - root.targetH) > Theme.settleEps && !root.arrived(hMotion)
+    readonly property bool resizing: root.settling(wMotion, root.wAnim, root.targetW) || root.settling(hMotion, root.hAnim, root.targetH)
     readonly property string face: root.modal ? Modal.which : root.alert ? "note" : "idle"
     readonly property bool moving: hold.running || root.resizing
     readonly property bool panelReady: !root.moving
@@ -488,6 +486,12 @@ Item {
         return m.crossed && (m.target > m.origin || m.peak !== 0)
     }
 
+    function settling(m, at, to) {
+        if (root.arrived(m))
+            return false
+        return m.moving && m.damping < 1 || Math.abs(at - to) > Theme.settleEps
+    }
+
     function reach(m, room) {
         if (m.target > m.origin)
             return Theme.menuBounceReach
@@ -805,7 +809,7 @@ Item {
             id: center
             x: root.centerX(width)
             shown: Notifs.open
-            ready: root.panelReveal && center.settled
+            ready: root.faceReady("notifs")
             rise: root.panelRise
         }
 

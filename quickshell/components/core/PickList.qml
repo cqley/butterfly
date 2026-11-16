@@ -10,6 +10,7 @@ Item {
     property string key: ""
     property bool highlight: true
     property bool highlightShown: true
+    property real highlightOpacity: 1
     property bool marked: false
     property string mark: ""
     property Component delegate
@@ -48,6 +49,7 @@ Item {
             border.width: Theme.surfaceBorderWidth
             border.color: Theme.surfaceBorder
             antialiasing: true
+            opacity: root.highlightOpacity
             visible: root.highlight && root.highlightShown
 
             Mark {
