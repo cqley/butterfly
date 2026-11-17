@@ -25,13 +25,10 @@ Rectangle {
 
     Keys.onPressed: e => {
         Settings.keyNav = true
-        if (e.key === Qt.Key_Left) {
-            root.step(-1)
-            e.accepted = true
-        } else if (e.key === Qt.Key_Right) {
-            root.step(1)
-            e.accepted = true
-        }
+        Binds.run(e, {
+            left: () => root.step(-1),
+            right: () => root.step(1)
+        }, "hold")
     }
 
     SettingsFocus {

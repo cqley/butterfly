@@ -14,80 +14,29 @@ Pick {
     width: n > 0 ? Math.min(n, Theme.trayRows) * Theme.trayCellW : Theme.trayEmptyW
     height: n > 0 ? Theme.trayRowH : empty.implicitHeight + Theme.emptyPad
     focus: shown
-
-    property string selId: ""
+    owner: Tray
+    keepWhileOpen: true
+    entries: items
+    identity: it => it.id
+    onFresh: {
+        reset()
+        anchor = ""
+    }
 
     function run() {
         if (items[sel])
             items[sel].activate()
     }
 
-    function fresh() {
-        reset()
-        selId = ""
-    }
-
-    function remember() {
-        if (items && items[sel])
-            selId = items[sel].id
-    }
-
-    function syncSel() {
-        if (!n) {
-            selId = ""
-            return
-        }
-        if (selId !== "") {
-            for (let i = 0; i < n; i++) {
-                if (items[i] && items[i].id === selId) {
-                    if (i !== sel) {
-                        hold()
-                        sel = i
-                    }
-                    return
-                }
-            }
-        }
-        const i = Math.max(0, Math.min(n - 1, sel))
-        if (i !== sel) {
-            hold()
-            sel = i
-        }
-        remember()
-    }
-
-    onVisibleChanged: {
-        if (visible)
-            forceActiveFocus()
-        else if (!Tray.open)
-            fresh()
-    }
-
     Connections {
         target: Tray
-        function onOpenChanged() {
-            if (!Tray.open)
-                return
-            root.fresh()
-            root.forceActiveFocus()
-        }
         function onItemsChanged() { root.syncSel() }
     }
 
-    Connections {
-        target: root
-        function onSelChanged() { root.remember() }
-    }
-
-    Keys.onPressed: e => {
-        const k = e.key
-        if (k === Qt.Key_Escape) Tray.open = false
-        else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) run()
-        else if (k === Qt.Key_Right) move(1, true)
-        else if (k === Qt.Key_Left) move(-1, true)
-        else if (!nav(e)) return
-        e.accepted = true
-    }
+    keys: ({
+        cancel: () => Tray.open = false,
+        accept: () => root.run()
+    })
 
     Txt {
         id: empty
@@ -205,14 +154,12 @@ Pick {
                         }
                     }
 
-                    MouseArea {
+                    PickArea {
                         id: area
-                        anchors.fill: parent
-                        enabled: cell.onscreen
-                        hoverEnabled: cell.onscreen
-                        cursorShape: Qt.PointingHandCursor
+                        pick: root
+                        at: cell.index
+                        live: cell.onscreen
                         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                        onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), cell.index)
                         onClicked: mouse => {
                             if (!cell.modelData)
                                 return

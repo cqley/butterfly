@@ -10,32 +10,17 @@ Tiles {
     pad: Theme.pwPad
     width: Theme.powerW - 2 * Theme.pwPad
     height: Theme.pwH
+    owner: Power
+    onFresh: reset()
 
     function run(i) {
         Power.run(i)
     }
 
-    onVisibleChanged: {
-        if (visible) forceActiveFocus()
-        else reset()
-    }
-
-    Connections {
-        target: Power
-        function onOpenChanged() {
-            if (!Power.open) return
-            root.reset()
-            root.forceActiveFocus()
-        }
-    }
-
-    Keys.onPressed: e => {
-        const k = e.key
-        if (k === Qt.Key_Escape) Power.open = false
-        else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) root.run(root.sel)
-        else if (!root.nav(e)) return
-        e.accepted = true
-    }
+    keys: ({
+        cancel: () => Power.open = false,
+        accept: () => root.run(root.sel)
+    })
 
     Row {
         spacing: Theme.pwGap
@@ -94,12 +79,10 @@ Tiles {
                     }
                 }
 
-                MouseArea {
+                PickArea {
                     id: mouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), tile.index)
+                    pick: root
+                    at: tile.index
                     onClicked: root.run(tile.index)
                 }
             }

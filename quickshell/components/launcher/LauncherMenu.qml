@@ -24,6 +24,9 @@ Pick {
     pad: Theme.lpad
     width: Theme.launchW - 2 * Theme.lpad
     height: col.height
+    owner: Launcher
+    focusTarget: input
+    onFresh: clear()
 
     function fuzzy(n, s) {
         let j = 0
@@ -118,22 +121,6 @@ Pick {
         swap.restart()
     }
 
-    onVisibleChanged: {
-        if (visible) input.forceActiveFocus()
-        else {
-            clear()
-        }
-    }
-
-    Connections {
-        target: Launcher
-        function onOpenChanged() {
-            if (!Launcher.open) return
-            clear()
-            input.forceActiveFocus()
-        }
-    }
-
     Column {
         id: col
         width: parent.width
@@ -199,25 +186,12 @@ Pick {
                 font.weight: Font.Medium
                 clip: true
 
-                Keys.onPressed: e => {
-                    if (e.isAutoRepeat) {
-                        e.accepted = e.key !== Qt.Key_Backspace && e.key !== Qt.Key_Delete && !/^[^\x00-\x1f\x7f]+$/.test(e.text)
-                        return
-                    }
-                    const k = e.key
-                    const c = e.modifiers & Qt.ControlModifier
-                    const w = true
-                    if (k === Qt.Key_Escape) Launcher.open = false
-                    else if (k === Qt.Key_Return || k === Qt.Key_Enter) root.run()
-                    else if (k === Qt.Key_Down || k === Qt.Key_Tab || c && (k === Qt.Key_J || k === Qt.Key_N)) root.move(1, w)
-                    else if (k === Qt.Key_Up || k === Qt.Key_Backtab || c && (k === Qt.Key_K || k === Qt.Key_P)) root.move(-1, w)
-                    else if (k === Qt.Key_PageDown) root.move(1, false)
-                    else if (k === Qt.Key_PageUp) root.move(-1, false)
-                    else if (c && k === Qt.Key_End) root.move(root.n, false)
-                    else if (c && k === Qt.Key_Home) root.move(-root.n, false)
-                    else return
-                    e.accepted = true
-                }
+                Keys.onPressed: e => Binds.run(e, Object.assign(Binds.list((d, w) => root.move(d, w), () => root.n), {
+                    left: null,
+                    right: null,
+                    cancel: () => Launcher.open = false,
+                    accept: () => root.run()
+                }), "insert")
             }
 
             Txt {
@@ -307,13 +281,11 @@ Pick {
                     }
                 }
 
-                MouseArea {
+                PickArea {
                     id: area
-                    anchors.fill: parent
-                    enabled: row.onscreen
-                    hoverEnabled: row.onscreen
-                    cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
+                    pick: root
+                    at: row.index
+                    live: row.onscreen
                     onClicked: {
                         root.sel = row.index
                         root.run()
@@ -322,17 +294,9 @@ Pick {
             }
         }
 
-        Item {
-            width: parent.width
-            height: empty.implicitHeight + Theme.emptyPad
+        Empty {
+            text: "no results"
             visible: root.n === 0
-
-            Txt {
-                id: empty
-                anchors.centerIn: parent
-                text: "no results"
-                opacity: Theme.dimEmpty
-            }
         }
     }
 }

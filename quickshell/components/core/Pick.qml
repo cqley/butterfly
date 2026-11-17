@@ -12,6 +12,12 @@ Panel {
     property var view: []
     property bool churn: false
     readonly property bool settled: !root.churn
+    property var keys: ({})
+    property bool frozen: false
+    property var entries: []
+    property var identity: null
+    property string anchor: ""
+    property bool holdResync: true
 
     Timer {
         id: release
@@ -61,30 +67,41 @@ Panel {
             sel = i
     }
 
-    function nav(e) {
-        if (e.isAutoRepeat)
-            return true
-        const k = e.key
-        const c = e.modifiers & Qt.ControlModifier
-        const s = e.modifiers & Qt.ShiftModifier
-        if (k === Qt.Key_Down || k === Qt.Key_J || k === Qt.Key_L || k === Qt.Key_Tab || c && k === Qt.Key_N)
-            move(1, true)
-        else if (k === Qt.Key_Up || k === Qt.Key_K || k === Qt.Key_H || k === Qt.Key_Backtab || c && k === Qt.Key_P)
-            move(-1, true)
-        else if (k === Qt.Key_PageDown)
-            move(1, false)
-        else if (k === Qt.Key_PageUp)
-            move(-1, false)
-        else if (k === Qt.Key_End || k === Qt.Key_G && s)
-            move(n, false)
-        else if (k === Qt.Key_Home || k === Qt.Key_G)
-            move(-n, false)
-        else
-            return false
-        return true
+    function remember() {
+        if (root.identity && root.entries && root.entries[sel])
+            anchor = root.identity(root.entries[sel])
     }
 
+    function syncSel() {
+        if (!n) {
+            anchor = ""
+            return
+        }
+        if (anchor !== "") {
+            for (let i = 0; i < n; i++) {
+                if (root.entries[i] && root.identity(root.entries[i]) === anchor) {
+                    if (i !== sel) {
+                        if (root.holdResync)
+                            hold()
+                        sel = i
+                    }
+                    return
+                }
+            }
+        }
+        const i = Math.max(0, Math.min(n - 1, sel))
+        if (i !== sel) {
+            if (root.holdResync)
+                hold()
+            sel = i
+        }
+        remember()
+    }
+
+    Keys.onPressed: e => Binds.run(e, Object.assign(root.frozen ? {} : Binds.list((d, w) => root.move(d, w), () => root.n), root.keys))
+
     onSelChanged: {
+        remember()
         if (sel < start)
             start = sel
         else if (sel > start + rows - 1)

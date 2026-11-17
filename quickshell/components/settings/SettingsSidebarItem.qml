@@ -15,22 +15,10 @@ Item {
     activeFocusOnTab: true
 
     Keys.onPressed: e => {
-        if (e.isAutoRepeat) {
-            e.accepted = true
-            return
-        }
         Settings.keyNav = true
-        const k = e.key
-        if (k === Qt.Key_Down || k === Qt.Key_J || k === Qt.Key_L || k === Qt.Key_Tab) {
-            root.stepped(1)
-            e.accepted = true
-        } else if (k === Qt.Key_Up || k === Qt.Key_K || k === Qt.Key_H || k === Qt.Key_Backtab) {
-            root.stepped(-1)
-            e.accepted = true
-        } else if (k === Qt.Key_Space || k === Qt.Key_Return || k === Qt.Key_Enter) {
-            root.activated()
-            e.accepted = true
-        }
+        Binds.run(e, Object.assign(Binds.step(d => root.stepped(d)), {
+            accept: () => root.activated()
+        }))
     }
 
     MouseArea {

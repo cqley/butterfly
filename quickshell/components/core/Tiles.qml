@@ -7,6 +7,7 @@ Panel {
     property bool snap: false
     property real px: -1
     property real py: -1
+    property var keys: ({})
 
     Timer {
         id: release
@@ -30,23 +31,13 @@ Panel {
         sel = i
     }
 
-    function nav(e) {
+    function move(d, wrap) {
         if (!n)
-            return false
-        const k = e.key
-        const s = e.modifiers & Qt.ShiftModifier
-        if (k === Qt.Key_Right || k === Qt.Key_L || k === Qt.Key_J || k === Qt.Key_Tab)
-            sel = (sel + 1) % n
-        else if (k === Qt.Key_Left || k === Qt.Key_H || k === Qt.Key_K || k === Qt.Key_Backtab)
-            sel = (sel + n - 1) % n
-        else if (k === Qt.Key_End || k === Qt.Key_G && s)
-            sel = n - 1
-        else if (k === Qt.Key_Home || k === Qt.Key_G)
-            sel = 0
-        else
-            return false
-        return true
+            return
+        sel = wrap ? ((sel + d) % n + n) % n : Math.max(0, Math.min(n - 1, sel + d))
     }
+
+    Keys.onPressed: e => Binds.run(e, Object.assign(Binds.list((d, w) => root.move(d, w), () => root.n), { pageDown: null, pageUp: null }, root.keys))
 
     onNChanged: if (sel >= n) sel = Math.max(0, n - 1)
 }

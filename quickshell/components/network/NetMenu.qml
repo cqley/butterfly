@@ -13,44 +13,16 @@ Pick {
     width: Theme.netW - 2 * Theme.netPad
     height: col.height
     focus: shown
-
-    property string selSsid: ""
-    readonly property string selKey: items && items[sel] ? String(items[sel].ssid) : ""
-
-    function fresh() {
+    owner: Net
+    entries: items
+    identity: it => it.ssid
+    onFresh: {
         reset()
-        selSsid = ""
+        anchor = ""
         pass.text = ""
     }
 
-    function remember() {
-        if (items && items[sel])
-            selSsid = items[sel].ssid
-    }
-
-    function syncSel() {
-        if (!n) {
-            selSsid = ""
-            return
-        }
-        if (selSsid !== "") {
-            for (let i = 0; i < n; i++) {
-                if (items[i] && items[i].ssid === selSsid) {
-                    if (i !== sel) {
-                        hold()
-                        sel = i
-                    }
-                    return
-                }
-            }
-        }
-        const i = Math.max(0, Math.min(n - 1, sel))
-        if (i !== sel) {
-            hold()
-            sel = i
-        }
-        remember()
-    }
+    readonly property string selKey: items && items[sel] ? String(items[sel].ssid) : ""
 
     function connecting(item) {
         return !!item && Net.phase === "connecting" && Net.pending === item.ssid
@@ -79,13 +51,6 @@ Pick {
         return ""
     }
 
-    onVisibleChanged: {
-        if (visible)
-            forceActiveFocus()
-        else
-            fresh()
-    }
-
     onAskChanged: {
         if (ask) {
             pass.text = ""
@@ -97,65 +62,28 @@ Pick {
 
     Connections {
         target: Net
-        function onOpenChanged() {
-            if (!Net.open)
-                return
-            root.fresh()
-            root.forceActiveFocus()
-        }
         function onListChanged() { root.syncSel() }
     }
 
-    Connections {
-        target: root
-        function onSelChanged() { root.remember() }
-    }
-
-    Keys.onPressed: e => {
-        const k = e.key
-        if (k === Qt.Key_Escape) {
+    frozen: ask
+    keys: ({
+        cancel: () => {
             if (Net.phase === "connecting")
                 Net.stopConnect()
-            else if (ask)
+            else if (root.ask)
                 Net.cancelAsk()
             else
                 Net.open = false
-        } else if (ask)
-            return
-        else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space)
-            run()
-        else if (!nav(e))
-            return
-        e.accepted = true
-    }
+        },
+        accept: () => {
+            if (!root.ask)
+                root.run()
+        }
+    })
 
-    QtObject {
+    Pulse {
         id: pulse
-        property real val: 1
-        property bool running: Net.phase === "connecting" || Net.phase === "disconnecting"
-    }
-
-    SequentialAnimation {
-        running: pulse.running
-        loops: Animation.Infinite
-
-        NumberAnimation {
-            target: pulse
-            property: "val"
-            from: 1
-            to: 0
-            duration: Theme.blink
-            easing.type: Easing.InOutSine
-        }
-
-        NumberAnimation {
-            target: pulse
-            property: "val"
-            from: 0
-            to: 1
-            duration: Theme.blink
-            easing.type: Easing.InOutSine
-        }
+        running: Net.phase === "connecting" || Net.phase === "disconnecting"
     }
 
     Column {
@@ -264,15 +192,11 @@ Pick {
                     }
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: row.onscreen
-                    hoverEnabled: row.onscreen
-                    cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: m => {
-                        if (!root.ask)
-                            root.aim(mapToItem(null, m.x, m.y), row.index)
-                    }
+                PickArea {
+                    pick: root
+                    at: row.index
+                    live: row.onscreen
+                    aims: !root.ask
                     onClicked: {
                         if (root.ask) {
                             const same = Net.asking === row.modelData.ssid
@@ -287,30 +211,14 @@ Pick {
             }
         }
 
-        Item {
-            width: parent.width
-            height: empty.implicitHeight + Theme.emptyPad
+        Empty {
+            text: "no networks"
             visible: Net.available && Net.enabled && root.n === 0
-
-            Txt {
-                id: empty
-                anchors.centerIn: parent
-                text: "no networks"
-                opacity: Theme.dimEmpty
-            }
         }
 
-        Item {
-            width: parent.width
-            height: offline.implicitHeight + Theme.emptyPad
+        Empty {
+            text: Net.title
             visible: !root.ask && !(Net.available && Net.enabled)
-
-            Txt {
-                id: offline
-                anchors.centerIn: parent
-                text: Net.title
-                opacity: Theme.dimEmpty
-            }
         }
 
         Fade {
@@ -359,17 +267,13 @@ Pick {
                     font.pixelSize: Theme.fsL
                     clip: true
 
-                    Keys.onPressed: e => {
-                        const k = e.key
-                        if (k === Qt.Key_Escape) {
+                    Keys.onPressed: e => Binds.run(e, {
+                        cancel: () => {
                             Net.cancelAsk()
                             root.forceActiveFocus()
-                            e.accepted = true
-                        } else if (k === Qt.Key_Return || k === Qt.Key_Enter) {
-                            root.run()
-                            e.accepted = true
-                        }
-                    }
+                        },
+                        accept: () => root.run()
+                    }, "insert")
                 }
 
                 Txt {

@@ -6,7 +6,6 @@ import Quickshell
 Pick {
     id: root
     readonly property var items: Notifs.history
-    property string selKey: ""
     property double now: Date.now()
     property var gone: ({})
     property var faded: ({})
@@ -20,6 +19,10 @@ Pick {
     width: Theme.centerW - 2 * Theme.centerPad
     height: col.height
     focus: shown
+    owner: Notifs
+    entries: view
+    identity: it => it.key
+    holdResync: false
 
     Component.onCompleted: view = items
 
@@ -108,68 +111,22 @@ Pick {
         return true
     }
 
-    function fresh() {
+    onFresh: {
         exit.stop()
         gone = ({})
         faded = ({})
         now = Date.now()
         view = items
         reset()
-        selKey = ""
+        anchor = ""
         remember()
     }
 
-    function remember() {
-        if (view[sel])
-            selKey = view[sel].key
-    }
-
-    function syncSel() {
-        if (!n) {
-            selKey = ""
-            return
-        }
-        if (selKey !== "") {
-            for (let i = 0; i < n; i++) {
-                if (view[i] && view[i].key === selKey) {
-                    sel = i
-                    return
-                }
-            }
-        }
-        sel = Math.max(0, Math.min(n - 1, sel))
-        remember()
-    }
-
-    onVisibleChanged: {
-        if (visible)
-            forceActiveFocus()
-        else
-            fresh()
-    }
-
-    Connections {
-        target: Notifs
-        function onOpenChanged() {
-            if (!Notifs.open)
-                return
-            root.fresh()
-            root.forceActiveFocus()
-        }
-    }
-
-    Connections {
-        target: root
-        function onSelChanged() { root.remember() }
-    }
-
-    Keys.onPressed: e => {
-        const k = e.key
-        if (k === Qt.Key_Escape) Notifs.open = false
-        else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space || k === Qt.Key_Delete || k === Qt.Key_Backspace) run()
-        else if (!nav(e)) return
-        e.accepted = true
-    }
+    keys: ({
+        cancel: () => Notifs.open = false,
+        accept: () => root.run(),
+        delete: () => root.run()
+    })
 
     Column {
         id: col
@@ -432,13 +389,11 @@ Pick {
                         popWait.start()
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        enabled: row.onscreen && !row.leaving
-                        hoverEnabled: row.onscreen && !row.leaving
-                        cursorShape: Qt.PointingHandCursor
+                    PickArea {
+                        pick: root
+                        at: row.index
+                        live: row.onscreen && !row.leaving
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
                         onClicked: e => {
                             root.sel = row.index
                             if (e.button === Qt.RightButton)

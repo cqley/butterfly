@@ -61,17 +61,12 @@ Item {
 
             Keys.onPressed: e => {
                 Settings.keyNav = true
-                if (e.key === Qt.Key_Escape) {
-                    Settings.open = false
-                    e.accepted = true
-                } else if (e.key === Qt.Key_PageDown || e.key === Qt.Key_PageUp) {
-                    e.accepted = true
-                    if (e.isAutoRepeat)
-                        return
-                    const dir = e.key === Qt.Key_PageDown ? 1 : -1
-                    const maxY = Math.max(0, view.contentHeight - view.height)
-                    view.contentY = Math.max(0, Math.min(maxY, view.contentY + dir * view.height))
-                }
+                const page = d => view.contentY = Math.max(0, Math.min(Math.max(0, view.contentHeight - view.height), view.contentY + d * view.height))
+                Binds.run(e, {
+                    cancel: () => Settings.open = false,
+                    pageDown: () => page(1),
+                    pageUp: () => page(-1)
+                })
             }
 
             FocusScope {

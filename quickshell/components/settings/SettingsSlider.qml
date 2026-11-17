@@ -48,21 +48,18 @@ Item {
 
     Keys.onPressed: e => {
         Settings.keyNav = true
-        if (e.key === Qt.Key_Left) {
-            root.nudge(-1)
-            e.accepted = true
-        } else if (e.key === Qt.Key_Right) {
-            root.nudge(1)
-            e.accepted = true
-        } else if (e.key === Qt.Key_Home) {
-            root.moved(root.from)
-            root.committed()
-            e.accepted = true
-        } else if (e.key === Qt.Key_End) {
-            root.moved(root.to)
-            root.committed()
-            e.accepted = true
-        }
+        Binds.run(e, {
+            left: () => root.nudge(-1),
+            right: () => root.nudge(1),
+            home: () => {
+                root.moved(root.from)
+                root.committed()
+            },
+            end: () => {
+                root.moved(root.to)
+                root.committed()
+            }
+        }, "hold")
     }
 
     SettingsFocus {

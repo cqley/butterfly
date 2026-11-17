@@ -26,6 +26,10 @@ Panel {
     width: Theme.authW - 2 * Theme.authPad
     height: col.height
     focus: shown
+    owner: Polkit
+    focusTarget: input
+    freshOnShow: true
+    onFresh: reset()
 
     onFlowChanged: if (flow) {
         reset()
@@ -79,25 +83,6 @@ Panel {
         fault = root.failText
     }
 
-    onVisibleChanged: {
-        reset()
-        if (visible) {
-            forceActiveFocus()
-            input.forceActiveFocus()
-        }
-    }
-
-    Connections {
-        target: Polkit
-        function onOpenChanged() {
-            if (!Polkit.open)
-                return
-            root.reset()
-            root.forceActiveFocus()
-            input.forceActiveFocus()
-        }
-    }
-
     Connections {
         target: Polkit.flow
         function onInputPromptChanged() { root.take() }
@@ -120,12 +105,7 @@ Panel {
         }
     }
 
-    Keys.onPressed: e => {
-        if (e.key === Qt.Key_Escape) {
-            root.cancel()
-            e.accepted = true
-        }
-    }
+    Keys.onPressed: e => Binds.run(e, { cancel: () => root.cancel() })
 
     SequentialAnimation {
         id: shake

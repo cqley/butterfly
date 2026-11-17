@@ -19,6 +19,7 @@ Pick {
     width: Theme.trayMenuW - 2 * Theme.trayMenuPad
     height: back.height + (root.n > 0 ? list.height : Theme.trayMenuRowH)
     focus: shown
+    takesFocus: true
 
     QsMenuOpener {
         id: opener
@@ -131,7 +132,7 @@ Pick {
         }
     }
 
-    function fresh() {
+    onFresh: {
         swap.stop()
         settle.stop()
         churn = false
@@ -140,35 +141,21 @@ Pick {
         reset()
     }
 
-    onVisibleChanged: {
-        if (visible)
-            forceActiveFocus()
-        else
-            fresh()
-    }
-
     Connections {
         target: Tray
         function onCurrentMenuHandleChanged() { root.rewind = true }
     }
 
-    Keys.onPressed: e => {
-        const k = e.key
-        if (k === Qt.Key_Escape) {
-            Tray.popMenu()
-        } else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) {
-            run()
-        } else if (k === Qt.Key_Right) {
+    keys: ({
+        cancel: () => Tray.popMenu(),
+        accept: () => root.run(),
+        right: () => {
             const it = root.items[root.sel]
             if (it && it.hasChildren)
-                run()
-        } else if (k === Qt.Key_Left) {
-            Tray.popMenu()
-        } else if (!nav(e)) {
-            return
-        }
-        e.accepted = true
-    }
+                root.run()
+        },
+        left: () => Tray.popMenu()
+    })
 
     Item {
         id: back
@@ -285,12 +272,11 @@ Pick {
                 opacity: Theme.dimMuted
             }
 
-            MouseArea {
-                anchors.fill: parent
-                enabled: row.live && row.onscreen
-                hoverEnabled: row.live && row.onscreen
+            PickArea {
+                pick: root
+                at: row.index
+                live: row.live && row.onscreen
                 cursorShape: row.live ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
                 onClicked: {
                     root.sel = row.index
                     root.run()

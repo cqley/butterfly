@@ -15,11 +15,10 @@ Panel {
     width: Math.max(0, total * Theme.mixerColW + Math.max(0, total - 1) * Theme.mixerColGap)
     height: rail.height
     focus: shown
-
-    function pick() {
-        sel = root.bn > 0 ? Brightness.home() : 0
-        forceActiveFocus()
-    }
+    owner: Mixer
+    freshOnShow: true
+    freshOnHide: false
+    onFresh: sel = root.bn > 0 ? Brightness.home() : 0
 
     function kindOf(i) {
         return i < root.bn ? "bright" : i < root.bn + root.an ? "audio" : "stream"
@@ -73,46 +72,21 @@ Panel {
     }
 
     onTotalChanged: sel = Math.max(0, Math.min(root.total - 1, sel))
-    onVisibleChanged: if (visible) pick()
-
-    Connections {
-        target: Mixer
-        function onOpenChanged() {
-            if (Mixer.open)
-                root.pick()
-        }
-    }
-
     Keys.onPressed: e => {
-        const k = e.key
         const s = e.modifiers & Qt.ShiftModifier ? Theme.mixerFineStep : Theme.mixerStep
-        if (k === Qt.Key_Escape)
-            Mixer.open = false
-        else if (k === Qt.Key_M || k === Qt.Key_Space)
-            root.toggleMute()
-        else if (k === Qt.Key_Up || k === Qt.Key_K)
-            root.nudge(s)
-        else if (k === Qt.Key_Down || k === Qt.Key_J)
-            root.nudge(-s)
-        else if (k === Qt.Key_Right || k === Qt.Key_L || k === Qt.Key_Tab)
-            root.move(1)
-        else if (k === Qt.Key_Left || k === Qt.Key_H || k === Qt.Key_Backtab)
-            root.move(-1)
-        else if (k === Qt.Key_PageUp)
-            root.nudge(Theme.mixerBigStep)
-        else if (k === Qt.Key_PageDown)
-            root.nudge(-Theme.mixerBigStep)
-        else if (k === Qt.Key_Home)
-            root.setv(0)
-        else if (k === Qt.Key_End)
-            root.setv(1)
-        else if (k === Qt.Key_O)
-            Audio.cycle(0)
-        else if (k === Qt.Key_I)
-            Audio.cycle(1)
-        else
-            return
-        e.accepted = true
+        Binds.run(e, Object.assign(Binds.step(d => root.move(d)), {
+            cancel: () => Mixer.open = false,
+            accept: () => root.toggleMute(),
+            m: () => root.toggleMute(),
+            up: () => root.nudge(s),
+            down: () => root.nudge(-s),
+            pageUp: () => root.nudge(Theme.mixerBigStep),
+            pageDown: () => root.nudge(-Theme.mixerBigStep),
+            home: () => root.setv(0),
+            end: () => root.setv(1),
+            o: () => Audio.cycle(0),
+            i: () => Audio.cycle(1)
+        }), "hold")
     }
 
     Row {

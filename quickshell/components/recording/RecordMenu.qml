@@ -11,6 +11,11 @@ Tiles {
     pad: Theme.pwPad
     width: Math.max(0, n * Theme.pwW + Math.max(0, n - 1) * Theme.pwGap)
     height: Theme.pwH
+    owner: Record
+    onFresh: {
+        reset()
+        remember()
+    }
 
     function key(i) {
         const it = items[i]
@@ -35,11 +40,6 @@ Tiles {
         anchor = key(sel)
     }
 
-    function fresh() {
-        reset()
-        remember()
-    }
-
     function resync() {
         for (let i = 0; i < n; i++) {
             if (key(i) === anchor) {
@@ -55,21 +55,8 @@ Tiles {
         remember()
     }
 
-    onVisibleChanged: {
-        if (visible)
-            forceActiveFocus()
-        else
-            fresh()
-    }
-
     Connections {
         target: Record
-        function onOpenChanged() {
-            if (!Record.open)
-                return
-            root.fresh()
-            root.forceActiveFocus()
-        }
         function onItemsChanged() {
             root.resync()
         }
@@ -80,13 +67,10 @@ Tiles {
         function onSelChanged() { root.remember() }
     }
 
-    Keys.onPressed: e => {
-        const k = e.key
-        if (k === Qt.Key_Escape) Record.open = false
-        else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) root.run(root.sel)
-        else if (!root.nav(e)) return
-        e.accepted = true
-    }
+    keys: ({
+        cancel: () => Record.open = false,
+        accept: () => root.run(root.sel)
+    })
 
     Row {
         spacing: Theme.pwGap
@@ -172,12 +156,10 @@ Tiles {
                     visible: tile.live
                 }
 
-                MouseArea {
+                PickArea {
                     id: mouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), tile.index)
+                    pick: root
+                    at: tile.index
                     onClicked: root.run(tile.index)
                 }
             }

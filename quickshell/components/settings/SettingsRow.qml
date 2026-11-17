@@ -51,10 +51,7 @@ Item {
 
     Keys.onPressed: e => {
         Settings.keyNav = true
-        if (root.modified && (e.key === Qt.Key_Delete || e.key === Qt.Key_Backspace)) {
-            root.reset()
-            e.accepted = true
-        }
+        Binds.run(e, { delete: root.modified ? () => root.reset() : null })
     }
 
     Item {
@@ -66,10 +63,7 @@ Item {
 
         Keys.onPressed: e => {
             Settings.keyNav = true
-            if (e.key === Qt.Key_Space || e.key === Qt.Key_Return || e.key === Qt.Key_Enter) {
-                root.activate()
-                e.accepted = true
-            }
+            Binds.run(e, { accept: () => root.activate() })
         }
 
         Rectangle {

@@ -44,6 +44,8 @@ Panel {
     width: viewW
     height: Theme.wallTrackH
     focus: shown
+    owner: Wallpaper
+    onFresh: reset()
 
     FolderListModel {
         id: folder
@@ -102,43 +104,21 @@ Panel {
         go(0, true)
     }
 
-    onVisibleChanged: {
-        if (visible) {
-            rebuild()
-            forceActiveFocus()
-            reset()
-        } else {
-            reset()
-        }
+    onVisibleChanged: if (visible) {
+        rebuild()
+        reset()
     }
 
-    Connections {
-        target: Wallpaper
-        function onOpenChanged() {
-            if (!Wallpaper.open) return
-            root.reset()
-            root.forceActiveFocus()
-        }
-    }
-
-    Keys.onPressed: e => {
-        if (e.isAutoRepeat) {
-            e.accepted = true
-            return
-        }
-        const k = e.key
-        const s = e.modifiers & Qt.ShiftModifier
-        if (k === Qt.Key_Escape) Wallpaper.open = false
-        else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) root.apply()
-        else if (k === Qt.Key_Right || k === Qt.Key_Down || k === Qt.Key_L || k === Qt.Key_J || k === Qt.Key_Tab) root.move(1)
-        else if (k === Qt.Key_Left || k === Qt.Key_Up || k === Qt.Key_H || k === Qt.Key_K || k === Qt.Key_Backtab) root.move(-1)
-        else if (k === Qt.Key_PageDown) root.move(1)
-        else if (k === Qt.Key_PageUp) root.move(-1)
-        else if (k === Qt.Key_End || k === Qt.Key_G && s) root.jump(root.n - 1)
-        else if (k === Qt.Key_Home || k === Qt.Key_G) root.jump(0)
-        else return
-        e.accepted = true
-    }
+    Keys.onPressed: e => Binds.run(e, Object.assign(Binds.step(d => root.move(d)), {
+        cancel: () => Wallpaper.open = false,
+        accept: () => root.apply(),
+        pageDown: () => root.move(1),
+        pageUp: () => root.move(-1),
+        top: () => root.jump(0),
+        home: () => root.jump(0),
+        bottom: () => root.jump(root.n - 1),
+        end: () => root.jump(root.n - 1)
+    }))
 
     Txt {
         anchors.centerIn: parent

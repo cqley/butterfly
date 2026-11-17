@@ -52,12 +52,11 @@ Rectangle {
         onAccepted: root.committed(input.text)
         onActiveFocusChanged: if (!activeFocus) root.committed(input.text)
 
-        Keys.onPressed: e => {
-            if (e.key === Qt.Key_Escape) {
+        Keys.onPressed: e => Binds.run(e, {
+            cancel: () => {
                 input.text = root.text
                 input.focus = false
-                e.accepted = true
             }
-        }
+        }, "insert")
     }
 }

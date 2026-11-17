@@ -12,8 +12,14 @@ Pick {
     width: Theme.btW - 2 * Theme.btPad
     height: col.height
     focus: shown
+    owner: Bt
+    entries: items
+    identity: it => it.address
+    onFresh: {
+        reset()
+        anchor = ""
+    }
 
-    property string selAddr: ""
     readonly property string selKey: items[sel] ? String(items[sel].address) : ""
 
     function run() {
@@ -21,98 +27,19 @@ Pick {
             Bt.pick(items[sel])
     }
 
-    function fresh() {
-        reset()
-        selAddr = ""
-    }
-
-    function remember() {
-        if (items && items[sel])
-            selAddr = items[sel].address
-    }
-
-    function syncSel() {
-        if (!n) {
-            selAddr = ""
-            return
-        }
-        if (selAddr !== "") {
-            for (let i = 0; i < n; i++) {
-                if (items[i] && items[i].address === selAddr) {
-                    if (i !== sel) {
-                        hold()
-                        sel = i
-                    }
-                    return
-                }
-            }
-        }
-        const i = Math.max(0, Math.min(n - 1, sel))
-        if (i !== sel) {
-            hold()
-            sel = i
-        }
-        remember()
-    }
-
-    onVisibleChanged: {
-        if (visible)
-            forceActiveFocus()
-        else
-            fresh()
-    }
-
     Connections {
         target: Bt
-        function onOpenChanged() {
-            if (!Bt.open)
-                return
-            root.fresh()
-            root.forceActiveFocus()
-        }
         function onItemsChanged() { root.syncSel() }
     }
 
-    Connections {
-        target: root
-        function onSelChanged() { root.remember() }
-    }
+    keys: ({
+        cancel: () => Bt.open = false,
+        accept: () => root.run()
+    })
 
-    Keys.onPressed: e => {
-        const k = e.key
-        if (k === Qt.Key_Escape) Bt.open = false
-        else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) run()
-        else if (!nav(e)) return
-        e.accepted = true
-    }
-
-    QtObject {
+    Pulse {
         id: pulse
-        property real val: 1
-        property bool running: Bt.busy || Bt.powering
-    }
-
-    SequentialAnimation {
-        running: pulse.running
-        loops: Animation.Infinite
-
-        NumberAnimation {
-            target: pulse
-            property: "val"
-            from: 1
-            to: 0
-            duration: Theme.blink
-            easing.type: Easing.InOutSine
-        }
-
-        NumberAnimation {
-            target: pulse
-            property: "val"
-            from: 0
-            to: 1
-            duration: Theme.blink
-            easing.type: Easing.InOutSine
-        }
+        running: Bt.busy || Bt.powering
     }
 
     Column {
@@ -205,12 +132,10 @@ Pick {
                     }
                 }
 
-                MouseArea {
-                    anchors.fill: parent
-                    enabled: row.onscreen
-                    hoverEnabled: row.onscreen
-                    cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), row.index)
+                PickArea {
+                    pick: root
+                    at: row.index
+                    live: row.onscreen
                     onClicked: {
                         root.sel = row.index
                         root.run()
@@ -219,30 +144,14 @@ Pick {
             }
         }
 
-        Item {
-            width: parent.width
-            height: empty.implicitHeight + Theme.emptyPad
+        Empty {
+            text: "no devices"
             visible: Bt.enabled && root.n === 0
-
-            Txt {
-                id: empty
-                anchors.centerIn: parent
-                text: "no devices"
-                opacity: Theme.dimEmpty
-            }
         }
 
-        Item {
-            width: parent.width
-            height: offline.implicitHeight + Theme.emptyPad
+        Empty {
+            text: Bt.title
             visible: !Bt.enabled
-
-            Txt {
-                id: offline
-                anchors.centerIn: parent
-                text: Bt.title
-                opacity: Theme.dimEmpty
-            }
         }
     }
 }

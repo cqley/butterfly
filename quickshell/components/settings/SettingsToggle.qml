@@ -21,16 +21,11 @@ Rectangle {
 
     Keys.onPressed: e => {
         Settings.keyNav = true
-        if (e.key === Qt.Key_Space || e.key === Qt.Key_Return || e.key === Qt.Key_Enter) {
-            root.toggled(!root.checked)
-            e.accepted = true
-        } else if (e.key === Qt.Key_Left && root.checked) {
-            root.toggled(false)
-            e.accepted = true
-        } else if (e.key === Qt.Key_Right && !root.checked) {
-            root.toggled(true)
-            e.accepted = true
-        }
+        Binds.run(e, {
+            accept: () => root.toggled(!root.checked),
+            left: root.checked ? () => root.toggled(false) : null,
+            right: root.checked ? null : () => root.toggled(true)
+        })
     }
 
     Behavior on color {

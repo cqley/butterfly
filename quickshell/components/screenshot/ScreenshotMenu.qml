@@ -11,6 +11,8 @@ Tiles {
     pad: Theme.pwPad
     width: n > 0 ? n * Theme.pwW + (n - 1) * Theme.pwGap : empty.implicitWidth
     height: Theme.pwH
+    owner: Screenshot
+    onFresh: reset()
 
     function run(i) {
         if (i < 0 || i >= n)
@@ -18,28 +20,10 @@ Tiles {
         Screenshot.pick(items[i])
     }
 
-    onVisibleChanged: {
-        if (visible) forceActiveFocus()
-        else reset()
-    }
-
-    Connections {
-        target: Screenshot
-        function onOpenChanged() {
-            if (!Screenshot.open)
-                return
-            root.reset()
-            root.forceActiveFocus()
-        }
-    }
-
-    Keys.onPressed: e => {
-        const k = e.key
-        if (k === Qt.Key_Escape) Screenshot.open = false
-        else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Space) root.run(root.sel)
-        else if (!root.nav(e)) return
-        e.accepted = true
-    }
+    keys: ({
+        cancel: () => Screenshot.open = false,
+        accept: () => root.run(root.sel)
+    })
 
     Txt {
         id: empty
@@ -125,12 +109,10 @@ Tiles {
                     }
                 }
 
-                MouseArea {
+                PickArea {
                     id: mouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: m => root.aim(mapToItem(null, m.x, m.y), tile.index)
+                    pick: root
+                    at: tile.index
                     onClicked: root.run(tile.index)
                 }
             }
