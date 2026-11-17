@@ -612,6 +612,7 @@ Singleton {
     readonly property int mediaNudgeDuration: 110
     readonly property int playNudge: 0
     readonly property int barHit: 7
+    readonly property int mediaSeekStep: 5
     readonly property color mediaTrack: tile
     readonly property real btnHoverScale: 1.06
     readonly property real btnPressScale: 0.94

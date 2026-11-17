@@ -19,6 +19,14 @@ Item {
     readonly property real glyph: primary ? Theme.playGlyph : Theme.glyphS
     signal clicked
 
+    function press() {
+        if (!root.can)
+            return
+        if (root.dir !== 0)
+            bumpAnim.restart()
+        root.clicked()
+    }
+
     onCanChanged: if (can) seen = true
     onPlayerChanged: seen = false
 

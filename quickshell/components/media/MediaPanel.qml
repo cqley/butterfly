@@ -97,6 +97,11 @@ Panel {
         root.p.position = f * root.len
     }
 
+    function skip(d) {
+        if (root.seekable)
+            root.p.seek(d * Theme.mediaSeekStep)
+    }
+
     function pad(n) {
         return n < 10 ? "0" + n : "" + n
     }
@@ -110,6 +115,14 @@ Panel {
             return pad(m) + ":" + pad(s)
         return h + ":" + pad(m) + ":" + pad(s)
     }
+
+    Keys.onPressed: e => Binds.run(e, {
+        accept: playBtn.press,
+        left: prevBtn.press,
+        right: nextBtn.press,
+        up: () => root.skip(1),
+        down: () => root.skip(-1)
+    })
 
     Timer {
         id: settle
@@ -362,6 +375,7 @@ Panel {
             spacing: Theme.mediaCtlGap
 
             Btn {
+                id: prevBtn
                 dir: -1
                 path: "M22 5L11.25 12L22 19Z M12.75 5L2 12L12.75 19Z"
                 player: root.p
@@ -370,6 +384,7 @@ Panel {
             }
 
             Btn {
+                id: playBtn
                 primary: true
                 dx: root.on ? 0 : Theme.playNudge
                 path: root.on ? "M6 5.5H8.5V18.5H6Z M15.5 5.5H18V18.5H15.5Z" : "M7.5 5L20.5 12L7.5 19Z"
@@ -379,6 +394,7 @@ Panel {
             }
 
             Btn {
+                id: nextBtn
                 dir: 1
                 path: "M2 5L12.75 12L2 19Z M11.25 5L22 12L11.25 19Z"
                 player: root.p
