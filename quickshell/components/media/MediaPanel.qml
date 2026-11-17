@@ -409,7 +409,7 @@ Panel {
             x: Theme.mediaCover ? Theme.mediaCoverBarInset : 0
             width: parent.width - 2 * x
             height: Theme.barH
-            radius: height / 2
+            radius: Theme.corner(height / 2)
             color: Theme.mediaTrack
             antialiasing: true
 
@@ -423,7 +423,7 @@ Panel {
             Rectangle {
                 width: parent.width * root.frac
                 height: parent.height
-                radius: Math.min(height / 2, width / 2)
+                radius: Theme.corner(Math.min(height / 2, width / 2))
                 color: Theme.accent
                 antialiasing: true
             }

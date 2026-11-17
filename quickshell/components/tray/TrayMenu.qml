@@ -79,7 +79,7 @@ Pick {
                 y: (Theme.trayRowH - Theme.traySelD) / 2
                 width: Theme.traySelD
                 height: Theme.traySelD
-                radius: width / 2
+                radius: Theme.corner(width / 2)
                 color: Theme.selFill
                 border.width: Theme.surfaceBorderWidth
                 border.color: Theme.surfaceBorder
@@ -126,7 +126,7 @@ Pick {
                             anchors.centerIn: parent
                             width: Theme.trayChipD
                             height: Theme.trayChipD
-                            radius: width / 2
+                            radius: Theme.corner(width / 2)
                             color: Theme.chip
                             opacity: cell.passive && !cell.selected ? Theme.dimMid : 1
                             antialiasing: true

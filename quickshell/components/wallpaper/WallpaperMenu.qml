@@ -208,7 +208,7 @@ Panel {
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: -Theme.wallRing
-                            radius: Theme.wallRadius + Theme.wallRing
+                            radius: Theme.wallRadius + Theme.corner(Theme.wallRing)
                             color: "transparent"
                             border.width: Theme.wallRing + Theme.wallBleed
                             border.color: Theme.accent

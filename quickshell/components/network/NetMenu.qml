@@ -243,10 +243,11 @@ Pick {
                 y: rule.height + Theme.netPromptGap
                 width: parent.width
                 height: Theme.netFieldH
-                radius: height / 2
+                radius: Theme.corner(height / 2)
                 color: Theme.chip
                 border.color: Theme.accent
                 border.width: pass.activeFocus ? Theme.feedbackFocusBorder : 0
+                border.pixelAligned: false
                 antialiasing: true
 
                 Behavior on border.width { NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease } }

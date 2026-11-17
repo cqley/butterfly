@@ -32,7 +32,7 @@ Rectangle {
     }
 
     SettingsFocus {
-        radius: root.radius + Theme.settingsFocusPad
+        radius: root.radius + Theme.corner(Theme.settingsFocusPad)
         focused: root.activeFocus
     }
 

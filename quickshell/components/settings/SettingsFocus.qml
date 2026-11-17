@@ -8,9 +8,10 @@ Rectangle {
 
     anchors.fill: parent
     anchors.margins: -Theme.settingsFocusPad
-    radius: Theme.settingsFocusRadius + Theme.settingsFocusPad
+    radius: Theme.settingsFocusRadius + Theme.corner(Theme.settingsFocusPad)
     color: "transparent"
     border.width: Theme.settingsFocusWidth
+    border.pixelAligned: false
     border.color: Theme.settingsFocusInk
     opacity: shown ? 1 : 0
     visible: opacity > 0

@@ -53,7 +53,7 @@ Item {
         y: Theme.mid(root.height, height)
         width: Theme.settingsSidebarIconD
         height: Theme.settingsSidebarIconD
-        radius: width / 2
+        radius: Theme.corner(width / 2)
         color: root.selected ? Theme.settingsIconOnBg : Theme.settingsIconOffBg
         scale: iconScale.shaped
         antialiasing: true

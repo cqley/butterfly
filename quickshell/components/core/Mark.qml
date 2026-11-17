@@ -10,7 +10,7 @@ Rectangle {
     y: Math.round(parent.height / 2 + (cap ? Theme.markCapY - Theme.markCapH / 2 : Theme.markY - Theme.markH / 2))
     width: Theme.markW
     height: cap ? Theme.markCapH : Theme.markH
-    radius: width / 2
+    radius: Theme.corner(width / 2)
     color: root.tint
     antialiasing: true
 }

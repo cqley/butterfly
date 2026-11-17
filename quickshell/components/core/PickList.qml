@@ -44,7 +44,7 @@ Item {
             y: slide.shaped
             width: inner.width - Theme.selInset * 2
             height: root.rowH - Theme.selGap
-            radius: height / 2
+            radius: Theme.corner(height / 2)
             color: Theme.selFill
             border.width: Theme.surfaceBorderWidth
             border.color: Theme.surfaceBorder

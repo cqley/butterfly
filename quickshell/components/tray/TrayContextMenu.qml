@@ -235,7 +235,7 @@ Pick {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Theme.trayMenuMarkD
                 height: Theme.trayMenuMarkD
-                radius: row.modelData && row.modelData.buttonType === QsMenuButtonType.RadioButton ? width / 2 : 2
+                radius: row.modelData && row.modelData.buttonType === QsMenuButtonType.RadioButton ? width / 2 : Theme.corner(2)
                 color: Theme.accent
                 visible: row.checked
             }

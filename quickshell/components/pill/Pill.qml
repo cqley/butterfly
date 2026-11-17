@@ -1113,7 +1113,7 @@ Item {
             y: -parent.cut - Theme.pillHaloSpread
             width: parent.width
             height: skin.height + 2 * Theme.pillHaloSpread
-            radius: body.radius + Theme.pillHaloSpread
+            radius: body.radius + Theme.corner(Theme.pillHaloSpread)
             topLeftRadius: radius * root.cornerFrac
             topRightRadius: radius * root.cornerFrac
             color: "transparent"

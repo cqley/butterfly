@@ -14,7 +14,7 @@ Rectangle {
 
     width: Theme.settingsToggleW
     height: Theme.settingsToggleH
-    radius: height / 2
+    radius: Theme.corner(height / 2)
     color: root.checked ? Theme.accent : Theme.settingsTrack
     antialiasing: true
     activeFocusOnTab: true
@@ -33,7 +33,7 @@ Rectangle {
     }
 
     SettingsFocus {
-        radius: root.radius + Theme.settingsFocusPad
+        radius: root.radius + Theme.corner(Theme.settingsFocusPad)
         focused: root.activeFocus
     }
 
@@ -51,7 +51,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         width: Theme.settingsToggleKnob
         height: Theme.settingsToggleKnob
-        radius: width / 2
+        radius: Theme.corner(width / 2)
         color: root.checked && !Theme.whiteKnobs ? Theme.settingsBg : Theme.knobInk
         antialiasing: true
 

@@ -52,7 +52,7 @@ FocusScope {
                     anchors.centerIn: parent
                     width: Theme.settingsDotD
                     height: Theme.settingsDotD
-                    radius: width / 2
+                    radius: Theme.corner(width / 2)
                     color: dot.modelData
                     border.width: Theme.surfaceBorderWidth
                     border.color: Theme.surfaceBorder
@@ -74,7 +74,7 @@ FocusScope {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: width / 2
+                    radius: Theme.corner(width / 2)
                     color: "transparent"
                     border.width: Theme.surfaceBorderWidth
                     border.color: Theme.fg

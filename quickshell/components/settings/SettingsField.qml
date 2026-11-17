@@ -10,14 +10,14 @@ Rectangle {
 
     width: Theme.settingsFieldW
     height: Theme.settingsFieldH
-    radius: height / 2
+    radius: Theme.corner(height / 2)
     color: Theme.settingsFieldBg
     antialiasing: true
 
     onTextChanged: if (!input.activeFocus) input.text = root.text
 
     SettingsFocus {
-        radius: root.radius + Theme.settingsFocusPad
+        radius: root.radius + Theme.corner(Theme.settingsFocusPad)
         focused: input.activeFocus
         always: true
     }

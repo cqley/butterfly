@@ -31,6 +31,10 @@ Singleton {
         return Math.max(0, outer - inset)
     }
 
+    function corner(r) {
+        return r * roundness
+    }
+
     function mid(outer, size) {
         return Math.round((outer - size) / 2)
     }
@@ -255,7 +259,9 @@ Singleton {
     readonly property int pad: cfg("pad", 16)
     readonly property int w: cfg("w", 64)
     readonly property int h: cfg("h", 28)
-    readonly property int radius: cfg("radius", 28)
+    readonly property int radiusBase: 28
+    readonly property int radius: cfg("radius", radiusBase)
+    readonly property real roundness: Math.max(0, Math.min(1, radius / radiusBase))
     readonly property int pillBorderWidth: 1
     readonly property real pillBorderOpacity: 0.08
     readonly property int pillHaloWidth: 1
@@ -398,7 +404,7 @@ Singleton {
     readonly property int noteOpenW: 300
     readonly property int noteTop: (noteH - noteIcon) / 2
     readonly property int noteIcon: 28
-    readonly property int noteIconR: 14
+    readonly property int noteIconR: corner(14)
     readonly property int noteIconX: 10
     readonly property int noteTextGap: 10
     readonly property int noteTextRight: 14
@@ -461,7 +467,7 @@ Singleton {
 
     // launcher
     readonly property int launchW: cfg("launchW", 340)
-    readonly property int launchRadius: 24
+    readonly property int launchRadius: corner(24)
     readonly property int lpad: 8
     readonly property int rowH: cfg("rowH", 38)
     readonly property int rows: cfg("rows", 5)
@@ -485,7 +491,7 @@ Singleton {
     readonly property int launchIconBox: 24
     readonly property int launchIconSize: cfg("launchIconSize", 16)
     readonly property int launchIconSourceSize: 32
-    readonly property int launchIconRadius: 10
+    readonly property int launchIconRadius: corner(10)
     readonly property int launchIconBorderWidth: surfaceBorderWidth
     readonly property real launchIconSelectedScale: 1.02
     readonly property color launchIconFill: Qt.rgba(chip.r, chip.g, chip.b, 0.36)
@@ -521,7 +527,7 @@ Singleton {
     readonly property int wallN: 5
     readonly property int wallPreload: 5
     readonly property int wallTrackH: thumbH + 22
-    readonly property int wallRadius: 9
+    readonly property int wallRadius: corner(9)
     readonly property int wallRing: 1
     readonly property int wallBleed: 1
     readonly property color wallIdleBorder: surfaceBorder
@@ -539,7 +545,7 @@ Singleton {
     readonly property int authW: 340
     readonly property int authPad: 16
     readonly property int authFieldH: 38
-    readonly property int authFieldR: 12
+    readonly property int authFieldR: corner(12)
     readonly property int authBtnH: 38
     readonly property int authIcon: 36
     readonly property int authSpacing: 12
@@ -555,7 +561,7 @@ Singleton {
     readonly property int authLockGlide: 260
     readonly property int authBtnGap: 8
     readonly property int authGlyph: 18
-    readonly property int authIconR: 12
+    readonly property int authIconR: corner(12)
     readonly property int authFieldTextX: 14
     readonly property int authDots: 3
     readonly property int authDotS: 4
@@ -590,7 +596,7 @@ Singleton {
     readonly property int mediaTimeH: 11
     readonly property string mediaRemainChar: "−"
     readonly property int artFade: 220
-    readonly property int artR: 18
+    readonly property int artR: corner(18)
     readonly property int artGlyph: 32
     readonly property string artNotePath: "M9 18V5L21 3V16M9 18A3 3 0 0 1 3 18A3 3 0 0 1 9 18ZM21 16A3 3 0 0 1 15 16A3 3 0 0 1 21 16Z"
     readonly property bool mediaTimes: cfg("mediaTimes", false)
@@ -604,7 +610,7 @@ Singleton {
     readonly property int mediaCoverBleed: 48
     readonly property real mediaCoverDim: 0.45
     readonly property int mediaCoverInset: 8
-    readonly property int mediaCoverR: radius - (islandMediaPad - mediaCoverInset)
+    readonly property int mediaCoverR: inner(radius, islandMediaPad - mediaCoverInset)
     readonly property int mediaCoverBarInset: 12
     readonly property int mediaScrollSpeed: 24
     readonly property int mediaScrollHold: 1600
@@ -754,7 +760,7 @@ Singleton {
     readonly property int regionLabelGap: 8
     readonly property int regionLabelPadX: 8
     readonly property int regionLabelPadY: 4
-    readonly property int regionLabelR: 8
+    readonly property int regionLabelR: corner(8)
     readonly property real regionGuideOpacity: 0.6
     readonly property int regionGuideWidth: 1
     readonly property string shotBodyPath: "M5 8H10L12 6H16L18 8H19A2 2 0 0 1 21 10V17A2 2 0 0 1 19 19H5A2 2 0 0 1 3 17V10A2 2 0 0 1 5 8Z"
@@ -790,7 +796,7 @@ Singleton {
     readonly property int weekLead: 1
     readonly property int weekDays: 7
     readonly property int weekGap: 4
-    readonly property int weekTodayR: 11
+    readonly property int weekTodayR: corner(11)
     readonly property real weekFadeMin: 0.12
     readonly property real weekFadeSpan: 4.7
     readonly property real weekFadeCurve: 1
@@ -943,7 +949,7 @@ Singleton {
     readonly property int settingsTitleInset: 4
     readonly property int settingsTitleLift: 2
     readonly property int settingsSidebarItemH: 34
-    readonly property int settingsSidebarItemRadius: settingsSidebarItemH / 2
+    readonly property int settingsSidebarItemRadius: corner(settingsSidebarItemH / 2)
     readonly property int settingsSidebarPadX: 7
     readonly property int settingsSidebarGap: 3
     readonly property int settingsLabelPx: fs(12)
@@ -1003,7 +1009,7 @@ Singleton {
     readonly property color settingsSegBg: mix(settingsBg, fg, 0.04)
     readonly property real settingsFocusWidth: 1.5
     readonly property int settingsFocusPad: 3
-    readonly property int settingsFocusRadius: 7
+    readonly property int settingsFocusRadius: corner(7)
     readonly property color settingsFocusInk: accent
     readonly property int settingsModDot: 5
     readonly property int settingsModHit: 16

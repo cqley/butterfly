@@ -63,7 +63,7 @@ Item {
     }
 
     SettingsFocus {
-        radius: root.height / 2 + Theme.settingsFocusPad
+        radius: Theme.corner(root.height / 2 + Theme.settingsFocusPad)
         focused: root.activeFocus
     }
 
@@ -71,14 +71,14 @@ Item {
         y: root.trackY
         width: parent.width
         height: Theme.settingsSliderH
-        radius: height / 2
+        radius: Theme.corner(height / 2)
         color: Theme.settingsTrack
         antialiasing: true
 
         Rectangle {
             width: parent.width * pos.value
             height: parent.height
-            radius: height / 2
+            radius: Theme.corner(height / 2)
             color: Theme.accent
             antialiasing: true
         }
@@ -89,7 +89,7 @@ Item {
         y: root.axis - height / 2
         width: Theme.settingsSliderKnobD
         height: Theme.settingsSliderKnobD
-        radius: width / 2
+        radius: Theme.corner(width / 2)
         color: Theme.knobInk
         antialiasing: true
         scale: knobScale.shaped

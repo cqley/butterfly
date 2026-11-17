@@ -143,7 +143,7 @@ Pick {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Theme.centerBtn
                 height: Theme.centerBtn
-                radius: width / 2
+                radius: Theme.corner(width / 2)
                 color: Notifs.dnd ? (dndArea.containsMouse ? Theme.dndToneHover : Theme.dndTone)
                     : dndArea.containsMouse ? Theme.tile : Theme.chip
                 border.width: Theme.surfaceBorderWidth
@@ -221,7 +221,7 @@ Pick {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Theme.centerBtn
                 height: Theme.centerBtn
-                radius: width / 2
+                radius: Theme.corner(width / 2)
                 color: clearArea.containsMouse ? Theme.tile : Theme.chip
                 border.width: Theme.surfaceBorderWidth
                 border.color: clearArea.containsMouse ? Theme.surfaceBorderHover : Theme.surfaceBorder

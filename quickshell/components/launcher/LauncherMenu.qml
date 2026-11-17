@@ -132,7 +132,7 @@ Pick {
 
             Rectangle {
                 anchors.fill: parent
-                radius: height / 2
+                radius: Theme.corner(height / 2)
                 color: Theme.chip
                 opacity: input.activeFocus ? Theme.launchSearchFocusOpacity : Theme.launchSearchOpacity
                 antialiasing: true
@@ -232,7 +232,7 @@ Pick {
                     anchors.rightMargin: Theme.selInset
                     anchors.verticalCenter: parent.verticalCenter
                     height: Theme.rowH - Theme.selGap
-                    radius: height / 2
+                    radius: Theme.corner(height / 2)
                     color: Theme.selFill
                     border.width: Theme.surfaceBorderWidth
                     border.color: Theme.surfaceBorder

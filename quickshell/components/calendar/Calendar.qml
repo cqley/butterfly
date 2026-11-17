@@ -96,7 +96,7 @@ Panel {
                             anchors.centerIn: parent
                             width: Math.round(root.ch * Theme.calTodayScale)
                             height: width
-                            radius: width / 2
+                            radius: Theme.corner(width / 2)
                             visible: today
                             color: Theme.accent
                             opacity: Theme.todayFill

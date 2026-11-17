@@ -74,7 +74,7 @@ Item {
                 anchors.top: parent.top
                 width: Theme.mixerTrackW
                 height: parent.height
-                radius: width / 2
+                radius: Theme.corner(width / 2)
                 color: Theme.chip
                 opacity: root.dim
                 antialiasing: true
@@ -85,7 +85,7 @@ Item {
                 anchors.bottom: parent.bottom
                 width: Theme.mixerTrackW
                 height: root.level > 0 ? root.base + root.level * root.travel : 0
-                radius: width / 2
+                radius: Theme.corner(width / 2)
                 color: root.muted ? Theme.mixerMutedFill : Theme.audioFill
                 opacity: root.dim
                 antialiasing: true
@@ -101,7 +101,7 @@ Item {
                 y: (1 - root.level) * root.travel
                 width: Theme.mixerHandleW
                 height: Theme.mixerHandleH
-                radius: height / 2
+                radius: Theme.corner(height / 2)
                 color: Theme.fg
                 opacity: root.silent ? Theme.mixerZeroDim : root.live ? 1 : Theme.mixerKnobDim
                 antialiasing: true

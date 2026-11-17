@@ -335,7 +335,7 @@ Panel {
                 Rectangle {
                     width: Theme.authBtnH
                     height: Theme.authBtnH
-                    radius: height / 2
+                    radius: Theme.corner(height / 2)
                     color: cancelArea.containsMouse ? Theme.tile : Theme.chip
                     scale: cancelScale.shaped
                     antialiasing: true
@@ -381,7 +381,7 @@ Panel {
                     readonly property bool live: root.unlocked && !root.working
                     width: Theme.authBtnH
                     height: Theme.authBtnH
-                    radius: height / 2
+                    radius: Theme.corner(height / 2)
                     color: Theme.accent
                     opacity: live ? (okArea.pressed ? Theme.authPressed : 1) : Theme.authDisabled
                     scale: okScale.shaped
