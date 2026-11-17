@@ -248,7 +248,10 @@ Singleton {
     readonly property int emptyPad: 8
 
     // pill
+    readonly property bool notch: cfg("notch", true)
+    readonly property int notchEar: cfg("notchEar", 10)
     readonly property int gap: cfg("gap", 6)
+    readonly property int edge: notch ? 0 : gap
     readonly property int pad: cfg("pad", 16)
     readonly property int w: cfg("w", 64)
     readonly property int h: cfg("h", 28)
@@ -258,7 +261,7 @@ Singleton {
     readonly property int pillHaloWidth: 1
     readonly property real pillHaloOpacity: 0.18
     readonly property int pillHaloSpread: 1
-    readonly property int zone: gap + h
+    readonly property int zone: edge + h
 
     // shadow
     readonly property bool shadowOn: cfg("shadowOn", true)

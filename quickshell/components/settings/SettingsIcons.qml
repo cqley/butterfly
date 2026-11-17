@@ -56,6 +56,9 @@ Column {
         SettingsRow {
             label: "charge ring"
             token: "batRingEnabled"
+            value: Theme.notch ? "off in notch mode" : ""
+            enabled: !Theme.notch
+            opacity: enabled ? 1 : Theme.dimMid
 
             SettingsToggle {
                 checked: Theme.batRingEnabled

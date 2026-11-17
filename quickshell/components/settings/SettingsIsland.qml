@@ -39,9 +39,24 @@ Column {
         }
 
         SettingsRow {
+            label: "notch mode"
+            token: "notch"
+
+            SettingsToggle {
+                checked: Theme.notch
+                onToggled: on => {
+                    Cfg.set("notch", on)
+                    Cfg.flush()
+                }
+            }
+        }
+
+        SettingsRow {
             label: "gap from the screen edge"
             token: "gap"
-            value: Theme.gap + " px"
+            value: Theme.notch ? "off in notch mode" : Theme.gap + " px"
+            enabled: !Theme.notch
+            opacity: enabled ? 1 : Theme.dimMid
 
             SettingsSlider {
                 from: 0
@@ -103,7 +118,9 @@ Column {
         SettingsRow {
             label: "pop-out drop"
             token: "islandPopDrop"
-            value: Theme.islandPopDrop + " px"
+            value: Theme.notch ? "off in notch mode" : Theme.islandPopDrop + " px"
+            enabled: !Theme.notch
+            opacity: enabled ? 1 : Theme.dimMid
 
             SettingsSlider {
                 from: 0

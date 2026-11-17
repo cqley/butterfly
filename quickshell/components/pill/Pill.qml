@@ -266,18 +266,42 @@ Item {
         function status(): string { return root.hidden ? "hidden" : "shown" }
     }
 
+    IpcHandler {
+        target: "notch"
+
+        function toggle(): string {
+            Cfg.set("notch", !Theme.notch)
+            Cfg.flush()
+            return Theme.notch ? "on" : "off"
+        }
+
+        function status(): string { return Theme.notch ? "on" : "off" }
+    }
+
     Spring {
         id: tuckMotion
         target: root.tucked ? 1 : 0
         hold: Theme.springHold
+        settle: Theme.scaleSettle(Theme.h + Theme.barClear)
         response: Theme.barResponse
         damping: Theme.barDamping
         epsilon: Theme.springUnitEps
         rest: Theme.springUnitStop
     }
 
+    Spring {
+        id: notchMotion
+        target: Theme.notch ? 1 : 0
+        response: Theme.barResponse
+        damping: 1
+        settle: Theme.scaleSettle(Theme.notchEar)
+        epsilon: Theme.springUnitEps
+        rest: Theme.springUnitStop
+        Component.onCompleted: land(target)
+    }
+
     opacity: root.tucked && !tuckMotion.moving ? 0 : 1
-    transform: Translate { y: -tuckMotion.shaped * (yMotion.shaped + root.hAnim + Theme.barClear) }
+    transform: Translate { y: -tuckMotion.shaped * (root.topY + root.hAnim + Theme.barClear) }
 
     readonly property bool islandReady: !stage.running
 
@@ -312,9 +336,9 @@ Item {
         readonly property real restW: root.idleTargetW + 2 * Theme.islandHitGrow
         readonly property real restH: Theme.h + Theme.islandHitGrow
         x: (root.width - width) / 2
-        y: Theme.gap
-        width: Math.max(body.width, restW)
-        height: Math.max(body.y - Theme.gap + body.height, restH)
+        y: Theme.edge
+        width: Math.max(body.width + 2 * root.ear, restW)
+        height: Math.max(body.y - Theme.edge + body.height, restH)
 
         HoverHandler { id: halo }
     }
@@ -507,7 +531,13 @@ Item {
     }
 
     readonly property real idleCenterDrop: dropMotion.shaped
-    readonly property real bodyDrop: Theme.gap + (islandPop.popped ? Theme.islandPopDrop : 0)
+    readonly property real bodyDrop: islandPop.popped && !Theme.notch ? Theme.islandPopDrop : 0
+    readonly property real notchT: Math.max(0, Math.min(1, notchMotion.shaped))
+    readonly property real rho: body.radius - (body.radius + Theme.notchEar) * root.notchT
+    readonly property real ear: Math.max(0, -root.rho)
+    readonly property real topRadius: Math.max(0, root.rho)
+    readonly property real cornerFrac: body.radius > 0 ? root.topRadius / body.radius : 1 - root.notchT
+    readonly property real topY: yMotion.shaped + Theme.gap * root.cornerFrac
 
     Spring {
         id: wMotion
@@ -562,7 +592,7 @@ Item {
     Item {
         id: skin
         x: (root.width - width) / 2
-        y: yMotion.shaped
+        y: root.topY
         width: root.wAnim
         height: root.hAnim
     }
@@ -575,24 +605,43 @@ Item {
     Rectangle {
         anchors.fill: skin
         radius: body.radius
+        topLeftRadius: root.topRadius
+        topRightRadius: root.topRadius
         color: Theme.bg
         antialiasing: true
+    }
+
+    NotchEar {
+        x: skin.x - root.ear
+        y: skin.y
+        z: 6
+        size: root.ear
+    }
+
+    NotchEar {
+        x: skin.x + skin.width - 1
+        y: skin.y
+        z: 6
+        size: root.ear
+        mirror: true
     }
 
     ClippingRectangle {
         id: body
         x: Theme.mid(root.width, width)
-        y: Math.round(yMotion.shaped)
+        y: Math.round(root.topY)
         width: Math.round(root.wAnim)
         height: Math.round(root.hAnim)
         radius: Math.min(Math.min(width, height) / 2, root.cornerCap)
+        topLeftRadius: root.topRadius
+        topRightRadius: root.topRadius
         antialiasing: true
         color: "transparent"
         Component.onCompleted: body.contentItem.transform = [bodyShift]
 
         Translate {
             id: bodyShift
-            y: yMotion.shaped - body.y
+            y: root.topY - body.y
         }
 
         HoverHandler {
@@ -840,7 +889,7 @@ Item {
     Fade {
         id: idle
         x: body.x
-        y: yMotion.shaped + Theme.idleTopOffsetY + root.idleCenterDrop
+        y: root.topY + Theme.idleTopOffsetY + root.idleCenterDrop
         width: body.width
         height: Theme.h
         clip: true
@@ -1012,7 +1061,10 @@ Item {
 
     Rectangle {
         anchors.fill: skin
+        anchors.topMargin: -Theme.pillBorderWidth * (1 - root.cornerFrac)
         radius: body.radius
+        topLeftRadius: root.topRadius
+        topRightRadius: root.topRadius
         color: "transparent"
         border.width: Theme.pillBorderWidth
         border.color: Qt.rgba(1, 1, 1, Theme.pillBorderOpacity)
@@ -1023,7 +1075,7 @@ Item {
     Fade {
         id: ringFade
         anchors.fill: skin
-        shown: root.ringBase
+        shown: root.ringBase && !Theme.notch
         ready: !ringSettle.running
         rise: Theme.batRingRise
         fall: Theme.batRingFall
@@ -1038,15 +1090,27 @@ Item {
         }
     }
 
-    Rectangle {
-        anchors.fill: skin
-        anchors.margins: -Theme.pillHaloSpread
-        radius: body.radius + Theme.pillHaloSpread
-        color: "transparent"
-        border.width: Theme.pillHaloWidth
-        border.color: Qt.rgba(0, 0, 0, Theme.pillHaloOpacity)
-        antialiasing: true
+    Item {
+        readonly property real cut: root.ear > 0 ? root.ear : -Theme.pillHaloSpread
+        x: skin.x - Theme.pillHaloSpread
+        y: skin.y + cut
+        width: skin.width + 2 * Theme.pillHaloSpread
+        height: skin.height + Theme.pillHaloSpread - cut
+        clip: cut > 0
         z: 5
+
+        Rectangle {
+            y: -parent.cut - Theme.pillHaloSpread
+            width: parent.width
+            height: skin.height + 2 * Theme.pillHaloSpread
+            radius: body.radius + Theme.pillHaloSpread
+            topLeftRadius: radius * root.cornerFrac
+            topRightRadius: radius * root.cornerFrac
+            color: "transparent"
+            border.width: Theme.pillHaloWidth
+            border.color: Qt.rgba(0, 0, 0, Theme.pillHaloOpacity)
+            antialiasing: true
+        }
     }
 
     readonly property date clockNow: clock.date

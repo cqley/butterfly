@@ -47,6 +47,10 @@ Item {
     width: parent ? parent.width : 0
     height: Theme.settingsRowH
 
+    Behavior on opacity {
+        NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
+    }
+
     Component.onCompleted: root.hasActor = root.actor() !== null
 
     Keys.onPressed: e => {
