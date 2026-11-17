@@ -107,8 +107,11 @@ Singleton {
         onFileChanged: reload()
         onLoadFailed: { if (!root.ready) root.v = ({}); root.ready = true }
         onLoaded: {
-            if (!settle.running && text() !== root.mine)
-                root.adopt(text())
+            const t = text()
+            if (!settle.running && t !== root.mine) {
+                root.adopt(t)
+                root.mine = t
+            }
             root.ready = true
         }
     }

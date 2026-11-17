@@ -25,6 +25,7 @@
 | `workspaces` | `toggle` `place <left\|right\|only>` `style <dots\|bars>` `status` |
 | `modal` | `dismiss` `status` |
 | `bar` | `toggle` `status` |
+| `notch` | `toggle` `status` |
 
 ```
 quickshell ipc call <target> <action>

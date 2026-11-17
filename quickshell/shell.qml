@@ -23,7 +23,8 @@ Scope {
                     right: true
                 }
                 readonly property int reserve: pill.hidden && Theme.barFreesZone ? 0 : Theme.zone
-                implicitHeight: Math.max(1, reserve)
+                implicitHeight: 1
+                exclusionMode: ExclusionMode.Normal
                 exclusiveZone: reserve
                 aboveWindows: false
                 color: "transparent"

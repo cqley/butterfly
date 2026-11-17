@@ -248,7 +248,7 @@ Singleton {
     readonly property int emptyPad: 8
 
     // pill
-    readonly property bool notch: cfg("notch", true)
+    readonly property bool notch: cfg("notch", false)
     readonly property int notchEar: cfg("notchEar", 10)
     readonly property int gap: cfg("gap", 6)
     readonly property int edge: notch ? 0 : gap
