@@ -811,8 +811,8 @@ Singleton {
     readonly property real menuBounceReach: cfg("menuBounceReach", 28)
     readonly property real menuBounceDip: cfg("menuBounceDip", 0.08)
     readonly property bool menuSwitchDip: cfg("menuSwitchDip", true)
-    readonly property real islandDropResponse: 0.24
-    readonly property real islandDropDamping: 0.92
+    readonly property real islandDropResponse: 0.225
+    readonly property real islandDropDamping: 1
     readonly property real islandContentResponse: islandResponse
     readonly property real islandContentDamping: springDamping
     readonly property int islandPopW: cfg("islandPopW", 12)

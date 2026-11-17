@@ -16,7 +16,11 @@ Menu {
     property bool veiled: false
     property bool dnd: false
     property var history: []
+    property var fresh: []
+    readonly property bool unread: fresh.length > 0
     property int seq: 0
+
+    onOpenChanged: if (open) fresh = []
 
     function plain(text) {
         return String(text || "")
@@ -94,6 +98,8 @@ Menu {
 
     function insertNew(h, e) {
         e.key = "h" + (++seq)
+        if (!open)
+            fresh = [...fresh, e.key]
         return [e, ...h]
     }
 
@@ -104,11 +110,13 @@ Menu {
         const h = history.slice()
         const merged = coalesceHead(h, e) || replaceById(h, e) || insertNew(h, e)
         history = merged.slice(0, Theme.notificationHistoryMax)
+        fresh = fresh.filter(k => history.some(x => x.key === k))
     }
 
     function forget(key) {
         const e = history.find(x => x.key === key)
         history = history.filter(x => x.key !== key)
+        fresh = fresh.filter(k => k !== key)
         if (!e)
             return
         if (e.system) {
@@ -149,6 +157,7 @@ Menu {
 
     function clear() {
         history = []
+        fresh = []
         flush(false)
     }
 
@@ -312,10 +321,17 @@ Menu {
 
     onVeiledChanged: if (!veiled && current === null && !gap.running) pump()
 
+    function read(n) {
+        const e = history.find(x => n.system ? echoes(x, n) : !x.system && x.nid === n.id)
+        if (e)
+            fresh = fresh.filter(k => k !== e.key)
+    }
+
     function dismiss() {
         const n = current
         if (!n)
             return
+        read(n)
         next()
         if (!n.system && n.tracked)
             n.dismiss()

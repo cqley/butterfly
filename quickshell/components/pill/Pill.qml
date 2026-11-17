@@ -277,7 +277,7 @@ Item {
     }
 
     opacity: root.tucked && !tuckMotion.moving ? 0 : 1
-    transform: Translate { y: -tuckMotion.shaped * (yMotion.value + root.hAnim + Theme.barClear) }
+    transform: Translate { y: -tuckMotion.shaped * (yMotion.shaped + root.hAnim + Theme.barClear) }
 
     readonly property bool islandReady: !stage.running
 
@@ -544,6 +544,7 @@ Item {
         response: Theme.islandDropResponse
         damping: Theme.islandDropDamping
         epsilon: Theme.settleEps
+        settle: Theme.springSettle
     }
 
     Spring {
@@ -552,7 +553,7 @@ Item {
         response: Theme.islandDropResponse
         damping: Theme.islandDropDamping
         epsilon: Theme.settleEps
-        hold: Theme.springHold
+        settle: Theme.springSettle
     }
 
     readonly property int cornerCap: Launcher.open ? Theme.launchRadius : Theme.radius
@@ -561,7 +562,7 @@ Item {
     Item {
         id: skin
         x: (root.width - width) / 2
-        y: yMotion.value
+        y: yMotion.shaped
         width: root.wAnim
         height: root.hAnim
     }
@@ -581,7 +582,7 @@ Item {
     ClippingRectangle {
         id: body
         x: Theme.mid(root.width, width)
-        y: Math.round(yMotion.value)
+        y: Math.round(yMotion.shaped)
         width: Math.round(root.wAnim)
         height: Math.round(root.hAnim)
         radius: Math.min(Math.min(width, height) / 2, root.cornerCap)
@@ -591,7 +592,7 @@ Item {
 
         Translate {
             id: bodyShift
-            y: yMotion.value - body.y
+            y: yMotion.shaped - body.y
         }
 
         HoverHandler {
@@ -839,7 +840,7 @@ Item {
     Fade {
         id: idle
         x: body.x
-        y: yMotion.value + Theme.idleTopOffsetY + root.idleCenterDrop
+        y: yMotion.shaped + Theme.idleTopOffsetY + root.idleCenterDrop
         width: body.width
         height: Theme.h
         clip: true

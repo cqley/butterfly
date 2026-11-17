@@ -304,7 +304,7 @@ Item {
                     x: bell.width - width
                     y: -Theme.dashNoteDotRing
                     color: Theme.bg
-                    opacity: root.notes > 0 ? 1 : 0
+                    opacity: Notifs.unread && root.notes > 0 ? 1 : 0
                     visible: opacity > 0.004
                     antialiasing: true
 
