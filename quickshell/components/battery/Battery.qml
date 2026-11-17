@@ -19,6 +19,7 @@ Singleton {
     property bool testMode: false
     property real testPct: 0.8
     property bool testCharging: false
+    property bool testReady: false
 
     readonly property var device: UPower.displayDevice
     readonly property bool available: root.testMode || (!!device && device.ready && device.isLaptopBattery)
@@ -139,7 +140,35 @@ Singleton {
         Cfg.flush()
     }
 
-    Component.onCompleted: root.syncPowerConnection()
+    function saveTest() {
+        if (root.testReady)
+            testStore.setText(JSON.stringify({ on: root.testMode, pct: root.testPct, charging: root.testCharging }))
+    }
+
+    onTestModeChanged: root.saveTest()
+    onTestPctChanged: root.saveTest()
+    onTestChargingChanged: root.saveTest()
+
+    Component.onCompleted: {
+        Quickshell.execDetached(["mkdir", "-p", Quickshell.stateDir])
+        try {
+            const t = JSON.parse(testStore.text())
+            root.testMode = t.on === true
+            root.testPct = typeof t.pct === "number" ? Math.max(0, Math.min(1, t.pct)) : root.testPct
+            root.testCharging = t.charging === true
+        } catch (e) {
+        }
+        root.testReady = true
+        root.syncPowerConnection()
+    }
+
+    FileView {
+        id: testStore
+        path: Quickshell.statePath("battery-test.json")
+        blockLoading: true
+        printErrors: false
+    }
+
     onDeviceChanged: root.resetPowerConnection()
 
     Connections {
