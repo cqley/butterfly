@@ -10,16 +10,18 @@ Panel {
     property bool snap: false
     property real trackTo: 0
     readonly property real trackX: trackMotion.shaped
-    readonly property real focusPos: focusMotion.shaped
     property real vel: Theme.wallVelocity
     property int trackDur: Theme.glide
     property var files: []
+    property bool applied: false
+    readonly property string current: Theme.pal && Theme.pal.wallpaper ? String(Theme.pal.wallpaper) : ""
     readonly property int n: files.length
     readonly property int sel: n ? ((cursor % n) + n) % n : 0
     readonly property int step: Theme.thumbW + Theme.thumbGap
     readonly property real viewW: Theme.wallW - 2 * Theme.wallPad
+    readonly property int originX: Math.round((viewW - Theme.thumbW) / 2)
     readonly property int win: Theme.wallN + Theme.wallPreload * 2
-    readonly property real centerIndex: n ? ((viewW - Theme.thumbW) / 2 - trackX) / step : 0
+    readonly property real centerIndex: n ? (originX - trackX) / step : 0
     readonly property int winStart: n ? Math.round(centerIndex) - Math.floor(win / 2) : 0
 
     Spring {
@@ -30,22 +32,19 @@ Panel {
         target: root.trackTo
     }
 
-    Spring {
-        id: focusMotion
-        response: Theme.feedbackResponse
-        epsilon: Theme.springUnitEps
-        rest: Theme.springUnitStop
-        settle: Theme.scaleSettle(Theme.thumbW) / (Theme.wallFocusScale - 1)
-        snap: root.snap
-        target: root.cursor
-    }
-
     pad: Theme.wallPad
     width: viewW
     height: Theme.wallTrackH
     focus: shown
     owner: Wallpaper
-    onFresh: reset()
+    onFresh: {
+        if (Wallpaper.open)
+            return
+        if (!applied)
+            reset()
+        applied = false
+    }
+    onCurrentChanged: if (!visible) reset()
 
     FolderListModel {
         id: folder
@@ -59,7 +58,7 @@ Panel {
     }
 
     function centerFor(i) {
-        return Math.round((viewW - Theme.thumbW) / 2 - i * step)
+        return originX - i * step
     }
 
     function rebuild() {
@@ -92,22 +91,22 @@ Panel {
 
     function jump(i) {
         if (!n) return
-        go(Math.max(0, Math.min(n - 1, i)), false)
+        go(cursor - sel + Math.max(0, Math.min(n - 1, i)), false)
     }
 
     function apply() {
         if (!n) return
+        applied = true
         Wallpaper.set(files[sel].path)
     }
 
     function reset() {
-        go(0, true)
+        const i = Math.max(0, files.findIndex(f => f.path === current))
+        if (!n || sel !== i)
+            go(i, true)
     }
 
-    onVisibleChanged: if (visible) {
-        rebuild()
-        reset()
-    }
+    onVisibleChanged: if (visible) rebuild()
 
     Keys.onPressed: e => Binds.run(e, Object.assign(Binds.step(d => root.move(d)), {
         cancel: () => Wallpaper.open = false,
@@ -128,13 +127,14 @@ Panel {
     }
 
     Item {
-        width: parent.width
+        x: -Theme.wallEdgeFade
+        width: parent.width + 2 * Theme.wallEdgeFade
         height: Theme.wallTrackH
         clip: true
 
         Item {
             id: track
-            x: root.trackX
+            x: root.trackX + Theme.wallEdgeFade
             height: parent.height
             width: parent.width
 
@@ -147,7 +147,7 @@ Panel {
                     readonly property int abs: root.winStart + (((index - root.winStart) % root.win) + root.win) % root.win
                     readonly property int realIdx: root.n ? ((abs % root.n) + root.n) % root.n : 0
                     readonly property real dist: Math.abs(abs - root.centerIndex)
-                    readonly property real glowFast: Math.max(0, 1 - Math.abs(abs - root.focusPos))
+                    readonly property real glow: Math.max(0, 1 - cell.dist)
                     readonly property var info: root.files[realIdx]
 
                     x: abs * root.step
@@ -162,10 +162,15 @@ Panel {
                         width: Theme.thumbW
                         height: Theme.thumbH
                         transformOrigin: Item.Center
-                        scale: cell.glowFast > 0
-                            ? 1 + (Theme.wallFocusScale - 1) * cell.glowFast
-                            : (area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1)
-                        z: cell.glowFast
+                        scale: (1 + (Theme.wallFocusScale - 1) * cell.glow) * hoverMotion.shaped
+                        z: cell.glow
+
+                        ScaleSpring {
+                            id: hoverMotion
+                            size: Theme.thumbW
+                            target: area.pressed ? Theme.feedbackPressScale : area.containsMouse ? Theme.feedbackHoverScale : 1
+                            Component.onCompleted: land(1)
+                        }
 
                         Rectangle {
                             anchors.fill: parent
@@ -196,7 +201,7 @@ Panel {
                             color: "transparent"
                             border.width: Theme.surfaceBorderWidth
                             border.color: Theme.wallIdleBorder
-                            opacity: 1 - cell.glowFast
+                            opacity: 1 - cell.glow
                             antialiasing: true
                         }
 
@@ -207,7 +212,7 @@ Panel {
                             color: "transparent"
                             border.width: Theme.wallRing + Theme.wallBleed
                             border.color: Theme.accent
-                            opacity: cell.glowFast
+                            opacity: cell.glow
                             antialiasing: true
                         }
                     }
@@ -225,6 +230,27 @@ Panel {
                         }
                     }
                 }
+            }
+        }
+
+        Rectangle {
+            width: Theme.wallEdgeFade
+            height: parent.height
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: Theme.bg }
+                GradientStop { position: 1; color: Qt.rgba(Theme.bg.r, Theme.bg.g, Theme.bg.b, 0) }
+            }
+        }
+
+        Rectangle {
+            x: parent.width - width
+            width: Theme.wallEdgeFade
+            height: parent.height
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0; color: Qt.rgba(Theme.bg.r, Theme.bg.g, Theme.bg.b, 0) }
+                GradientStop { position: 1; color: Theme.bg }
             }
         }
     }

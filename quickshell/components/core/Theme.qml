@@ -532,6 +532,7 @@ Singleton {
     readonly property int wallSourceW: thumbW * 2
     readonly property int wallSourceH: thumbH * 2
     readonly property real wallFocusScale: 1.15
+    readonly property int wallEdgeFade: thumbGap
     readonly property int wallW: thumbW * wallN + thumbGap * (wallN - 1) + wallFocusGap * 2 + wallPad * 2
 
     // auth

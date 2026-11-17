@@ -537,7 +537,7 @@ Item {
     readonly property real ear: Math.max(0, -root.rho)
     readonly property real topRadius: Math.max(0, root.rho)
     readonly property real cornerFrac: body.radius > 0 ? root.topRadius / body.radius : 1 - root.notchT
-    readonly property real topY: yMotion.shaped + Theme.gap * root.cornerFrac
+    readonly property real topY: yMotion.shaped + gapMotion.shaped * root.cornerFrac
 
     Spring {
         id: wMotion
@@ -575,6 +575,16 @@ Item {
         damping: Theme.islandDropDamping
         epsilon: Theme.settleEps
         settle: Theme.springSettle
+    }
+
+    Spring {
+        id: gapMotion
+        target: Theme.gap
+        response: Theme.islandDropResponse
+        damping: Theme.islandDropDamping
+        epsilon: Theme.settleEps
+        settle: Theme.springSettle
+        Component.onCompleted: land(target)
     }
 
     Spring {

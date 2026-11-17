@@ -8,6 +8,7 @@ Item {
     property string label: ""
     property string value: ""
     property string token: ""
+    property string off: ""
     property bool showArrow: false
     property bool last: true
     property bool hasActor: false
@@ -46,6 +47,8 @@ Item {
 
     width: parent ? parent.width : 0
     height: Theme.settingsRowH
+    enabled: root.off === ""
+    opacity: enabled ? 1 : Theme.dimMid
 
     Behavior on opacity {
         NumberAnimation { duration: Theme.feedbackDuration; easing.type: Theme.ease }
@@ -156,9 +159,9 @@ Item {
         Component.onCompleted: root.centerSlot()
 
         Txt {
-            visible: root.value !== ""
+            visible: text !== ""
             anchors.verticalCenter: parent.verticalCenter
-            text: root.value
+            text: root.off !== "" ? root.off : root.value
             font.pixelSize: Theme.settingsValuePx
             font.weight: Font.Normal
             color: Theme.settingsValueInk

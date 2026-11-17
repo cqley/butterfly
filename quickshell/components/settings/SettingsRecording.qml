@@ -5,10 +5,6 @@ import QtQuick
 Column {
     id: root
 
-    function note(ok) {
-        return ok ? "" : "unsupported"
-    }
-
     function store(key, value) {
         const v = value.trim()
         if (v === "")
@@ -25,9 +21,7 @@ Column {
         SettingsRow {
             label: "desktop audio"
             token: "recordDesktopAudio"
-            value: root.note(Record.canDesktopAudio)
-            enabled: Record.canDesktopAudio
-            opacity: enabled ? 1 : Theme.dimMid
+            off: Record.canDesktopAudio ? "" : "unsupported"
 
             SettingsToggle {
                 checked: Theme.recordDesktopAudio
@@ -41,9 +35,7 @@ Column {
         SettingsRow {
             label: "microphone"
             token: "recordMic"
-            value: root.note(Record.canMic)
-            enabled: Record.canMic
-            opacity: enabled ? 1 : Theme.dimMid
+            off: Record.canMic ? "" : "unsupported"
 
             SettingsToggle {
                 checked: Theme.recordMic
@@ -59,9 +51,7 @@ Column {
         SettingsRow {
             label: "show cursor"
             token: "recordCursor"
-            value: root.note(Record.canCursor)
-            enabled: Record.canCursor
-            opacity: enabled ? 1 : Theme.dimMid
+            off: Record.canCursor ? "" : "unsupported"
 
             SettingsToggle {
                 checked: Theme.recordCursor
@@ -75,9 +65,8 @@ Column {
         SettingsRow {
             label: "frame rate"
             token: "recordFps"
-            value: Record.canFps ? Theme.recordFps + " fps" : root.note(false)
-            enabled: Record.canFps
-            opacity: enabled ? 1 : Theme.dimMid
+            value: Theme.recordFps + " fps"
+            off: Record.canFps ? "" : "unsupported"
 
             SettingsSlider {
                 from: 24

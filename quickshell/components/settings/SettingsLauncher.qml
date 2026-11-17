@@ -50,20 +50,5 @@ Column {
                 onCommitted: Cfg.flush()
             }
         }
-
-        SettingsRow {
-            label: "icon size"
-            token: "launchIconSize"
-            value: Theme.launchIconSize + " px"
-
-            SettingsSlider {
-                from: 12
-                to: 32
-                step: 1
-                value: Theme.launchIconSize
-                onMoved: v => Cfg.set("launchIconSize", Math.round(v))
-                onCommitted: Cfg.flush()
-            }
-        }
     }
 }
