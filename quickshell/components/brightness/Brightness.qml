@@ -11,6 +11,7 @@ Singleton {
     property bool probed: false
     property bool backlit: false
     property bool calm: true
+    property bool hold: false
     property int fetchBus: 0
     property var queue: []
     property alias devices: devs
@@ -18,7 +19,8 @@ Singleton {
     readonly property int count: devs.count
 
     Component.onCompleted: refresh()
-    onCalmChanged: if (calm) Qt.callLater(pump)
+    onCalmChanged: calm ? quiet.restart() : quiet.stop()
+    onHoldChanged: if (!hold) quiet.restart()
 
     Connections {
         target: Quickshell
@@ -97,6 +99,9 @@ Singleton {
 
     function pump() {
         if (!calm || fetch.running || queue.length === 0)
+            return
+        const next = find("ddc", queue[0])
+        if (hold && next >= 0 && devs.get(next).ready)
             return
         fetchBus = queue.shift()
         fetch.running = true
@@ -206,6 +211,12 @@ Singleton {
         delegate: Writer {
             onSettled: ok => root.onSettled(kind, bus, ok)
         }
+    }
+
+    Timer {
+        id: quiet
+        interval: Theme.brightSettle
+        onTriggered: root.pump()
     }
 
     Timer {

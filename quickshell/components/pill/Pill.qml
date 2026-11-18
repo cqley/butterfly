@@ -334,6 +334,12 @@ Item {
         value: !root.moving && !morph.moving
     }
 
+    Binding {
+        target: Brightness
+        property: "hold"
+        value: Mixer.open
+    }
+
     anchors.fill: parent
 
     property alias hitTarget: hit
