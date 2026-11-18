@@ -51,6 +51,7 @@ Item {
         text: root.fallbackText
         visible: icon.showPlaceholder && !icon.loading
         font.pixelSize: Theme.launchFallbackPx
-        font.weight: Font.Bold
+        font.weight: Theme.boldWeight
+        font.variableAxes: Theme.bold
     }
 }

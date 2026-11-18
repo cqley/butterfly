@@ -82,7 +82,8 @@ Panel {
                     text: d.getDate()
                     color: tint
                     font.pixelSize: Theme.fsXL
-                    font.weight: today ? Font.Bold : Font.Medium
+                    font.weight: today ? Theme.boldWeight : Font.Medium
+                    font.variableAxes: today ? Theme.bold : ({})
                 }
             }
         }

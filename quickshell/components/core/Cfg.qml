@@ -13,6 +13,7 @@ Singleton {
     readonly property var defaults: ({})
     property bool ready: false
     property string mine: ""
+    property var pending: ({})
     readonly property int count: Object.keys(v).length
 
     function has(key) {
@@ -60,6 +61,7 @@ Singleton {
         const next = Object.assign({}, root.v)
         next[key] = value
         root.v = next
+        root.pending[key] = { value: value }
         settle.restart()
     }
 
@@ -69,33 +71,60 @@ Singleton {
         const next = Object.assign({}, root.v)
         delete next[key]
         root.v = next
+        root.pending[key] = { gone: true }
         settle.restart()
     }
 
     function clearAll() {
         if (Object.keys(root.v).length === 0)
             return
+        for (const k in root.v)
+            root.pending[k] = { gone: true }
         root.v = ({})
         settle.restart()
     }
 
     function flush() {
         settle.stop()
+        root.pending = ({})
         root.mine = JSON.stringify(root.v, null, 2) + "\n"
         file.setText(root.mine)
     }
 
-    function adopt(text) {
-        let parsed = null
+    function parse(text) {
         try {
-            parsed = JSON.parse(text)
+            const p = JSON.parse(text)
+            return p && typeof p === "object" && !Array.isArray(p) ? p : null
         } catch (e) {
-            parsed = null
+            return null
         }
-        const ok = parsed && typeof parsed === "object" && !Array.isArray(parsed)
-        if (!ok && root.ready)
+    }
+
+    function adopt(text) {
+        const parsed = root.parse(text)
+        if (!parsed && root.ready)
             return
-        root.v = ok ? parsed : ({})
+        root.v = parsed || ({})
+    }
+
+    function merge(text) {
+        const theirs = root.parse(text)
+        if (!theirs)
+            return
+        const base = root.parse(root.mine) || ({})
+        const next = Object.assign({}, theirs)
+        for (const k in root.pending) {
+            if (!root.same(theirs[k], base[k])) {
+                delete root.pending[k]
+                continue
+            }
+            if (root.pending[k].gone)
+                delete next[k]
+            else
+                next[k] = root.pending[k].value
+        }
+        root.v = next
+        root.mine = text
     }
 
     Timer {
@@ -116,9 +145,13 @@ Singleton {
         onLoadFailed: { if (!root.ready) root.v = ({}); root.ready = true }
         onLoaded: {
             const t = text()
-            if (!settle.running && t !== root.mine) {
-                root.adopt(t)
-                root.mine = t
+            if (t !== root.mine) {
+                if (settle.running) {
+                    root.merge(t)
+                } else {
+                    root.adopt(t)
+                    root.mine = t
+                }
             }
             root.ready = true
         }

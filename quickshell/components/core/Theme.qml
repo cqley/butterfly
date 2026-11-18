@@ -13,9 +13,12 @@ Singleton {
         return m.length ? m : Quickshell.screens.slice(0, 1)
     }
     readonly property string shellScreen: shellScreens.length ? shellScreens[0].name : ""
-    readonly property string font: "Inter"
+    readonly property bool fontVariable: Qt.fontFamilies().indexOf("Inter Variable") >= 0
+    readonly property string font: fontVariable ? "Inter Variable" : "Inter"
     readonly property real fontScale: cfg("fontScale", 1, 0.8, 1.4)
     readonly property var tabular: ({ "tnum": 1 })
+    readonly property int boldWeight: fontVariable ? Font.DemiBold : Font.Bold
+    readonly property var bold: fontVariable ? { "wght": 700 } : ({})
     readonly property int fsXXS: fs(9)
     readonly property int fsXS: fs(10)
     readonly property int fsS: fs(11)

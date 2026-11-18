@@ -10,6 +10,7 @@ Singleton {
     property int screenCount: 0
     property bool probed: false
     property bool backlit: false
+    property bool calm: true
     property int fetchBus: 0
     property var queue: []
     property alias devices: devs
@@ -17,6 +18,7 @@ Singleton {
     readonly property int count: devs.count
 
     Component.onCompleted: refresh()
+    onCalmChanged: if (calm) Qt.callLater(pump)
 
     Connections {
         target: Quickshell
@@ -94,7 +96,7 @@ Singleton {
     }
 
     function pump() {
-        if (fetch.running || queue.length === 0)
+        if (!calm || fetch.running || queue.length === 0)
             return
         fetchBus = queue.shift()
         fetch.running = true
@@ -216,7 +218,9 @@ Singleton {
         id: settle
         interval: Theme.speed
         onTriggered: {
-            if (!root.scanned || root.count === 0 || root.screenCount !== Quickshell.screens.length)
+            if (!root.calm)
+                settle.restart()
+            else if (!root.scanned || root.count === 0 || root.screenCount !== Quickshell.screens.length)
                 scan.running = true
             else
                 root.pump()

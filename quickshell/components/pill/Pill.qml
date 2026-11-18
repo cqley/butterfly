@@ -4,6 +4,7 @@ import Quickshell.Widgets
 import Quickshell.Io
 import "../audio"
 import "../bluetooth"
+import "../brightness"
 import "../calendar"
 import "../core"
 import "../launcher"
@@ -325,6 +326,12 @@ Item {
         target: Modal
         property: "busy"
         value: grow.running
+    }
+
+    Binding {
+        target: Brightness
+        property: "calm"
+        value: !root.moving && !morph.moving
     }
 
     anchors.fill: parent

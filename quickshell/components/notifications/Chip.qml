@@ -158,6 +158,7 @@ ClippingRectangle {
         text: root.letter
         visible: !root.own && img.showPlaceholder && !img.loading
         font.pixelSize: Theme.fsM
-        font.weight: Font.Bold
+        font.weight: Theme.boldWeight
+        font.variableAxes: Theme.bold
     }
 }

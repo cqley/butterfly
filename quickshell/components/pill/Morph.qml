@@ -20,6 +20,7 @@ Item {
     readonly property real t: root.runs ? drive.shaped : 1
     readonly property real tFlat: root.runs ? flat.shaped : 1
     readonly property bool morphing: root.runs && (root.face || drive.moving || flat.moving)
+    readonly property bool moving: drive.moving || flat.moving || veilRun.running
     readonly property bool live: root.face || root.morphing || exit.running
     readonly property bool leaving: root.live && !root.face && !root.morphing
     readonly property bool veiled: root.morphing || root.dashVisible
