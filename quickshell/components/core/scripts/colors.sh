@@ -16,6 +16,12 @@ readonly BASE=8
 : "${COLORS_SAMPLE:=50}"
 : "${COLORS_MIN_CONTRAST:=4.5}"
 : "${COLORS_MIN_CHROMA:=0.15}"
+: "${COLORS_DIM_CONTRAST:=3}"
+: "${COLORS_ANSI_SAT:=0.6}"
+: "${COLORS_ANSI_TINT:=200}"
+: "${COLORS_RED:=#E5534B}"
+: "${COLORS_YELLOW:=#FFCC00}"
+: "${COLORS_GREEN:=#34C759}"
 
 die() {
     printf '%s: %s\n' "$PROG" "$*" >&2
@@ -29,16 +35,21 @@ warn() {
 usage() {
     cat <<EOF
 usage: $PROG [options] <image>
+       $PROG --hook NAME
 
 derives a 16-color palette from <image>, sets it as the wallpaper, and renders
 the palette into templates under \$COLORS_DIR.
 
 options:
   -n, --no-wallpaper   only generate templates, do not touch the wallpaper
-  -A, --no-apply       do not push escape sequences to running terminals
+  -A, --no-apply       only write templates: no escape sequences, tmux, compositor
+                       borders or kdeglobals
   -q, --quiet          do not print the palette swatches
   -o, --out DIR        write templates to DIR instead of \$COLORS_DIR
   -m, --monitor NAME   wallpaper output to prefer (default: \$COLORS_MAIN_OUTPUT)
+  -H, --hook NAME      make NAME load the palette on start: a shell (bash, zsh,
+                       ksh, fish, nu) or a terminal (foot, alacritty, ghostty);
+                       repeatable, can be given without <image>
   -h, --help           show this help
 
 environment:
@@ -52,12 +63,19 @@ environment:
   COLORS_SAMPLE=$COLORS_SAMPLE
   COLORS_MIN_CONTRAST=$COLORS_MIN_CONTRAST
   COLORS_MIN_CHROMA=$COLORS_MIN_CHROMA
+  COLORS_DIM_CONTRAST=$COLORS_DIM_CONTRAST
+  COLORS_ANSI_SAT=$COLORS_ANSI_SAT
+  COLORS_ANSI_TINT=$COLORS_ANSI_TINT
+  COLORS_RED=$COLORS_RED
+  COLORS_YELLOW=$COLORS_YELLOW
+  COLORS_GREEN=$COLORS_GREEN
 
 requires: bash, magick, gawk, awww, coreutils
 templates:
   colors colors.txt colors.sh colors.fish colors.json sequences
   kitty.conf tmux.conf colors.lua colors.css gtk.css btop.theme
-  zathurarc Xresources
+  zathurarc Xresources kdeglobals shell.sh shell.fish
+  foot.ini alacritty.toml ghostty
 EOF
 }
 
@@ -135,28 +153,55 @@ luma601() {
     ))"
 }
 
+readonly AWK_COLOR='
+function chan(hex, i,    c) {
+    c = strtonum("0x" substr(hex, i, 2)) / 255
+    return (c <= 0.04045) ? c / 12.92 : ((c + 0.055) / 1.055) ^ 2.4
+}
+function lum(hex) {
+    return 0.2126 * chan(hex, 2) + 0.7152 * chan(hex, 4) + 0.0722 * chan(hex, 6)
+}
+function contrast(a, b,    l1, l2, t) {
+    l1 = lum(a); l2 = lum(b)
+    if (l1 < l2) { t = l1; l1 = l2; l2 = t }
+    return (l1 + 0.05) / (l2 + 0.05)
+}
+function mix(hex, target, t,    i, out, c, d) {
+    out = "#"
+    for (i = 2; i <= 6; i += 2) {
+        c = strtonum("0x" substr(hex, i, 2))
+        d = (target ~ /^#/) ? strtonum("0x" substr(target, i, 2)) : target
+        out = out sprintf("%02X", int(c + (d - c) * t + 0.5))
+    }
+    return out
+}
+function lift(hex, floor,    target, t, cand) {
+    if (contrast(hex, bg) >= floor) return hex
+    target = (lum(bg) < 0.5) ? 255 : 0
+    for (t = 0.05; t <= 1.0001; t += 0.05) {
+        cand = mix(hex, target, t)
+        if (contrast(cand, bg) >= floor) return cand
+    }
+    return (target == 255) ? "#FFFFFF" : "#000000"
+}
+'
+
+pick_dim() {
+    gawk -v bg="$1" -v min="$COLORS_DIM_CONTRAST" "$AWK_COLOR"'
+        /^#[0-9A-Fa-f]{6}$/ && toupper($0) != toupper(bg) {
+            c = contrast($0, bg)
+            if (c >= min && (pick == "" || c < pickc)) { pick = $0; pickc = c }
+            if (c > bestc) { bestc = c; best = $0 }
+        }
+        END {
+            if (pick != "") { print pick; exit }
+            print lift(best == "" ? bg : best, min)
+        }
+    '
+}
+
 pick_contrasting() {
-    gawk -v bg="$1" -v min="$COLORS_MIN_CONTRAST" '
-        function chan(hex, i,    c) {
-            c = strtonum("0x" substr(hex, i, 2)) / 255
-            return (c <= 0.04045) ? c / 12.92 : ((c + 0.055) / 1.055) ^ 2.4
-        }
-        function lum(hex) {
-            return 0.2126 * chan(hex, 2) + 0.7152 * chan(hex, 4) + 0.0722 * chan(hex, 6)
-        }
-        function contrast(a, b,    l1, l2, t) {
-            l1 = lum(a); l2 = lum(b)
-            if (l1 < l2) { t = l1; l1 = l2; l2 = t }
-            return (l1 + 0.05) / (l2 + 0.05)
-        }
-        function mix(hex, target, t,    i, out, c) {
-            out = "#"
-            for (i = 2; i <= 6; i += 2) {
-                c = strtonum("0x" substr(hex, i, 2))
-                out = out sprintf("%02X", int(c + (target - c) * t + 0.5))
-            }
-            return out
-        }
+    gawk -v bg="$1" -v min="$COLORS_MIN_CONTRAST" "$AWK_COLOR"'
         BEGIN { best = ""; bestc = 0 }
         /^#[0-9A-Fa-f]{6}$/ {
             c = contrast($0, bg)
@@ -164,39 +209,13 @@ pick_contrasting() {
         }
         END {
             if (best == "") { print bg; exit }
-            if (bestc >= min) { print best; exit }
-            target = (lum(bg) < 0.5) ? 255 : 0
-            for (t = 0.05; t <= 1.0001; t += 0.05) {
-                cand = mix(best, target, t)
-                if (contrast(cand, bg) >= min) { print cand; exit }
-            }
-            print (target == 255) ? "#FFFFFF" : "#000000"
+            print lift(best, min)
         }
     '
 }
 
 pick_accent() {
-    gawk -v bg="$1" -v min="$COLORS_MIN_CONTRAST" -v minchroma="$COLORS_MIN_CHROMA" '
-        function chan(hex, i,    c) {
-            c = strtonum("0x" substr(hex, i, 2)) / 255
-            return (c <= 0.04045) ? c / 12.92 : ((c + 0.055) / 1.055) ^ 2.4
-        }
-        function lum(hex) {
-            return 0.2126 * chan(hex, 2) + 0.7152 * chan(hex, 4) + 0.0722 * chan(hex, 6)
-        }
-        function contrast(a, b,    l1, l2, t) {
-            l1 = lum(a); l2 = lum(b)
-            if (l1 < l2) { t = l1; l1 = l2; l2 = t }
-            return (l1 + 0.05) / (l2 + 0.05)
-        }
-        function mix(hex, target, t,    i, out, c) {
-            out = "#"
-            for (i = 2; i <= 6; i += 2) {
-                c = strtonum("0x" substr(hex, i, 2))
-                out = out sprintf("%02X", int(c + (target - c) * t + 0.5))
-            }
-            return out
-        }
+    gawk -v bg="$1" -v min="$COLORS_MIN_CONTRAST" -v minchroma="$COLORS_MIN_CHROMA" "$AWK_COLOR"'
         function chroma(hex,    r, g, b, mx, mn) {
             r = strtonum("0x" substr(hex, 2, 2))
             g = strtonum("0x" substr(hex, 4, 2))
@@ -214,13 +233,36 @@ pick_accent() {
         END {
             if (ok != "" && okchroma >= minchroma) { print ok; exit }
             if (best == "") { print bg; exit }
-            if (contrast(best, bg) >= min) { print best; exit }
-            target = (lum(bg) < 0.5) ? 255 : 0
-            for (t = 0.05; t <= 1.0001; t += 0.05) {
-                cand = mix(best, target, t)
-                if (contrast(cand, bg) >= min) { print cand; exit }
+            print lift(best, min)
+        }
+    '
+}
+
+ansi_hues() {
+    gawk -v bg="$1" -v tintc="$2" -v min="$COLORS_MIN_CONTRAST" \
+        -v sat="$COLORS_ANSI_SAT" -v tint="$COLORS_ANSI_TINT" "$AWK_COLOR"'
+        function k(n, h) { return (n + h / 30) % 12 }
+        function f(n, h, s, l,    a, x) {
+            a = s * ((l < 1 - l) ? l : 1 - l)
+            x = k(n, h) - 3
+            if (9 - k(n, h) < x) x = 9 - k(n, h)
+            if (x > 1) x = 1
+            if (x < -1) x = -1
+            return l - a * x
+        }
+        function hsl(h, s, l) {
+            return sprintf("#%02X%02X%02X", int(f(0, h, s, l) * 255 + 0.5), int(f(8, h, s, l) * 255 + 0.5), int(f(4, h, s, l) * 255 + 0.5))
+        }
+        BEGIN {
+            dark = lum(bg) < 0.5
+            split("0 125 48 215 300 180", hue, " ")
+            for (pass = 0; pass < 2; pass++) {
+                l = dark ? 0.58 + pass * 0.1 : 0.42 - pass * 0.1
+                for (i = 1; i <= 6; i++) {
+                    col = mix(hsl(hue[i], sat, l), tintc, tint / 1000)
+                    print lift(col, min)
+                }
             }
-            print (target == 255) ? "#FFFFFF" : "#000000"
         }
     '
 }
@@ -274,9 +316,10 @@ emit_fish() {
     for i in "${!c[@]}"; do
         b[i]=$(hex_bare "${c[$i]}")
     done
-    local bgb fgb
+    local bgb fgb tlb
     bgb=$(hex_bare "$bg")
     fgb=$(hex_bare "$fg")
+    tlb=$(hex_bare "$tile")
 
     cat > "$out/colors.fish" <<EOF
 set fish_color_autosuggestion ${b[8]}
@@ -299,21 +342,21 @@ set fish_color_option ${b[3]}
 set fish_color_param ${b[12]}
 set fish_color_quote ${b[11]}
 set fish_color_redirection ${b[5]}
-set fish_color_search_match --background=${b[8]}
-set fish_color_selection --background=${b[8]}
+set fish_color_search_match --background=$tlb
+set fish_color_selection --background=$tlb
 set fish_color_status ${b[1]}
 set fish_color_user ${b[10]}
 set fish_color_valid_path --underline
 set fish_pager_color_background $bgb
 set fish_pager_color_completion $fgb
-set fish_pager_color_description --background=${b[8]}
+set fish_pager_color_description --background=$tlb
 set fish_pager_color_prefix ${b[10]}
 set fish_pager_color_progress ${b[8]}
 set fish_pager_color_secondary_background $bgb
 set fish_pager_color_secondary_completion $fgb
 set fish_pager_color_secondary_description ${b[8]}
 set fish_pager_color_secondary_prefix ${b[10]}
-set fish_pager_color_selected_background --background=${b[8]}
+set fish_pager_color_selected_background --background=$tlb
 set fish_pager_color_selected_completion $fgb
 set fish_pager_color_selected_description ${b[8]}
 set fish_pager_color_selected_prefix ${b[10]}
@@ -382,18 +425,84 @@ emit_kitty() {
     } > "$out/kitty.conf"
 }
 
+foot_section() {
+    local v
+    v=$(foot --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -n1) || true
+    if [[ $v =~ ^([0-9]+)\.([0-9]+)$ ]] && ((BASH_REMATCH[1] == 1 && BASH_REMATCH[2] < 24)); then
+        printf 'colors'
+    else
+        printf 'colors-dark'
+    fi
+}
+
+emit_foot() {
+    {
+        printf '[%s]\n' "$(foot_section)"
+        printf 'foreground=%s\n' "$(hex_bare "$fg")"
+        printf 'background=%s\n' "$(hex_bare "$bg")"
+        printf 'selection-foreground=%s\n' "$(hex_bare "$bg")"
+        printf 'selection-background=%s\n' "$(hex_bare "$fg")"
+        printf 'urls=%s\n' "$(hex_bare "${c[4]}")"
+        local i
+        for i in {0..7}; do
+            printf 'regular%d=%s\n' "$i" "$(hex_bare "${c[$i]}")"
+        done
+        for i in {0..7}; do
+            printf 'bright%d=%s\n' "$i" "$(hex_bare "${c[$((i + 8))]}")"
+        done
+    } > "$out/foot.ini"
+}
+
+emit_alacritty() {
+    local names=(black red green yellow blue magenta cyan white) i
+    {
+        printf '[colors.primary]\n'
+        printf 'background = "%s"\n' "$bg"
+        printf 'foreground = "%s"\n' "$fg"
+        printf '\n[colors.cursor]\n'
+        printf 'text = "%s"\n' "$bg"
+        printf 'cursor = "%s"\n' "$cursor"
+        printf '\n[colors.selection]\n'
+        printf 'text = "%s"\n' "$bg"
+        printf 'background = "%s"\n' "$fg"
+        printf '\n[colors.normal]\n'
+        for i in {0..7}; do
+            printf '%s = "%s"\n' "${names[$i]}" "${c[$i]}"
+        done
+        printf '\n[colors.bright]\n'
+        for i in {0..7}; do
+            printf '%s = "%s"\n' "${names[$i]}" "${c[$((i + 8))]}"
+        done
+    } > "$out/alacritty.toml"
+}
+
+emit_ghostty() {
+    {
+        printf 'background = %s\n' "$bg"
+        printf 'foreground = %s\n' "$fg"
+        printf 'cursor-color = %s\n' "$cursor"
+        printf 'cursor-text = %s\n' "$bg"
+        printf 'selection-background = %s\n' "$fg"
+        printf 'selection-foreground = %s\n' "$bg"
+        local i
+        for i in "${!c[@]}"; do
+            printf 'palette = %d=%s\n' "$i" "${c[$i]}"
+        done
+    } > "$out/ghostty"
+}
+
 emit_tmux() {
     cat > "$out/tmux.conf" <<EOF
 set -g status-style "bg=$bg,fg=$fg"
 set -g status-left-style "bg=$bg,fg=${c[4]}"
 set -g status-right-style "bg=$bg,fg=${c[8]}"
 set -g window-status-style "bg=$bg,fg=${c[8]}"
-set -g window-status-current-style "bg=${c[8]},fg=$fg,bold"
+set -g window-status-current-style "bg=$tile,fg=$fg,bold"
 set -g window-status-activity-style "bg=$bg,fg=${c[3]}"
 set -g pane-border-style "fg=${c[8]}"
 set -g pane-active-border-style "fg=$fg"
-set -g message-style "bg=${c[8]},fg=$fg"
-set -g message-command-style "bg=${c[8]},fg=$fg"
+set -g message-style "bg=$chip,fg=$fg"
+set -g message-command-style "bg=$chip,fg=$fg"
 set -g mode-style "bg=${c[4]},fg=$bg"
 set -g display-panes-colour "${c[8]}"
 set -g display-panes-active-colour "$fg"
@@ -450,9 +559,7 @@ emit_gtk() {
         for i in "${!c[@]}"; do
             printf '@define-color color%d %s;\n' "$i" "${c[$i]}"
         done
-        local chip tile name
-        chip=$(mix "$bg" "$fg" 110)
-        tile=$(mix "$bg" "$fg" 172)
+        local name
         for name in window view; do
             printf '@define-color %s_bg_color %s;\n@define-color %s_fg_color %s;\n' "$name" "$bg" "$name" "$fg"
         done
@@ -480,11 +587,11 @@ theme[main_bg]="$bg"
 theme[main_fg]="$fg"
 theme[title]="$fg"
 theme[hi_fg]="${c[4]}"
-theme[selected_bg]="${c[8]}"
+theme[selected_bg]="$tile"
 theme[selected_fg]="$fg"
 theme[inactive_fg]="${c[8]}"
 theme[graph_text]="$fg"
-theme[meter_bg]="${c[8]}"
+theme[meter_bg]="$chip"
 theme[proc_misc]="${c[6]}"
 theme[cpu_box]="${c[8]}"
 theme[mem_box]="${c[8]}"
@@ -522,7 +629,7 @@ emit_zathura() {
     cat > "$out/zathurarc" <<EOF
 set default-bg          "$bg"
 set default-fg          "$fg"
-set statusbar-bg        "${c[8]}"
+set statusbar-bg        "$chip"
 set statusbar-fg        "$fg"
 set inputbar-bg         "$bg"
 set inputbar-fg         "$fg"
@@ -536,10 +643,70 @@ set highlight-color     "${c[3]}"
 set highlight-active-color "${c[4]}"
 set completion-bg       "$bg"
 set completion-fg       "$fg"
-set completion-highlight-bg "${c[8]}"
+set completion-highlight-bg "$tile"
 set completion-highlight-fg "$fg"
 set recolor-lightcolor  "$bg"
 set recolor-darkcolor   "$fg"
+EOF
+}
+
+kde_rgb() {
+    local r g b
+    read -r r g b <<<"$(hex_rgb "$1")"
+    printf '%d,%d,%d' "$r" "$g" "$b"
+}
+
+kde_group() {
+    printf '[Colors:%s]\n' "$1"
+    printf 'BackgroundAlternate=%s\n' "$(kde_rgb "$3")"
+    printf 'BackgroundNormal=%s\n' "$(kde_rgb "$2")"
+    printf 'DecorationFocus=%s\n' "$(kde_rgb "$accent")"
+    printf 'DecorationHover=%s\n' "$(kde_rgb "$accent")"
+    printf 'ForegroundActive=%s\n' "$(kde_rgb "$6")"
+    printf 'ForegroundInactive=%s\n' "$(kde_rgb "$5")"
+    printf 'ForegroundLink=%s\n' "$(kde_rgb "$6")"
+    printf 'ForegroundNegative=%s\n' "$(kde_rgb "$COLORS_RED")"
+    printf 'ForegroundNeutral=%s\n' "$(kde_rgb "$COLORS_YELLOW")"
+    printf 'ForegroundNormal=%s\n' "$(kde_rgb "$4")"
+    printf 'ForegroundPositive=%s\n' "$(kde_rgb "$COLORS_GREEN")"
+    printf 'ForegroundVisited=%s\n\n' "$(kde_rgb "$6")"
+}
+
+emit_kde() {
+    local muted seldim
+    muted=$(mix "$bg" "$fg" 600)
+    seldim=$(mix "$accent" "$bg" 400)
+    {
+        kde_group View "$bg" "$chip" "$fg" "$muted" "$accent"
+        kde_group Window "$bg" "$chip" "$fg" "$muted" "$accent"
+        kde_group Button "$chip" "$tile" "$fg" "$muted" "$accent"
+        kde_group Selection "$accent" "$accent" "$bg" "$seldim" "$bg"
+        kde_group Tooltip "$chip" "$tile" "$fg" "$muted" "$accent"
+        kde_group Complementary "$bg" "$chip" "$fg" "$muted" "$accent"
+        kde_group Header "$chip" "$tile" "$fg" "$muted" "$accent"
+        kde_group 'Header][Inactive' "$bg" "$chip" "$fg" "$muted" "$accent"
+        printf '[WM]\n'
+        printf 'activeBackground=%s\n' "$(kde_rgb "$chip")"
+        printf 'activeBlend=%s\n' "$(kde_rgb "$chip")"
+        printf 'activeForeground=%s\n' "$(kde_rgb "$fg")"
+        printf 'inactiveBackground=%s\n' "$(kde_rgb "$bg")"
+        printf 'inactiveBlend=%s\n' "$(kde_rgb "$bg")"
+        printf 'inactiveForeground=%s\n' "$(kde_rgb "$muted")"
+    } > "$out/kdeglobals"
+}
+
+emit_shell_hooks() {
+    cat > "$out/shell.sh" <<EOF
+case \$- in *i*) ;; *) return 0 ;; esac
+[ -t 1 ] || return 0
+case \$TERM in linux | dumb) return 0 ;; esac
+[ -r "$dest/sequences" ] && cat "$dest/sequences"
+EOF
+    cat > "$out/shell.fish" <<EOF
+status is-interactive; or return
+test -t 1; or return
+contains -- "\$TERM" linux dumb; and return
+test -r "$dest/sequences"; and cat "$dest/sequences"
 EOF
 }
 
@@ -582,6 +749,125 @@ set_wallpaper() {
     fi
 }
 
+sync_kde_colors() {
+    local src=$1 cfg="${XDG_CONFIG_HOME:-$HOME/.config}/kdeglobals" tmp
+    cfg=$(realpath -m -- "$cfg")
+    [[ -f $cfg || ${QT_QPA_PLATFORMTHEME-} == kde ]] || return 0
+    if [[ -e $cfg && ! -w $(realpath -- "$cfg") ]]; then
+        warn "$cfg is not writable; skipping qt colors"
+        return 0
+    fi
+    mkdir -p -- "$(dirname -- "$cfg")"
+    tmp=$(mktemp "$cfg.XXXXXXXX")
+    {
+        if [[ -f $cfg ]]; then
+            gawk '
+                /^\[/ { skip = ($0 ~ /^\[Colors:/ || $0 == "[WM]") }
+                skip { next }
+                /^[[:space:]]*$/ { blank = 1; next }
+                { if (blank && n) print ""; blank = 0; print; n++ }
+            ' "$cfg"
+        fi
+        printf '\n'
+        cat "$src"
+    } > "$tmp"
+    chmod 600 -- "$tmp"
+    mv -f -- "$tmp" "$cfg"
+    if command -v busctl >/dev/null 2>&1; then
+        busctl --user emit /KGlobalSettings org.kde.KGlobalSettings notifyChange ii 0 0 >/dev/null 2>&1 || true
+    elif command -v dbus-send >/dev/null 2>&1; then
+        dbus-send --session --type=signal /KGlobalSettings org.kde.KGlobalSettings.notifyChange int32:0 int32:0 >/dev/null 2>&1 || true
+    fi
+}
+
+readonly HOOKS='bash zsh ksh fish nu foot alacritty ghostty'
+
+hook_line() {
+    case $1 in
+        bash | zsh | ksh) printf '[ -f "%s/shell.sh" ] && . "%s/shell.sh"' "$2" "$2" ;;
+        fish) printf 'test -f "%s/shell.fish"; and source "%s/shell.fish"' "$2" "$2" ;;
+        nu) printf "%s" "if \$nu.is-interactive and (is-terminal --stdout) and ((\$env.TERM? | default \"\") not-in [linux dumb]) and (\"$2/sequences\" | path exists) { ^cat \"$2/sequences\" }" ;;
+        foot) printf 'include=%s/foot.ini' "$2" ;;
+        alacritty) printf 'import = ["%s/alacritty.toml"]' "$2" ;;
+        ghostty) printf 'config-file = ?%s/ghostty' "$2" ;;
+    esac
+}
+
+hook_file() {
+    local cfg=${XDG_CONFIG_HOME:-$HOME/.config}
+    case $1 in
+        bash) printf '%s' "$HOME/.bashrc" ;;
+        zsh) printf '%s' "${ZDOTDIR:-$HOME}/.zshrc" ;;
+        ksh) printf '%s' "$HOME/.kshrc" ;;
+        fish) printf '%s' "$cfg/fish/conf.d/colors.fish" ;;
+        nu) printf '%s' "$cfg/nushell/autoload/colors.nu" ;;
+        foot) printf '%s' "$cfg/foot/foot.ini" ;;
+        alacritty) printf '%s' "$cfg/alacritty/alacritty.toml" ;;
+        ghostty)
+            if [[ -f $cfg/ghostty/config.ghostty ]]; then
+                printf '%s' "$cfg/ghostty/config.ghostty"
+            else
+                printf '%s' "$cfg/ghostty/config"
+            fi
+            ;;
+    esac
+}
+
+end_line() {
+    [[ -s $1 ]] || return 1
+    cat -- "$1"
+    [[ -z $(tail -c1 -- "$1") ]] || printf "\n"
+}
+
+touch_template() {
+    [[ -e $1 ]] && return 0
+    mkdir -p -- "$(dirname -- "$1")" && : > "$1"
+}
+
+install_hook() {
+    local name=$1 line rc tmp
+    line=$(hook_line "$name" "$2")
+    rc=$(hook_file "$name")
+    case $name in
+        foot) touch_template "$2/foot.ini" ;;
+        alacritty) touch_template "$2/alacritty.toml" ;;
+        ghostty) touch_template "$2/ghostty" ;;
+    esac
+    if [[ -f $rc ]] && grep -qF -- "$line" "$rc"; then
+        printf '%s: %s hook already in %s\n' "$PROG" "$name" "$rc"
+        return 0
+    fi
+    if [[ $name == alacritty && -f $rc ]] && grep -qE '^[[:space:]]*import[[:space:]]*=' "$rc"; then
+        warn "$rc already has an import list; add \"$2/alacritty.toml\" to it yourself"
+        return 1
+    fi
+    if [[ -e $rc && ! -w $(realpath -- "$rc") ]] || ! mkdir -p -- "$(dirname -- "$rc")" 2>/dev/null; then
+        warn "$rc is not writable; add this line to your $name config yourself:"
+        printf '%s\n' "$line" >&2
+        return 1
+    fi
+    rc=$(realpath -- "$rc" 2>/dev/null || printf '%s' "$rc")
+    tmp=$(mktemp "$rc.XXXXXXXX")
+    case $name in
+        foot)
+            { printf "%s\n" "$line"; end_line "$rc" || true; } > "$tmp"
+            ;;
+        alacritty)
+            if [[ -f $rc ]] && grep -qE '^[[:space:]]*\[general\]' "$rc"; then
+                gawk -v l="$line" '{ print } !done && /^[[:space:]]*\[general\]/ { print l; done = 1 }' "$rc" > "$tmp"
+            else
+                { end_line "$rc" && printf "\n"; printf "[general]\n%s\n" "$line"; } > "$tmp"
+            fi
+            ;;
+        *)
+            { end_line "$rc"; printf "%s\n" "$line"; } > "$tmp"
+            ;;
+    esac
+    [[ -f $rc ]] && chmod --reference="$rc" -- "$tmp"
+    mv -f -- "$tmp" "$rc"
+    printf '%s: added %s hook to %s\n' "$PROG" "$name" "$rc"
+}
+
 apply_sequences() {
     local pty
     shopt -s nullglob
@@ -605,6 +891,7 @@ main() {
     local dest=$COLORS_DIR
     local main_output=$COLORS_MAIN_OUTPUT
     local img=
+    local hooks=()
 
     while (($#)); do
         case $1 in
@@ -619,6 +906,11 @@ main() {
             -m | --monitor)
                 [[ ${2-} ]] || die "--monitor needs a name"
                 main_output=$2
+                shift
+                ;;
+            -H | --hook)
+                [[ ${2-} ]] || die "--hook needs a shell or terminal"
+                hooks+=("$2")
                 shift
                 ;;
             -h | --help)
@@ -636,6 +928,20 @@ main() {
     done
 
     img=${1-}
+    dest=$(realpath -m -- "$dest")
+    local sh
+    for sh in "${hooks[@]}"; do
+        case $sh in
+            bash | zsh | ksh | fish | nu | foot | alacritty | ghostty) ;;
+            *) die "unsupported hook: $sh ($HOOKS)" ;;
+        esac
+    done
+    if [[ -z $img ]] && ((${#hooks[@]})); then
+        for sh in "${hooks[@]}"; do
+            install_hook "$sh" "$dest" || true
+        done
+        return 0
+    fi
     if [[ -z $img ]]; then
         usage >&2
         return 1
@@ -667,6 +973,19 @@ main() {
     fg=$(printf '%s\n' "${c[@]}" | pick_contrasting "$bg")
     cursor=$fg
     accent=$(printf '%s\n' "${c[@]}" | pick_accent "$bg")
+    local dim chip tile
+    dim=$(printf '%s\n' "${c[@]}" | pick_dim "$bg")
+    chip=$(mix "$bg" "$fg" 110)
+    tile=$(mix "$bg" "$fg" 172)
+
+    local ansi=() i
+    mapfile -t ansi < <(ansi_hues "$bg" "$accent")
+    ((${#ansi[@]} == 12)) || die "could not derive the ansi hues"
+    for i in {0..5}; do
+        c[i + 1]=${ansi[i]}
+        c[i + 9]=${ansi[i + 6]}
+    done
+    c[8]=$dim
 
     out=$(mktemp -d -t "$PROG.XXXXXXXX")
     trap 'rm -rf -- "$out"' EXIT
@@ -678,6 +997,9 @@ main() {
     emit_json
     emit_sequences
     emit_kitty
+    emit_foot
+    emit_alacritty
+    emit_ghostty
     emit_tmux
     emit_lua
     emit_css
@@ -685,6 +1007,8 @@ main() {
     emit_btop
     emit_zathura
     emit_xresources
+    emit_kde
+    emit_shell_hooks
 
     mkdir -p -- "$dest"
     local f
@@ -702,10 +1026,14 @@ main() {
         fi
         sync_niri_border_color "$accent"
         sync_sway_border_color "$accent"
+        sync_kde_colors "$dest/kdeglobals"
     fi
     if ((do_print)); then
         print_swatches
     fi
+    for sh in "${hooks[@]}"; do
+        install_hook "$sh" "$dest" || true
+    done
 
     return 0
 }
