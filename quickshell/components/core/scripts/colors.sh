@@ -18,7 +18,7 @@ readonly BASE=8
 : "${COLORS_MIN_CHROMA:=0.15}"
 : "${COLORS_DIM_CONTRAST:=3}"
 : "${COLORS_ANSI_SAT:=0.6}"
-: "${COLORS_ANSI_TINT:=200}"
+: "${COLORS_ANSI_TINT:=750}"
 : "${COLORS_RED:=#E5534B}"
 : "${COLORS_YELLOW:=#FFCC00}"
 : "${COLORS_GREEN:=#34C759}"
@@ -42,14 +42,16 @@ the palette into templates under \$COLORS_DIR.
 
 options:
   -n, --no-wallpaper   only generate templates, do not touch the wallpaper
-  -A, --no-apply       only write templates: no escape sequences, tmux, compositor
-                       borders, kdeglobals or qt5ct/qt6ct reload
+  -A, --no-apply       only write templates: no escape sequences, compositor
+                       borders, kdeglobals, or reloading tmux, kitty, ghostty,
+                       btop, zathura and qt5ct/qt6ct
   -q, --quiet          do not print the palette swatches
   -o, --out DIR        write templates to DIR instead of \$COLORS_DIR
   -m, --monitor NAME   wallpaper output to prefer (default: \$COLORS_MAIN_OUTPUT)
   -H, --hook NAME      make NAME load the palette on start: a shell (bash, zsh,
-                       fish), a terminal (kitty, foot, alacritty, ghostty) or a
-                       toolkit (gtk, qt); repeatable, can be given without <image>
+                       fish), a terminal (kitty, foot, alacritty, ghostty), an
+                       app (tmux, zathura, btop) or a toolkit (gtk, qt);
+                       repeatable, can be given without <image>
   -h, --help           show this help
 
 environment:
@@ -70,7 +72,7 @@ environment:
   COLORS_YELLOW=$COLORS_YELLOW
   COLORS_GREEN=$COLORS_GREEN
 
-requires: bash, magick, gawk, awww, coreutils
+requires: bash, magick, gawk, coreutils (awww to set the wallpaper)
 templates:
   colors colors.txt colors.sh colors.fish colors.json sequences
   kitty.conf tmux.conf colors.lua colors.css gtk.css btop.theme
@@ -804,7 +806,7 @@ sync_kde_colors() {
     fi
 }
 
-readonly HOOKS='bash zsh fish kitty foot alacritty ghostty gtk qt'
+readonly HOOKS='bash zsh fish kitty foot alacritty ghostty tmux zathura btop gtk qt'
 
 sync_qtct() {
     local cfg=${XDG_CONFIG_HOME:-$HOME/.config} tool conf t
@@ -823,6 +825,8 @@ hook_line() {
         foot) printf 'include=%s/foot.ini' "$2" ;;
         alacritty) printf 'import = ["%s/alacritty.toml"]' "$2" ;;
         ghostty) printf 'config-file = ?%s/ghostty' "$2" ;;
+        tmux) printf 'source-file -q "%s/tmux.conf"' "$2" ;;
+        zathura) printf 'include "%s/zathurarc"' "$2" ;;
         gtk) printf '@import url("file://%s/gtk.css");' "$(uri_path "$2")" ;;
     esac
 }
@@ -855,6 +859,14 @@ hook_file() {
                 printf '%s\n' "$cfg/ghostty/config"
             fi
             ;;
+        tmux)
+            if [[ -f $HOME/.tmux.conf ]]; then
+                printf '%s\n' "$HOME/.tmux.conf"
+            else
+                printf '%s\n' "$cfg/tmux/tmux.conf"
+            fi
+            ;;
+        zathura) printf '%s\n' "$cfg/zathura/zathurarc" ;;
         gtk) printf '%s\n' "$cfg/gtk-3.0/gtk.css" "$cfg/gtk-4.0/gtk.css" ;;
     esac
 }
@@ -884,15 +896,11 @@ replace_file() {
 }
 
 hook_into() {
-    local name=$1 line=$2 rc=$3 tmp
-    if [[ -f $rc ]] && grep -qF -- "$line" "$rc"; then
+    local name=$1 line=$2 rc=$3 tmp item=$2
+    [[ $name == alacritty ]] && item=${line#*[} && item=${item%]}
+    if [[ -f $rc ]] && grep -qF -- "$item" "$rc"; then
         printf '%s: %s hook already in %s\n' "$PROG" "$name" "$rc"
         return 0
-    fi
-    if [[ $name == alacritty && -f $rc ]] && grep -qE '^[[:space:]]*import[[:space:]]*=' "$rc"; then
-        line=${line#*[}
-        warn "$rc already has an import list; add ${line%]} to it yourself"
-        return 1
     fi
     writable "$rc" "$name" "$line" || return 1
     rc=$(realpath -- "$rc" 2>/dev/null || printf '%s' "$rc")
@@ -902,7 +910,19 @@ hook_into() {
             { printf "%s\n" "$line"; end_line "$rc" || true; } > "$tmp"
             ;;
         alacritty)
-            if [[ -f $rc ]] && grep -qE '^[[:space:]]*\[general\]' "$rc"; then
+            if [[ -f $rc ]] && grep -qE '^[[:space:]]*import[[:space:]]*=' "$rc"; then
+                gawk -v RS='^$' -v ORS= -v p="$item" '
+                    {
+                        if (!match($0, /(^|\n)[ \t]*import[ \t]*=[ \t]*\[[^]]*\]/)) { print; next }
+                        head = substr($0, 1, RSTART + RLENGTH - 2)
+                        tail = substr($0, RSTART + RLENGTH - 1)
+                        body = head
+                        sub(/[ \t\n]+$/, "", body)
+                        sep = body ~ /[[,]$/ ? (body ~ /,$/ ? " " : "") : ", "
+                        print body sep p substr(head, length(body) + 1) tail
+                    }
+                ' "$rc" > "$tmp"
+            elif [[ -f $rc ]] && grep -qE '^[[:space:]]*\[general\]' "$rc"; then
                 gawk -v l="$line" '{ print } !done && /^[[:space:]]*\[general\]/ { print l; done = 1 }' "$rc" > "$tmp"
             else
                 { end_line "$rc" && printf "\n"; printf "[general]\n%s\n" "$line"; } > "$tmp"
@@ -1031,7 +1051,14 @@ install_hook() {
         foot) touch_template "$2/foot.ini" ;;
         alacritty) touch_template "$2/alacritty.toml" ;;
         ghostty) touch_template "$2/ghostty" ;;
+        tmux) touch_template "$2/tmux.conf" ;;
+        zathura) touch_template "$2/zathurarc" ;;
         gtk) touch_template "$2/gtk.css" ;;
+        btop)
+            touch_template "$2/btop.theme"
+            install_btop_hook "$2"
+            return
+            ;;
         qt)
             touch_template "$2/qtct.conf"
             install_qt_hook "$2"
@@ -1044,10 +1071,119 @@ install_hook() {
     done
     if [[ $name == gtk ]]; then
         theme=$(gtk_theme)
-        [[ ${theme,,} == adw-gtk3* ]] ||
-            printf '%s: gtk3 theme is %s, which follows the palette only in part; adw-gtk3 follows it fully\n' "$PROG" "$theme"
+        [[ ${theme,,} == adw-gtk3* ]] || select_adw_gtk3 "$theme" || ok=1
     fi
     return "$ok"
+}
+
+install_btop_hook() {
+    local dir=${XDG_CONFIG_HOME:-$HOME/.config}/btop conf theme tmp src
+    theme=$dir/themes/colors.theme
+    conf=$dir/btop.conf
+    if [[ -e $theme && ! -L $theme ]]; then
+        warn "$theme exists and is not a link; move it and run the btop hook again"
+        return 1
+    fi
+    if [[ $(readlink -- "$theme" 2>/dev/null) != "$1/btop.theme" ]]; then
+        writable "$theme" btop "ln -s $1/btop.theme $theme" || return 1
+        ln -sfn -- "$1/btop.theme" "$theme"
+    fi
+    if [[ -f $conf ]] && grep -qxE 'color_theme[[:space:]]*=[[:space:]]*"colors"' "$conf"; then
+        printf '%s: btop hook already in %s\n' "$PROG" "$conf"
+        return 0
+    fi
+    writable "$conf" btop 'color_theme = "colors"' || return 1
+    conf=$(realpath -m -- "$conf")
+    src=$conf
+    [[ -f $conf ]] || src=/dev/null
+    tmp=$(mktemp "$conf.XXXXXXXX")
+    gawk '
+        /^[[:space:]]*color_theme[[:space:]]*=/ { if (!done) print "color_theme = \"colors\""; done = 1; next }
+        { print }
+        END { if (!done) print "color_theme = \"colors\"" }
+    ' "$src" > "$tmp"
+    replace_file "$tmp" "$conf"
+    printf '%s: added btop hook to %s\n' "$PROG" "$conf"
+}
+
+select_adw_gtk3() {
+    local name=adw-gtk3-dark dir found='' ini=${XDG_CONFIG_HOME:-$HOME/.config}/gtk-3.0/settings.ini tmp src set=0
+    local dirs=("${XDG_DATA_HOME:-$HOME/.local/share}/themes" "$HOME/.themes") xdg=()
+    IFS=: read -ra xdg <<<"${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+    for dir in "${xdg[@]}"; do
+        dirs+=("$dir/themes")
+    done
+    for dir in "${dirs[@]}"; do
+        [[ -d $dir/$name/gtk-3.0 ]] && found=1 && break
+    done
+    if [[ -z $found ]]; then
+        warn "gtk3 theme is $1, which follows the palette only in part; install adw-gtk3 and run the gtk hook again"
+        return 1
+    fi
+    if command -v gsettings >/dev/null 2>&1 &&
+        gsettings set org.gnome.desktop.interface gtk-theme "$name" 2>/dev/null; then
+        set=1
+    fi
+    if [[ -f $ini && -w $(realpath -- "$ini") ]] || { ((!set)) && [[ ! -e $ini ]]; }; then
+        mkdir -p -- "$(dirname -- "$ini")"
+        ini=$(realpath -m -- "$ini")
+        src=$ini
+        [[ -f $ini ]] || src=/dev/null
+        tmp=$(mktemp "$ini.XXXXXXXX")
+        gawk -v n="$name" '
+            /^\[/ { if (s && !done) { print "gtk-theme-name=" n; done = 1 } s = ($0 == "[Settings]") }
+            s && /^[[:space:]]*gtk-theme-name[[:space:]]*=/ { if (!done) print "gtk-theme-name=" n; done = 1; next }
+            { print }
+            END {
+                if (s && !done) print "gtk-theme-name=" n
+                else if (!done) print "[Settings]\ngtk-theme-name=" n
+            }
+        ' "$src" > "$tmp"
+        replace_file "$tmp" "$ini"
+        set=1
+    fi
+    if ((!set)); then
+        warn "could not select $name; set it as your gtk3 theme yourself"
+        return 1
+    fi
+    printf '%s: gtk3 theme set to %s (was %s)\n' "$PROG" "$name" "$1"
+    [[ -z ${GTK_THEME-} ]] || warn "GTK_THEME=$GTK_THEME overrides it; unset it or set it to $name"
+}
+
+ver_ge() {
+    [[ $(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1) == "$2" ]]
+}
+
+signal_app() {
+    local sig=$1 min=$2 re=$3 dir pid comm v
+    for dir in /proc/[0-9]*; do
+        [[ -O $dir ]] && read -r comm 2>/dev/null < "$dir/comm" && [[ $comm =~ ^($re)$ ]] || continue
+        pid=${dir#/proc/}
+        v=$("$dir/exe" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n1) || true
+        [[ -n $v ]] && ver_ge "$v" "$min" || continue
+        kill -s "$sig" "$pid" 2>/dev/null || true
+    done
+}
+
+reload_zathura() {
+    local name
+    if command -v busctl >/dev/null 2>&1; then
+        for name in $(busctl --user list --no-legend 2>/dev/null | gawk '$1 ~ /^org\.pwmt\.zathura\.PID-/ { print $1 }'); do
+            busctl --user call "$name" /org/pwmt/zathura org.pwmt.zathura SourceConfig >/dev/null 2>&1 || true
+        done
+    elif command -v dbus-send >/dev/null 2>&1; then
+        for name in $(dbus-send --session --print-reply --dest=org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus.ListNames 2>/dev/null |
+            gawk -F'"' '$2 ~ /^org\.pwmt\.zathura\.PID-/ { print $2 }'); do
+            dbus-send --session --dest="$name" /org/pwmt/zathura org.pwmt.zathura.SourceConfig >/dev/null 2>&1 || true
+        done
+    fi
+}
+
+reload_apps() {
+    signal_app USR1 0.23 '\.?kitty(-wrapped)?'
+    signal_app USR2 1.2.0 '\.?ghostty(-wrapped?)?'
+    signal_app USR2 1.2.0 '\.?btop(-wrapped)?'
+    reload_zathura
 }
 
 apply_sequences() {
@@ -1117,7 +1253,7 @@ main() {
     local sh
     for sh in "${hooks[@]}"; do
         case $sh in
-            bash | zsh | fish | kitty | foot | alacritty | ghostty | gtk | qt) ;;
+            bash | zsh | fish | kitty | foot | alacritty | ghostty | tmux | zathura | btop | gtk | qt) ;;
             *) die "unsupported hook: $sh ($HOOKS)" ;;
         esac
     done
@@ -1214,6 +1350,7 @@ main() {
         sync_sway_border_color "$accent"
         sync_kde_colors "$dest/kdeglobals"
         sync_qtct
+        reload_apps
     fi
     if ((do_print)); then
         print_swatches

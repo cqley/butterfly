@@ -41,6 +41,8 @@ quickshell ipc call <target> <action>
 | recording | `gpu-screen-recorder`, `wf-recorder` or `wl-screenrec` |
 | screenshot | `grim` + `wl-copy` |
 | colors | `magick`, `gawk`, `awww` |
+| gtk colors | `adw-gtk3` |
+| qt colors | `qt6ct` (qt5ct for qt5 apps) |
 | lock | `hyprlock` `swaylock` (optional) |
 | visualizer | `cava` (optional) fallback if absent|
 
@@ -52,6 +54,7 @@ keep colors:
 | --- | --- |
 | shells | `bash` `zsh` `fish` |
 | terminals | `kitty` `foot` `alacritty` `ghostty` |
+| toolkits | `gtk` `qt` |
 
 kitty: add `include ~/.colors/kitty.conf` to `kitty.conf`.
 
