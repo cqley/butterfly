@@ -48,7 +48,7 @@ options:
   -o, --out DIR        write templates to DIR instead of \$COLORS_DIR
   -m, --monitor NAME   wallpaper output to prefer (default: \$COLORS_MAIN_OUTPUT)
   -H, --hook NAME      make NAME load the palette on start: a shell (bash, zsh,
-                       ksh, fish, nu) or a terminal (foot, alacritty, ghostty);
+                       fish) or a terminal (kitty, foot, alacritty, ghostty);
                        repeatable, can be given without <image>
   -h, --help           show this help
 
@@ -780,13 +780,13 @@ sync_kde_colors() {
     fi
 }
 
-readonly HOOKS='bash zsh ksh fish nu foot alacritty ghostty'
+readonly HOOKS='bash zsh fish kitty foot alacritty ghostty'
 
 hook_line() {
     case $1 in
-        bash | zsh | ksh) printf '[ -f "%s/shell.sh" ] && . "%s/shell.sh"' "$2" "$2" ;;
+        bash | zsh) printf '[ -f "%s/shell.sh" ] && . "%s/shell.sh"' "$2" "$2" ;;
         fish) printf 'test -f "%s/shell.fish"; and source "%s/shell.fish"' "$2" "$2" ;;
-        nu) printf "%s" "if \$nu.is-interactive and (is-terminal --stdout) and ((\$env.TERM? | default \"\") not-in [linux dumb]) and (\"$2/sequences\" | path exists) { ^cat \"$2/sequences\" }" ;;
+        kitty) printf 'include %s/kitty.conf' "$2" ;;
         foot) printf 'include=%s/foot.ini' "$2" ;;
         alacritty) printf 'import = ["%s/alacritty.toml"]' "$2" ;;
         ghostty) printf 'config-file = ?%s/ghostty' "$2" ;;
@@ -798,9 +798,8 @@ hook_file() {
     case $1 in
         bash) printf '%s' "$HOME/.bashrc" ;;
         zsh) printf '%s' "${ZDOTDIR:-$HOME}/.zshrc" ;;
-        ksh) printf '%s' "$HOME/.kshrc" ;;
         fish) printf '%s' "$cfg/fish/conf.d/colors.fish" ;;
-        nu) printf '%s' "$cfg/nushell/autoload/colors.nu" ;;
+        kitty) printf '%s' "$cfg/kitty/kitty.conf" ;;
         foot) printf '%s' "$cfg/foot/foot.ini" ;;
         alacritty) printf '%s' "$cfg/alacritty/alacritty.toml" ;;
         ghostty)
@@ -829,6 +828,7 @@ install_hook() {
     line=$(hook_line "$name" "$2")
     rc=$(hook_file "$name")
     case $name in
+        kitty) touch_template "$2/kitty.conf" ;;
         foot) touch_template "$2/foot.ini" ;;
         alacritty) touch_template "$2/alacritty.toml" ;;
         ghostty) touch_template "$2/ghostty" ;;
@@ -932,7 +932,7 @@ main() {
     local sh
     for sh in "${hooks[@]}"; do
         case $sh in
-            bash | zsh | ksh | fish | nu | foot | alacritty | ghostty) ;;
+            bash | zsh | fish | kitty | foot | alacritty | ghostty) ;;
             *) die "unsupported hook: $sh ($HOOKS)" ;;
         esac
     done

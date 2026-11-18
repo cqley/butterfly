@@ -46,7 +46,7 @@ quickshell ipc call <target> <action>
 
 ## colors
 
-picking a wallpaper derives a palette from it and writes themes for other apps to `~/.colors`. open terminals update right away. to keep the colors in new terminals, run once per shell or terminal you use:
+keep colors:
 
 ```
 ~/.config/quickshell/components/core/scripts/colors.sh --hook fish
@@ -54,10 +54,10 @@ picking a wallpaper derives a palette from it and writes themes for other apps t
 
 | kind | names |
 | --- | --- |
-| shells | `bash` `zsh` `ksh` `fish` `nu` |
-| terminals | `foot` `alacritty` `ghostty` |
+| shells | `bash` `zsh` `fish` |
+| terminals | `kitty` `foot` `alacritty` `ghostty` |
 
-kitty: add `include ~/.colors/kitty.conf` to `kitty.conf`. qt apps follow the palette through `~/.config/kdeglobals` when `QT_QPA_PLATFORMTHEME=kde`. if a config is read-only (home-manager), `--hook` prints the line to add yourself.
+kitty: add `include ~/.colors/kitty.conf` to `kitty.conf`.
 
 ## install
 
