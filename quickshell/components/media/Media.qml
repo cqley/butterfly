@@ -17,6 +17,7 @@ Singleton {
     readonly property string title: player ? player.trackTitle || player.identity : ""
     readonly property string artUrl: artFor(player)
     readonly property string trackKey: keyFor(player)
+    readonly property string artSource: sourceFor(artUrl, trackKey)
 
     function proxy(p) {
         return (p && p.dbusName ? p.dbusName : "").toLowerCase().indexOf("playerctld") >= 0
@@ -51,6 +52,10 @@ Singleton {
             return art.charAt(0) === "/" ? "file://" + art : art
         const m = urlFor(p).match(/(?:youtube\.com\/watch.*[?&]v=|youtu\.be\/)([\w-]{11})/)
         return m ? `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg` : ""
+    }
+
+    function sourceFor(url, key) {
+        return url.indexOf("file:") === 0 ? url + "#" + Qt.md5(key) : url
     }
 
     function nameFor(p) {

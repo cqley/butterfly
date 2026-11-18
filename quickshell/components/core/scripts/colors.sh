@@ -116,6 +116,17 @@ brighten() {
     printf '#%02X%02X%02X' "$r" "$g" "$b"
 }
 
+mix() {
+    local i out='#'
+    for i in 0 2 4; do
+        local a b
+        a=$(hex_channel "$1" "$i")
+        b=$(hex_channel "$2" "$i")
+        out+=$(printf '%02X' "$(( (a * (1000 - $3) + b * $3 + 500) / 1000 ))")
+    done
+    printf '%s' "$out"
+}
+
 luma601() {
     printf '%d' "$((
         299 * $(hex_channel "$1" 0) +
@@ -439,6 +450,27 @@ emit_gtk() {
         for i in "${!c[@]}"; do
             printf '@define-color color%d %s;\n' "$i" "${c[$i]}"
         done
+        local chip tile name
+        chip=$(mix "$bg" "$fg" 110)
+        tile=$(mix "$bg" "$fg" 172)
+        for name in window view; do
+            printf '@define-color %s_bg_color %s;\n@define-color %s_fg_color %s;\n' "$name" "$bg" "$name" "$fg"
+        done
+        for name in headerbar card popover dialog sidebar secondary_sidebar thumbnail; do
+            printf '@define-color %s_bg_color %s;\n@define-color %s_fg_color %s;\n' "$name" "$chip" "$name" "$fg"
+        done
+        printf '@define-color headerbar_backdrop_color %s;\n' "$bg"
+        printf '@define-color sidebar_backdrop_color %s;\n' "$bg"
+        printf '@define-color secondary_sidebar_backdrop_color %s;\n' "$bg"
+        printf '@define-color accent_color %s;\n' "$accent"
+        printf '@define-color accent_bg_color %s;\n' "$accent"
+        printf '@define-color accent_fg_color %s;\n' "$bg"
+        printf '@define-color theme_bg_color %s;\n@define-color theme_fg_color %s;\n' "$bg" "$fg"
+        printf '@define-color theme_base_color %s;\n@define-color theme_text_color %s;\n' "$bg" "$fg"
+        printf '@define-color theme_selected_bg_color %s;\n@define-color theme_selected_fg_color %s;\n' "$accent" "$bg"
+        printf '@define-color insensitive_bg_color %s;\n' "$tile"
+        printf '@define-color theme_unfocused_bg_color %s;\n@define-color theme_unfocused_fg_color %s;\n' "$bg" "$fg"
+        printf '@define-color theme_unfocused_base_color %s;\n@define-color theme_unfocused_text_color %s;\n' "$bg" "$fg"
     } > "$out/gtk.css"
 }
 
@@ -662,6 +694,9 @@ main() {
 
     if ((do_apply)); then
         apply_sequences "$dest"
+        if command -v tmux >/dev/null 2>&1; then
+            tmux source-file -q "$dest/tmux.conf" >/dev/null 2>&1 || true
+        fi
         if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]] && command -v hyprctl >/dev/null 2>&1; then
             hyprctl reload >/dev/null 2>&1 || true
         fi

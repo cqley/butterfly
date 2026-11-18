@@ -29,8 +29,7 @@ Panel {
     property int slide: 0
     readonly property int elapsed: Math.floor(frac * dur)
     readonly property int remain: Math.max(0, Math.round(dur - frac * dur))
-    readonly property string artSource: artUrl === "" ? ""
-        : artUrl.indexOf("file:") === 0 ? artUrl + "#" + Qt.md5(artKey) : artUrl
+    readonly property string artSource: Media.sourceFor(artUrl, artKey)
 
     onLenChanged: if (Media.player) dur = len
     onSrcOnChanged: if (Media.player) on = srcOn
@@ -99,7 +98,7 @@ Panel {
 
     function skip(d) {
         if (root.seekable)
-            root.p.seek(d * Theme.mediaSeekStep)
+            root.p.position = Math.max(0, Math.min(root.len, root.p.position + d * Theme.mediaSeekStep))
     }
 
     function pad(n) {
@@ -196,15 +195,13 @@ Panel {
         }
     }
 
-    ClippingRectangle {
+    Item {
         id: art
         visible: !Theme.mediaCover
         x: Theme.surfaceBorderWidth
         y: Theme.surfaceBorderWidth
         width: Theme.artS - 2 * Theme.surfaceBorderWidth
         height: Theme.artS - 2 * Theme.surfaceBorderWidth
-        radius: Theme.artR - Theme.surfaceBorderWidth
-        color: Theme.chip
         transformOrigin: Item.Center
         scale: artScale.shaped
 
@@ -216,6 +213,14 @@ Panel {
                 * (artArea.pressed ? Theme.feedbackPressScale : artArea.containsMouse ? Theme.feedbackHoverScale : 1)
         }
 
+        Rectangle {
+            anchors.fill: parent
+            radius: Theme.artR - Theme.surfaceBorderWidth
+            color: Theme.chip
+            antialiasing: true
+            visible: img.coverage < 1
+        }
+
         StableImage {
             id: img
             anchors.fill: parent
@@ -223,6 +228,7 @@ Panel {
             retries: 2
             fade: Theme.artFade
             opaque: true
+            radius: Theme.artR - Theme.surfaceBorderWidth
             fillMode: Image.PreserveAspectCrop
             sourceSize: Qt.size(Theme.artS * 2, Theme.artS * 2)
         }
@@ -233,8 +239,8 @@ Panel {
             width: Theme.iconGrid
             height: Theme.iconGrid
             scale: Theme.artGlyph / Theme.iconGrid
-            opacity: Theme.dimGhost
-            visible: img.showPlaceholder
+            opacity: Theme.dimGhost * (1 - img.coverage)
+            visible: opacity > 0
             preferredRendererType: Shape.CurveRenderer
 
             ShapePath {

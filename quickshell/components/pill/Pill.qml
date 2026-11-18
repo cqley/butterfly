@@ -1052,7 +1052,7 @@ Item {
                         opacity: morph.orphanVeil
                         playing: Media.playing
                         shown: visFade.visible
-                        artUrl: Media.artUrl
+                        artUrl: Media.artSource
                     }
                 }
             }

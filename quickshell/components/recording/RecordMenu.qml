@@ -1,6 +1,5 @@
 import "../core"
 import QtQuick
-import QtQuick.Shapes
 
 Tiles {
     id: root
@@ -78,66 +77,23 @@ Tiles {
         Repeater {
             model: root.items
 
-            Rectangle {
+            Tile {
                 id: tile
                 required property var modelData
                 required property int index
-                readonly property bool on: root.sel === index
                 readonly property bool isStop: modelData.kind === "stop"
                 readonly property bool isMonitor: modelData.kind === "monitor"
-                readonly property bool live: !isStop && Record.active && Record.targetLabel === modelData.label
-                readonly property color tone: isStop ? Theme.red : Theme.accent
-                property color ink: on ? Theme.bg : isStop ? Theme.red : Theme.fg
 
-                width: Theme.pwW
-                height: Theme.pwH
-                radius: Theme.inner(Theme.radius, Theme.pwPad)
-                antialiasing: true
-                color: on ? tone : Theme.chip
-                border.width: Theme.launchIconBorderWidth
-                border.color: on ? tone : Theme.launchIconBorder
-                transformOrigin: Item.Center
-                scale: scaleMotion.shaped
-
-                ScaleSpring {
-                    id: scaleMotion
-                    size: Theme.pwW
-                    target: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
-                }
-                Behavior on color {
-                    ColorAnimation { duration: root.snap ? 0 : Theme.glide; easing.type: Theme.ease }
-                }
-                Behavior on border.color {
-                    ColorAnimation { duration: root.snap ? 0 : Theme.glide; easing.type: Theme.ease }
-                }
-                Behavior on ink {
-                    ColorAnimation { duration: root.snap ? 0 : Theme.glide; easing.type: Theme.ease }
-                }
-
-                Shape {
-                    id: glyph
-                    anchors.centerIn: parent
-                    width: Theme.iconGrid
-                    height: Theme.iconGrid
-                    preferredRendererType: Shape.CurveRenderer
-
-                    ShapePath {
-                        strokeWidth: Theme.iconStroke
-                        strokeColor: tile.ink
-                        fillColor: "transparent"
-                        capStyle: ShapePath.RoundCap
-                        joinStyle: ShapePath.RoundJoin
-                        PathSvg {
-                            path: tile.isMonitor ? Theme.monitorPath
-                                : tile.isStop ? Theme.recStopPath
-                                : Theme.recPortalPath
-                        }
-                    }
-                }
+                pick: root
+                at: index
+                tone: isStop ? Theme.red : Theme.accent
+                rest: isStop ? Theme.red : Theme.fg
+                path: isMonitor ? Theme.monitorPath : isStop ? Theme.recStopPath : Theme.recPortalPath
+                onClicked: root.run(index)
 
                 Txt {
-                    x: Math.round(glyph.x + (glyph.width - width) / 2)
-                    y: Math.round(glyph.y + Theme.monitorNumAxis - height / 2) + Theme.monitorNumY
+                    x: Math.round(tile.glyph.x + (tile.glyph.width - width) / 2)
+                    y: Math.round(tile.glyph.y + Theme.monitorNumAxis - height / 2) + Theme.monitorNumY
                     visible: tile.isMonitor
                     text: root.ord(tile.index)
                     font.pixelSize: Theme.monitorNumPx
@@ -153,14 +109,7 @@ Tiles {
                     radius: height / 2
                     color: Theme.red
                     antialiasing: true
-                    visible: tile.live
-                }
-
-                PickArea {
-                    id: mouse
-                    pick: root
-                    at: tile.index
-                    onClicked: root.run(tile.index)
+                    visible: !tile.isStop && Record.active && Record.targetLabel === tile.modelData.label
                 }
             }
         }

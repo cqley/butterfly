@@ -39,46 +39,24 @@ Tiles {
         Repeater {
             model: root.items
 
-            Rectangle {
+            Tile {
                 id: tile
                 required property var modelData
                 required property int index
-                readonly property bool on: root.sel === index
-                readonly property bool isMonitor: modelData.kind === "monitor"
-                readonly property bool isActive: modelData.kind === "active"
-                property color ink: on ? Theme.bg : Theme.fg
 
-                width: Theme.pwW
-                height: Theme.pwH
-                radius: Theme.inner(Theme.radius, Theme.pwPad)
-                antialiasing: true
-                color: on ? Theme.accent : Theme.chip
-                border.width: Theme.launchIconBorderWidth
-                border.color: on ? Theme.accent : Theme.launchIconBorder
-                transformOrigin: Item.Center
-                scale: scaleMotion.shaped
+                pick: root
+                at: index
+                path: modelData.kind === "monitor" ? Theme.monitorPath
+                    : modelData.kind === "region" ? Theme.shotRegionPath
+                    : Theme.shotWindowPath
+                onClicked: root.run(index)
 
-                ScaleSpring {
-                    id: scaleMotion
-                    size: Theme.pwW
-                    target: mouse.pressed ? Theme.feedbackPressScale : mouse.containsMouse ? Theme.feedbackHoverScale : 1
-                }
-                Behavior on color {
-                    ColorAnimation { duration: root.snap ? 0 : Theme.glide; easing.type: Theme.ease }
-                }
-                Behavior on border.color {
-                    ColorAnimation { duration: root.snap ? 0 : Theme.glide; easing.type: Theme.ease }
-                }
-                Behavior on ink {
-                    ColorAnimation { duration: root.snap ? 0 : Theme.glide; easing.type: Theme.ease }
-                }
-
-                Shape {
+                under: Shape {
                     anchors.centerIn: parent
                     width: Theme.iconGrid
                     height: Theme.iconGrid
                     preferredRendererType: Shape.CurveRenderer
-                    visible: tile.isActive
+                    visible: tile.modelData.kind === "active"
 
                     ShapePath {
                         strokeWidth: -1
@@ -86,34 +64,6 @@ Tiles {
                         fillRule: ShapePath.WindingFill
                         PathSvg { path: Theme.shotActiveBadgePath }
                     }
-                }
-
-                Shape {
-                    id: glyph
-                    anchors.centerIn: parent
-                    width: Theme.iconGrid
-                    height: Theme.iconGrid
-                    preferredRendererType: Shape.CurveRenderer
-
-                    ShapePath {
-                        strokeWidth: Theme.iconStroke
-                        strokeColor: tile.ink
-                        fillColor: "transparent"
-                        capStyle: ShapePath.RoundCap
-                        joinStyle: ShapePath.RoundJoin
-                        PathSvg {
-                            path: tile.isMonitor ? Theme.monitorPath
-                                : tile.modelData.kind === "region" ? Theme.shotRegionPath
-                                : Theme.shotWindowPath
-                        }
-                    }
-                }
-
-                PickArea {
-                    id: mouse
-                    pick: root
-                    at: tile.index
-                    onClicked: root.run(tile.index)
                 }
             }
         }
