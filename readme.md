@@ -48,16 +48,16 @@ quickshell ipc call <target> <action>
 
 keep colors:
 
-```
-~/.config/quickshell/components/core/scripts/colors.sh --hook fish
-```
-
 | kind | names |
 | --- | --- |
 | shells | `bash` `zsh` `fish` |
 | terminals | `kitty` `foot` `alacritty` `ghostty` |
 
 kitty: add `include ~/.colors/kitty.conf` to `kitty.conf`.
+
+```
+~/.config/quickshell/components/core/scripts/colors.sh --hook fish
+```
 
 ## install
 

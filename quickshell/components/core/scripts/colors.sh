@@ -43,13 +43,13 @@ the palette into templates under \$COLORS_DIR.
 options:
   -n, --no-wallpaper   only generate templates, do not touch the wallpaper
   -A, --no-apply       only write templates: no escape sequences, tmux, compositor
-                       borders or kdeglobals
+                       borders, kdeglobals or qt5ct/qt6ct reload
   -q, --quiet          do not print the palette swatches
   -o, --out DIR        write templates to DIR instead of \$COLORS_DIR
   -m, --monitor NAME   wallpaper output to prefer (default: \$COLORS_MAIN_OUTPUT)
   -H, --hook NAME      make NAME load the palette on start: a shell (bash, zsh,
-                       fish) or a terminal (kitty, foot, alacritty, ghostty);
-                       repeatable, can be given without <image>
+                       fish), a terminal (kitty, foot, alacritty, ghostty) or a
+                       toolkit (gtk, qt); repeatable, can be given without <image>
   -h, --help           show this help
 
 environment:
@@ -75,7 +75,7 @@ templates:
   colors colors.txt colors.sh colors.fish colors.json sequences
   kitty.conf tmux.conf colors.lua colors.css gtk.css btop.theme
   zathurarc Xresources kdeglobals shell.sh shell.fish
-  foot.ini alacritty.toml ghostty
+  foot.ini alacritty.toml ghostty qtct.conf
 EOF
 }
 
@@ -572,6 +572,13 @@ emit_gtk() {
         printf '@define-color accent_color %s;\n' "$accent"
         printf '@define-color accent_bg_color %s;\n' "$accent"
         printf '@define-color accent_fg_color %s;\n' "$bg"
+        printf '@define-color panel_bg_color %s;\n@define-color panel_fg_color %s;\n' "$chip" "$fg"
+        printf '@define-color headerbar_border_color %s;\n' "$fg"
+        local tone
+        for name in destructive:$COLORS_RED error:$COLORS_RED warning:$COLORS_YELLOW success:$COLORS_GREEN; do
+            tone=${name#*:}
+            printf '@define-color %s_color %s;\n@define-color %s_bg_color %s;\n' "${name%%:*}" "$tone" "${name%%:*}" "$tone"
+        done
         printf '@define-color theme_bg_color %s;\n@define-color theme_fg_color %s;\n' "$bg" "$fg"
         printf '@define-color theme_base_color %s;\n@define-color theme_text_color %s;\n' "$bg" "$fg"
         printf '@define-color theme_selected_bg_color %s;\n@define-color theme_selected_fg_color %s;\n' "$accent" "$bg"
@@ -695,6 +702,23 @@ emit_kde() {
     } > "$out/kdeglobals"
 }
 
+emit_qtct() {
+    local muted seldim light dark off active disabled
+    muted=$(mix "$bg" "$fg" 600)
+    seldim=$(mix "$accent" "$bg" 400)
+    light=$(mix "$bg" "$fg" 250)
+    dark=$(mix "$bg" '#000000' 400)
+    off=$(mix "$bg" "$fg" 400)
+    active="$fg, $chip, $light, $tile, $dark, $chip, $fg, $fg, $fg, $bg, $bg, #000000, $accent, $bg, $accent, $accent, $chip, #000000, $chip, $fg, $muted, $accent"
+    disabled="$off, $chip, $light, $tile, $dark, $chip, $off, $off, $off, $bg, $bg, #000000, $seldim, $off, $seldim, $seldim, $chip, #000000, $chip, $off, $off, $seldim"
+    {
+        printf '[ColorScheme]\n'
+        printf 'active_colors=%s\n' "$active"
+        printf 'disabled_colors=%s\n' "$disabled"
+        printf 'inactive_colors=%s\n' "$active"
+    } > "$out/qtct.conf"
+}
+
 emit_shell_hooks() {
     cat > "$out/shell.sh" <<EOF
 case \$- in *i*) ;; *) return 0 ;; esac
@@ -780,7 +804,16 @@ sync_kde_colors() {
     fi
 }
 
-readonly HOOKS='bash zsh fish kitty foot alacritty ghostty'
+readonly HOOKS='bash zsh fish kitty foot alacritty ghostty gtk qt'
+
+sync_qtct() {
+    local cfg=${XDG_CONFIG_HOME:-$HOME/.config} tool conf t
+    for tool in qt5ct qt6ct; do
+        conf=$cfg/$tool/$tool.conf
+        if [[ ! -f $conf ]] || ! grep -qxF "color_scheme_path=$cfg/$tool/colors/colors.conf" "$conf"; then continue; fi
+        t=$(mktemp -p "$cfg/$tool" .colors.XXXXXXXX 2>/dev/null) && rm -f -- "$t"
+    done
+}
 
 hook_line() {
     case $1 in
@@ -790,25 +823,39 @@ hook_line() {
         foot) printf 'include=%s/foot.ini' "$2" ;;
         alacritty) printf 'import = ["%s/alacritty.toml"]' "$2" ;;
         ghostty) printf 'config-file = ?%s/ghostty' "$2" ;;
+        gtk) printf '@import url("file://%s/gtk.css");' "$(uri_path "$2")" ;;
     esac
+}
+
+uri_path() {
+    local LC_ALL=C s=$1 out='' ch i
+    for ((i = 0; i < ${#s}; i++)); do
+        ch=${s:i:1}
+        case $ch in
+            [A-Za-z0-9/._~-]) out+=$ch ;;
+            *) printf -v ch '%%%02X' "'$ch"; out+=$ch ;;
+        esac
+    done
+    printf '%s' "$out"
 }
 
 hook_file() {
     local cfg=${XDG_CONFIG_HOME:-$HOME/.config}
     case $1 in
-        bash) printf '%s' "$HOME/.bashrc" ;;
-        zsh) printf '%s' "${ZDOTDIR:-$HOME}/.zshrc" ;;
-        fish) printf '%s' "$cfg/fish/conf.d/colors.fish" ;;
-        kitty) printf '%s' "$cfg/kitty/kitty.conf" ;;
-        foot) printf '%s' "$cfg/foot/foot.ini" ;;
-        alacritty) printf '%s' "$cfg/alacritty/alacritty.toml" ;;
+        bash) printf '%s\n' "$HOME/.bashrc" ;;
+        zsh) printf '%s\n' "${ZDOTDIR:-$HOME}/.zshrc" ;;
+        fish) printf '%s\n' "$cfg/fish/conf.d/colors.fish" ;;
+        kitty) printf '%s\n' "$cfg/kitty/kitty.conf" ;;
+        foot) printf '%s\n' "$cfg/foot/foot.ini" ;;
+        alacritty) printf '%s\n' "$cfg/alacritty/alacritty.toml" ;;
         ghostty)
             if [[ -f $cfg/ghostty/config.ghostty ]]; then
-                printf '%s' "$cfg/ghostty/config.ghostty"
+                printf '%s\n' "$cfg/ghostty/config.ghostty"
             else
-                printf '%s' "$cfg/ghostty/config"
+                printf '%s\n' "$cfg/ghostty/config"
             fi
             ;;
+        gtk) printf '%s\n' "$cfg/gtk-3.0/gtk.css" "$cfg/gtk-4.0/gtk.css" ;;
     esac
 }
 
@@ -823,29 +870,31 @@ touch_template() {
     mkdir -p -- "$(dirname -- "$1")" && : > "$1"
 }
 
-install_hook() {
-    local name=$1 line rc tmp
-    line=$(hook_line "$name" "$2")
-    rc=$(hook_file "$name")
-    case $name in
-        kitty) touch_template "$2/kitty.conf" ;;
-        foot) touch_template "$2/foot.ini" ;;
-        alacritty) touch_template "$2/alacritty.toml" ;;
-        ghostty) touch_template "$2/ghostty" ;;
-    esac
+writable() {
+    if [[ -e $1 && ! -w $(realpath -- "$1") ]] || ! mkdir -p -- "$(dirname -- "$1")" 2>/dev/null; then
+        warn "$1 is not writable; add this to your $2 config yourself:"
+        printf '%s\n' "$3" >&2
+        return 1
+    fi
+}
+
+replace_file() {
+    [[ -f $2 ]] && chmod --reference="$2" -- "$1"
+    mv -f -- "$1" "$2"
+}
+
+hook_into() {
+    local name=$1 line=$2 rc=$3 tmp
     if [[ -f $rc ]] && grep -qF -- "$line" "$rc"; then
         printf '%s: %s hook already in %s\n' "$PROG" "$name" "$rc"
         return 0
     fi
     if [[ $name == alacritty && -f $rc ]] && grep -qE '^[[:space:]]*import[[:space:]]*=' "$rc"; then
-        warn "$rc already has an import list; add \"$2/alacritty.toml\" to it yourself"
+        line=${line#*[}
+        warn "$rc already has an import list; add ${line%]} to it yourself"
         return 1
     fi
-    if [[ -e $rc && ! -w $(realpath -- "$rc") ]] || ! mkdir -p -- "$(dirname -- "$rc")" 2>/dev/null; then
-        warn "$rc is not writable; add this line to your $name config yourself:"
-        printf '%s\n' "$line" >&2
-        return 1
-    fi
+    writable "$rc" "$name" "$line" || return 1
     rc=$(realpath -- "$rc" 2>/dev/null || printf '%s' "$rc")
     tmp=$(mktemp "$rc.XXXXXXXX")
     case $name in
@@ -859,13 +908,146 @@ install_hook() {
                 { end_line "$rc" && printf "\n"; printf "[general]\n%s\n" "$line"; } > "$tmp"
             fi
             ;;
+        gtk)
+            if [[ -s $rc ]]; then
+                gawk -v l="$line" '
+                    { line[NR] = $0 }
+                    stop { next }
+                    incom { if (index($0, "*/")) incom = 0; next }
+                    /^[[:space:]]*\/\*/ { if (!index(substr($0, index($0, "/*") + 2), "*/")) incom = 1; next }
+                    /^[[:space:]]*(@import|@charset)/ { at = NR; next }
+                    !/^[[:space:]]*$/ { stop = 1 }
+                    END {
+                        if (!at) print l
+                        for (i = 1; i <= NR; i++) {
+                            print line[i]
+                            if (i == at) print l
+                        }
+                    }
+                ' "$rc" > "$tmp"
+            else
+                printf "%s\n" "$line" > "$tmp"
+            fi
+            ;;
         *)
             { end_line "$rc"; printf "%s\n" "$line"; } > "$tmp"
             ;;
     esac
-    [[ -f $rc ]] && chmod --reference="$rc" -- "$tmp"
-    mv -f -- "$tmp" "$rc"
+    replace_file "$tmp" "$rc"
     printf '%s: added %s hook to %s\n' "$PROG" "$name" "$rc"
+}
+
+gtk_theme() {
+    local theme=${GTK_THEME-} ini=${XDG_CONFIG_HOME:-$HOME/.config}/gtk-3.0/settings.ini
+    theme=${theme%%:*}
+    if [[ -z $theme ]] && command -v gsettings >/dev/null 2>&1; then
+        theme=$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null || true)
+        theme=${theme//\'/}
+    fi
+    if [[ -z $theme && -f $ini ]]; then
+        theme=$(sed -n 's/^[[:space:]]*gtk-theme-name[[:space:]]*=[[:space:]]*//p' "$ini" | tail -n1)
+    fi
+    printf '%s' "${theme:-Adwaita}"
+}
+
+qtct_hook() {
+    local conf=$1/${1##*/}.conf scheme=$1/colors/colors.conf src tmp
+    if [[ -e $scheme && ! -L $scheme ]]; then
+        warn "$scheme exists and is not a link; move it and run the qt hook again"
+        return 1
+    fi
+    if [[ $(readlink -- "$scheme" 2>/dev/null) != "$2" ]]; then
+        writable "$scheme" qt "ln -s $2 $scheme" || return 1
+        ln -sfn -- "$2" "$scheme"
+    fi
+    src=$conf
+    if [[ -f $conf ]] && grep -qxF "color_scheme_path=$scheme" "$conf" && grep -qx 'custom_palette=true' "$conf"; then
+        printf '%s: qt hook already in %s\n' "$PROG" "$conf"
+        return 0
+    fi
+    writable "$conf" qt "$(printf '[Appearance]\ncolor_scheme_path=%s\ncustom_palette=true' "$scheme")" || return 1
+    conf=$(realpath -m -- "$conf")
+    [[ -f $conf ]] || src=/dev/null
+    tmp=$(mktemp "$conf.XXXXXXXX")
+    gawk -v s="$scheme" '
+        FNR == NR {
+            if (/^\[/) a = ($0 == "[Appearance]")
+            else if (a && /^custom_palette=/) cp = 1
+            else if (a && /^color_scheme_path=/) sp = 1
+            next
+        }
+        /^\[/ {
+            a = ($0 == "[Appearance]")
+            print
+            if (a) {
+                seen = 1
+                if (!sp) print "color_scheme_path=" s
+                if (!cp) print "custom_palette=true"
+            }
+            next
+        }
+        a && /^custom_palette=/ { print "custom_palette=true"; next }
+        a && /^color_scheme_path=/ { print "color_scheme_path=" s; next }
+        { print }
+        END {
+            if (!seen) {
+                if (FNR) print ""
+                print "[Appearance]"
+                print "color_scheme_path=" s
+                print "custom_palette=true"
+            }
+        }
+    ' "$src" "$src" > "$tmp"
+    replace_file "$tmp" "$conf"
+    printf '%s: added qt hook to %s\n' "$PROG" "$conf"
+}
+
+install_qt_hook() {
+    local cfg=${XDG_CONFIG_HOME:-$HOME/.config} tool tools=() ok=0
+    if [[ ${QT_QPA_PLATFORMTHEME-} == kde ]]; then
+        printf '%s: qt uses the kde platform theme, which follows the palette through kdeglobals already\n' "$PROG"
+        return 0
+    fi
+    for tool in qt5ct qt6ct; do
+        if [[ -d $cfg/$tool ]] || command -v "$tool" >/dev/null 2>&1; then
+            tools+=("$tool")
+        fi
+    done
+    ((${#tools[@]})) || tools=(qt6ct)
+    for tool in "${tools[@]}"; do
+        qtct_hook "$cfg/$tool" "$1/qtct.conf" || ok=1
+    done
+    case ${QT_QPA_PLATFORMTHEME-} in
+        qt5ct | qt6ct) ;;
+        *) printf '%s: qt apps read it once QT_QPA_PLATFORMTHEME=qt6ct (qt5ct for qt5 apps) is set\n' "$PROG" ;;
+    esac
+    return "$ok"
+}
+
+install_hook() {
+    local name=$1 rc rcs=() ok=0 theme
+    case $name in
+        kitty) touch_template "$2/kitty.conf" ;;
+        foot) touch_template "$2/foot.ini" ;;
+        alacritty) touch_template "$2/alacritty.toml" ;;
+        ghostty) touch_template "$2/ghostty" ;;
+        gtk) touch_template "$2/gtk.css" ;;
+        qt)
+            touch_template "$2/qtct.conf"
+            install_qt_hook "$2"
+            return
+            ;;
+    esac
+    mapfile -t rcs < <(hook_file "$name")
+    for rc in "${rcs[@]}"; do
+        hook_into "$name" "$(hook_line "$name" "$2")" "$rc" || ok=1
+    done
+    if [[ $name == gtk ]]; then
+        theme=$(gtk_theme)
+        [[ ${theme,,} == adw-gtk3* ]] ||
+            printf '%s: gtk3 theme is %s, which follows the palette only in part; adw-gtk3 follows it fully\n' "$PROG" "$theme"
+    fi
+    return "$ok"
 }
 
 apply_sequences() {
@@ -892,6 +1074,7 @@ main() {
     local main_output=$COLORS_MAIN_OUTPUT
     local img=
     local hooks=()
+    local args=()
 
     while (($#)); do
         case $1 in
@@ -909,7 +1092,7 @@ main() {
                 shift
                 ;;
             -H | --hook)
-                [[ ${2-} ]] || die "--hook needs a shell or terminal"
+                [[ ${2-} ]] || die "--hook needs a shell, terminal or toolkit"
                 hooks+=("$2")
                 shift
                 ;;
@@ -919,20 +1102,22 @@ main() {
                 ;;
             --)
                 shift
+                args+=("$@")
                 break
                 ;;
             -*) die "unknown option: $1" ;;
-            *) break ;;
+            *) args+=("$1") ;;
         esac
         shift
     done
 
+    set -- "${args[@]}"
     img=${1-}
     dest=$(realpath -m -- "$dest")
     local sh
     for sh in "${hooks[@]}"; do
         case $sh in
-            bash | zsh | fish | kitty | foot | alacritty | ghostty) ;;
+            bash | zsh | fish | kitty | foot | alacritty | ghostty | gtk | qt) ;;
             *) die "unsupported hook: $sh ($HOOKS)" ;;
         esac
     done
@@ -1008,6 +1193,7 @@ main() {
     emit_zathura
     emit_xresources
     emit_kde
+    emit_qtct
     emit_shell_hooks
 
     mkdir -p -- "$dest"
@@ -1027,6 +1213,7 @@ main() {
         sync_niri_border_color "$accent"
         sync_sway_border_color "$accent"
         sync_kde_colors "$dest/kdeglobals"
+        sync_qtct
     fi
     if ((do_print)); then
         print_swatches
