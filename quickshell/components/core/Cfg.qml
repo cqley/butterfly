@@ -36,10 +36,18 @@ Singleton {
         return !root.has(key) || (key in root.defaults && root.same(root.v[key], root.defaults[key]))
     }
 
-    function get(key, fallback) {
+    function get(key, fallback, lo, hi) {
         root.remember(key, fallback)
-        const x = root.v[key]
-        return x === undefined || x === null ? fallback : x
+        const x = root.v ? root.v[key] : undefined
+        if (x === undefined || x === null || typeof x !== typeof fallback)
+            return fallback
+        if (Array.isArray(lo))
+            return lo.indexOf(x) < 0 ? fallback : x
+        if (typeof x !== "number")
+            return x
+        if (!isFinite(x))
+            return fallback
+        return lo === undefined ? x : Math.min(Math.max(x, lo), hi)
     }
 
     function set(key, value) {

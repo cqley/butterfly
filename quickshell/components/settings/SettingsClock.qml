@@ -26,13 +26,13 @@ Column {
         SettingsRow {
             label: "clock size"
             token: "clockPx"
-            value: Cfg.get("clockPx", 14) + " px"
+            value: Cfg.get("clockPx", 14, 10, 22) + " px"
 
             SettingsSlider {
                 from: 10
                 to: 22
                 step: 1
-                value: Cfg.get("clockPx", 14)
+                value: Cfg.get("clockPx", 14, 10, 22)
                 onMoved: v => Cfg.set("clockPx", Math.round(v))
                 onCommitted: Cfg.flush()
             }

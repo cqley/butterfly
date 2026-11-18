@@ -14,7 +14,7 @@ Singleton {
     }
     readonly property string shellScreen: shellScreens.length ? shellScreens[0].name : ""
     readonly property string font: "Inter"
-    readonly property real fontScale: cfg("fontScale", 1)
+    readonly property real fontScale: cfg("fontScale", 1, 0.8, 1.4)
     readonly property var tabular: ({ "tnum": 1 })
     readonly property int fsXXS: fs(9)
     readonly property int fsXS: fs(10)
@@ -39,11 +39,8 @@ Singleton {
         return Math.round((outer - size) / 2)
     }
 
-    function cfg(key, fallback) {
-        Cfg.remember(key, fallback)
-        const store = Cfg.v
-        const x = store ? store[key] : undefined
-        return x === undefined || x === null ? fallback : x
+    function cfg(key, fallback, lo, hi) {
+        return Cfg.get(key, fallback, lo, hi)
     }
 
     readonly property var terminal: ["sh", "-c", 'for t in "$TERMINAL" alacritty kitty foot ghostty wezterm xterm; do command -v "$t" >/dev/null 2>&1 || continue; case $t in kitty) exec kitty "$@";; wezterm) exec wezterm start -- "$@";; *) exec "$t" -e "$@";; esac; done', "sh"]
@@ -145,7 +142,7 @@ Singleton {
     }
 
     // motion
-    readonly property int speed: cfg("speed", 300)
+    readonly property int speed: cfg("speed", 300, 80, 600)
     readonly property int fade: 60
     readonly property int rise: speed
     readonly property int fall: fade
@@ -156,15 +153,15 @@ Singleton {
     readonly property bool holdPill: false
     readonly property bool holdPanels: true
     readonly property bool blockSwap: false
-    readonly property int glide: cfg("glide", 240)
+    readonly property int glide: cfg("glide", 240, 40, 500)
     readonly property int fast: 60
     readonly property int feedbackDuration: 120
     readonly property real feedbackHoverScale: 1.03
     readonly property real feedbackPressScale: 0.97
     readonly property real feedbackFocusBorder: 1
     readonly property int ease: Easing.OutCubic
-    readonly property real springResponse: cfg("springResponse", 0.26)
-    readonly property real springDamping: cfg("springDamping", 1)
+    readonly property real springResponse: cfg("springResponse", 0.26, 0.08, 0.6)
+    readonly property real springDamping: cfg("springDamping", 1, 0.4, 1.6)
     readonly property real springEps: 0.1
     readonly property real springStop: 3
     readonly property real springUnitEps: 0.002
@@ -253,14 +250,14 @@ Singleton {
 
     // pill
     readonly property bool notch: cfg("notch", false)
-    readonly property int notchEar: cfg("notchEar", 10)
-    readonly property int gap: cfg("gap", 6)
+    readonly property int notchEar: cfg("notchEar", 10, 0, 40)
+    readonly property int gap: cfg("gap", 6, 0, 24)
     readonly property int edge: notch ? 0 : gap
-    readonly property int pad: cfg("pad", 16)
-    readonly property int w: cfg("w", 64)
-    readonly property int h: cfg("h", 28)
+    readonly property int pad: cfg("pad", 16, 4, 40)
+    readonly property int w: cfg("w", 64, 40, 160)
+    readonly property int h: cfg("h", 28, 20, 48)
     readonly property int radiusBase: 28
-    readonly property int radius: cfg("radius", radiusBase)
+    readonly property int radius: cfg("radius", radiusBase, 0, 40)
     readonly property real roundness: Math.max(0, Math.min(1, radius / radiusBase))
     readonly property int pillBorderWidth: 1
     readonly property real pillBorderOpacity: 0.08
@@ -272,11 +269,11 @@ Singleton {
     // shadow
     readonly property bool shadowOn: cfg("shadowOn", true)
     readonly property color shadowColor: "#000000"
-    readonly property real shadowOpacity: cfg("shadowOpacity", 0.42)
-    readonly property int shadowBlur: cfg("shadowBlur", 30)
-    readonly property int shadowSpread: cfg("shadowSpread", 0)
-    readonly property int shadowOffsetY: cfg("shadowOffsetY", 4)
-    readonly property real shadowContact: cfg("shadowContact", 0.6)
+    readonly property real shadowOpacity: cfg("shadowOpacity", 0.42, 0, 1)
+    readonly property int shadowBlur: cfg("shadowBlur", 30, 8, 60)
+    readonly property int shadowSpread: cfg("shadowSpread", 0, 0, 20)
+    readonly property int shadowOffsetY: cfg("shadowOffsetY", 4, 0, 12)
+    readonly property real shadowContact: cfg("shadowContact", 0.6, 0, 1)
     readonly property int shadowContactBlur: 4
     readonly property int shadowContactOffsetY: 1
 
@@ -287,8 +284,8 @@ Singleton {
     readonly property bool barFreesZone: true
 
     // idle row
-    readonly property int clockPx: fs(cfg("clockPx", 14))
-    readonly property string clockFormat: cfg("clockFormat", "HH:mm")
+    readonly property int clockPx: fs(cfg("clockPx", 14, 10, 22))
+    readonly property string clockFormat: cfg("clockFormat", "HH:mm", ["HH:mm", "hh:mm"])
 
     function clockText(date) {
         if (clockFormat !== "hh:mm")
@@ -316,48 +313,48 @@ Singleton {
     readonly property int micOffsetY: 0
     readonly property int recordOffsetX: 0
     readonly property int recordOffsetY: 0
-    readonly property int clockGap: cfg("clockGap", 8)
+    readonly property int clockGap: cfg("clockGap", 8, 0, 16)
     readonly property real idlePopResponse: springResponse
     readonly property real idlePopDamping: springDamping
     readonly property real slotScale: 0.7
     readonly property real slotExitAt: 0.75
     readonly property bool wifiOn: cfg("wifiOn", false)
-    readonly property string wifiPlace: cfg("wifiPlace", "right")
+    readonly property string wifiPlace: cfg("wifiPlace", "right", ["left", "right"])
     readonly property int wifiOffsetX: 0
     readonly property int wifiOffsetY: 0
-    readonly property string batPlace: cfg("batPlace", "right")
-    readonly property string micPlace: cfg("micPlace", "right")
-    readonly property string recPlace: cfg("recPlace", "right")
+    readonly property string batPlace: cfg("batPlace", "right", ["left", "right"])
+    readonly property string micPlace: cfg("micPlace", "right", ["left", "right"])
+    readonly property string recPlace: cfg("recPlace", "right", ["left", "right"])
 
     // workspaces
     readonly property bool wsOn: cfg("wsOn", false)
-    readonly property string wsPlace: cfg("wsPlace", "left")
+    readonly property string wsPlace: cfg("wsPlace", "left", ["left", "right", "only"])
     readonly property bool wsVertical: cfg("wsVertical", false)
     readonly property bool wsAccent: cfg("wsAccent", true)
     readonly property bool wsClick: cfg("wsClick", false)
     readonly property real wsHotLift: 0.45
     readonly property int wsCountMax: 5
-    readonly property int wsCount: Math.min(cfg("wsCount", 5), wsCountMax)
-    readonly property int wsGap: cfg("wsGap", 8)
-    readonly property int wsPad: cfg("wsPad", 7)
-    readonly property int wsClockGap: cfg("wsClockGap", 11)
-    readonly property real wsDotDim: cfg("wsDotDim", 0.3)
-    readonly property real wsDotLive: cfg("wsDotLive", 0.62)
-    readonly property int wsDot: cfg("wsDot", 4)
-    readonly property int wsActiveW: cfg("wsActiveW", 18)
-    readonly property int wsActiveH: cfg("wsActiveH", 6)
-    readonly property int wsBarW: cfg("wsBarW", 6)
-    readonly property int wsBarH: cfg("wsBarH", 10)
-    readonly property int wsBarActiveW: cfg("wsBarActiveW", 8)
-    readonly property int wsBarActiveH: cfg("wsBarActiveH", 16)
-    readonly property int wsBarGap: cfg("wsBarGap", 5)
+    readonly property int wsCount: cfg("wsCount", 5, 3, wsCountMax)
+    readonly property int wsGap: cfg("wsGap", 8, 2, 20)
+    readonly property int wsPad: cfg("wsPad", 7, 0, 24)
+    readonly property int wsClockGap: cfg("wsClockGap", 11, 0, 28)
+    readonly property real wsDotDim: cfg("wsDotDim", 0.3, 0.05, 1)
+    readonly property real wsDotLive: cfg("wsDotLive", 0.62, 0.05, 1)
+    readonly property int wsDot: cfg("wsDot", 4, 2, 10)
+    readonly property int wsActiveW: cfg("wsActiveW", 18, 4, 40)
+    readonly property int wsActiveH: cfg("wsActiveH", 6, 2, 14)
+    readonly property int wsBarW: cfg("wsBarW", 6, 2, 12)
+    readonly property int wsBarH: cfg("wsBarH", 10, 3, 22)
+    readonly property int wsBarActiveW: cfg("wsBarActiveW", 8, 2, 16)
+    readonly property int wsBarActiveH: cfg("wsBarActiveH", 16, 4, 26)
+    readonly property int wsBarGap: cfg("wsBarGap", 5, 1, 20)
     readonly property real wsResponse: springResponse
     readonly property real wsDamping: springDamping
-    readonly property real wsSpread: cfg("wsSpread", 0.3)
+    readonly property real wsSpread: cfg("wsSpread", 0.3, 0, 1)
     readonly property int wsSpreadCap: 8
     readonly property int wsMax: 24
     readonly property int wsBleed: 2
-    readonly property int wsSwap: cfg("wsSwap", 150)
+    readonly property int wsSwap: cfg("wsSwap", 150, 40, 300)
     readonly property int wsOffsetX: 0
     readonly property int wsOffsetY: 0
 
@@ -384,11 +381,11 @@ Singleton {
     readonly property color batRed: "#ff3b30"
     readonly property color batYellow: "#ffcc00"
     readonly property color batOk: accent
-    readonly property real batRedAt: cfg("batRedAt", 0.15)
-    readonly property real batYellowAt: cfg("batYellowAt", 0.25)
+    readonly property real batRedAt: cfg("batRedAt", 0.15, 0, 1)
+    readonly property real batYellowAt: cfg("batYellowAt", 0.25, 0, 1)
     readonly property bool batOn: cfg("batOn", true)
     readonly property bool batRingEnabled: cfg("batRingEnabled", true)
-    readonly property real batRingWidth: cfg("batRingWidth", 2.0)
+    readonly property real batRingWidth: cfg("batRingWidth", 2.0, 0.5, 6)
     readonly property int batRingGap: 0
     readonly property color batRingTrack: Qt.rgba(accent.r, accent.g, accent.b, 0.22)
     readonly property int batRingRise: idleRise
@@ -399,7 +396,7 @@ Singleton {
     }
 
     // notifications
-    readonly property int noteW: cfg("noteW", 264)
+    readonly property int noteW: cfg("noteW", 264, 200, 400)
     readonly property int noteH: 48
     readonly property int noteOpenW: 300
     readonly property int noteTop: (noteH - noteIcon) / 2
@@ -408,7 +405,7 @@ Singleton {
     readonly property int noteIconX: 10
     readonly property int noteTextGap: 10
     readonly property int noteTextRight: 14
-    readonly property int noteBodyLines: cfg("noteBodyLines", 1)
+    readonly property int noteBodyLines: cfg("noteBodyLines", 1, 0, 4)
     readonly property int noteOpenBodyLines: 3
     readonly property int noteLineGap: 1
     readonly property real noteSigScale: 0.8
@@ -420,13 +417,13 @@ Singleton {
     readonly property int noteMoonGlyph: 15
     readonly property int noteShotGlyph: 16
     readonly property int noteRecGlyph: 18
-    readonly property int dwell: cfg("dwell", 5000)
-    readonly property int dwellCritical: cfg("dwellCritical", 10000)
+    readonly property int dwell: cfg("dwell", 5000, 1000, 15000)
+    readonly property int dwellCritical: cfg("dwellCritical", 10000, 2000, 30000)
     readonly property int dwellMax: 15000
     readonly property int dwellMin: 500
     readonly property int dwellNever: 5000
     readonly property int notificationQueueMax: 32
-    readonly property int notificationHistoryMax: cfg("notificationHistoryMax", 50)
+    readonly property int notificationHistoryMax: cfg("notificationHistoryMax", 50, 5, 200)
 
     // notification center
     readonly property int centerW: 320
@@ -436,7 +433,7 @@ Singleton {
     readonly property int centerBtnGap: 8
     readonly property int centerGlyph: 15
     readonly property int centerRowH: 56
-    readonly property int centerRows: cfg("centerRows", 3)
+    readonly property int centerRows: cfg("centerRows", 3, 1, 8)
     readonly property int centerAxis: selInset + (centerRowH - selGap) / 2
     readonly property int centerIconX: centerAxis - noteIcon / 2
     readonly property int centerHeadInset: centerAxis - centerBtn / 2
@@ -466,11 +463,11 @@ Singleton {
     readonly property color dndGlyph: white
 
     // launcher
-    readonly property int launchW: cfg("launchW", 340)
+    readonly property int launchW: cfg("launchW", 340, 240, 520)
     readonly property int launchRadius: corner(24)
     readonly property int lpad: 8
-    readonly property int rowH: cfg("rowH", 38)
-    readonly property int rows: cfg("rows", 5)
+    readonly property int rowH: cfg("rowH", 38, 28, 56)
+    readonly property int rows: cfg("rows", 5, 3, 10)
     readonly property int searchH: 32
     readonly property real launchSearchOpacity: 0.22
     readonly property real launchSearchFocusOpacity: 0.42
@@ -489,7 +486,7 @@ Singleton {
     readonly property int launchSearchTextRight: 12
     readonly property int launchIconX: 10
     readonly property int launchIconBox: 24
-    readonly property int launchIconSize: cfg("launchIconSize", 16)
+    readonly property int launchIconSize: cfg("launchIconSize", 16, 8, 48)
     readonly property int launchIconSourceSize: 32
     readonly property int launchIconRadius: corner(10)
     readonly property int launchIconBorderWidth: surfaceBorderWidth
@@ -577,10 +574,10 @@ Singleton {
     readonly property string passChar: "•"
 
     // media
-    readonly property int mediaPillW: cfg("mediaPillW", 324)
+    readonly property int mediaPillW: cfg("mediaPillW", 324, 240, 440)
     readonly property int mediaW: mediaPillW - 2 * pad
     readonly property int mediaGap: 12
-    readonly property int artS: cfg("artS", 88)
+    readonly property int artS: cfg("artS", 88, 56, 120)
     readonly property int ctlS: 30
     readonly property int playS: 30
     readonly property int glyphS: 20
@@ -727,7 +724,7 @@ Singleton {
     readonly property int mixerPad: 16
     readonly property int mixerColW: 54
     readonly property int mixerColGap: 16
-    readonly property int mixerTrackH: cfg("mixerTrackH", 96)
+    readonly property int mixerTrackH: cfg("mixerTrackH", 96, 48, 160)
     readonly property int mixerTrackW: 3
     readonly property real mixerKnobDim: 0.85
     readonly property int mixerHandleW: 13
@@ -740,7 +737,7 @@ Singleton {
     readonly property bool mixerPct: cfg("mixerPct", false)
     readonly property bool mixerApps: cfg("mixerApps", false)
     readonly property bool mixerLabels: cfg("mixerLabels", Quickshell.screens.length > 1)
-    readonly property int mixerStep: cfg("mixerStep", 5)
+    readonly property int mixerStep: cfg("mixerStep", 5, 1, 20)
     readonly property int mixerFineStep: 1
     readonly property int mixerBigStep: 10
     readonly property real mixerResponse: springResponse
@@ -778,7 +775,7 @@ Singleton {
     readonly property string recordDirShort: tilde(recordDir)
     readonly property string recordBin: ""
     readonly property string recordBackend: ""
-    readonly property int recordFps: cfg("recordFps", 60)
+    readonly property int recordFps: cfg("recordFps", 60, 24, 144)
     readonly property bool recordDesktopAudio: cfg("recordDesktopAudio", true)
     readonly property bool recordMic: cfg("recordMic", false)
     readonly property bool recordCursor: cfg("recordCursor", true)
@@ -792,7 +789,7 @@ Singleton {
     readonly property string recDotPath: "M12 4A8 8 0 1 0 12 20A8 8 0 1 0 12 4Z"
 
     // calendar
-    readonly property int weekCells: cfg("weekCells", 9)
+    readonly property int weekCells: cfg("weekCells", 9, 5, 13)
     readonly property int weekLead: 1
     readonly property int weekDays: 7
     readonly property int weekGap: 4
@@ -800,8 +797,8 @@ Singleton {
     readonly property real weekFadeMin: 0.12
     readonly property real weekFadeSpan: 4.7
     readonly property real weekFadeCurve: 1
-    readonly property real todayFill: cfg("todayFill", 0.15)
-    readonly property real outMonth: cfg("outMonth", 0.25)
+    readonly property real todayFill: cfg("todayFill", 0.15, 0, 0.5)
+    readonly property real outMonth: cfg("outMonth", 0.25, 0.05, 0.8)
     readonly property int calSlide: 10
     readonly property int calGap: 6
     readonly property int calTitleX: 4
@@ -817,23 +814,23 @@ Singleton {
     readonly property real islandResponse: springResponse
     readonly property real islandDamping: springDamping
     readonly property bool menuBounce: cfg("menuBounce", true)
-    readonly property real menuBounceResponse: cfg("menuBounceResponse", 0.42)
-    readonly property real menuBounceDamping: cfg("menuBounceDamping", 0.6)
-    readonly property real menuBounceReach: cfg("menuBounceReach", 28)
-    readonly property real menuBounceDip: cfg("menuBounceDip", 0.08)
+    readonly property real menuBounceResponse: cfg("menuBounceResponse", 0.42, 0.2, 0.7)
+    readonly property real menuBounceDamping: cfg("menuBounceDamping", 0.6, 0.3, 0.95)
+    readonly property real menuBounceReach: cfg("menuBounceReach", 28, 4, 64)
+    readonly property real menuBounceDip: cfg("menuBounceDip", 0.08, 0, 0.2)
     readonly property bool menuSwitchDip: cfg("menuSwitchDip", true)
     readonly property real islandDropResponse: 0.225
     readonly property real islandDropDamping: 1
     readonly property real islandContentResponse: islandResponse
     readonly property real islandContentDamping: springDamping
-    readonly property int islandPopW: cfg("islandPopW", 12)
-    readonly property int islandPopH: cfg("islandPopH", 6)
-    readonly property int islandPopDrop: cfg("islandPopDrop", 5)
-    readonly property int islandHitGrow: cfg("islandHitGrow", 4)
+    readonly property int islandPopW: cfg("islandPopW", 12, 0, 40)
+    readonly property int islandPopH: cfg("islandPopH", 6, 0, 24)
+    readonly property int islandPopDrop: cfg("islandPopDrop", 5, 0, 20)
+    readonly property int islandHitGrow: cfg("islandHitGrow", 4, 0, 20)
     readonly property int islandContentSlide: 6
     readonly property int islandContentStage: 40
     readonly property int islandWeekCells: weekCells
-    readonly property int islandWeekLead: cfg("islandWeekLead", 0)
+    readonly property int islandWeekLead: cfg("islandWeekLead", 0, -40, 40)
     readonly property real islandWeekFadeSpan: 5.4
     readonly property real islandWeekFadeMin: 0.08
     readonly property real islandWeekFadeCurve: 2
@@ -850,17 +847,17 @@ Singleton {
     readonly property int islandMediaH: islandMediaTopPad + artS + islandMediaPad
 
     // dashboard
-    readonly property int dashW: cfg("dashW", 360)
+    readonly property int dashW: cfg("dashW", 360, dashMinW, dashMaxW)
     readonly property int dashMinW: 360
     readonly property int dashMaxW: 760
     readonly property int dashPad: 12
-    readonly property int dashPadX: cfg("dashPadX", 26)
+    readonly property int dashPadX: cfg("dashPadX", 26, 12, 48)
     readonly property int dashRowH: 24
     readonly property int dashRow2H: 14
     readonly property int dashBleed: 2
     readonly property int dashRowGap: 4
     readonly property int dashGap: 8
-    readonly property int dashStatusGap: cfg("dashStatusGap", 10)
+    readonly property int dashStatusGap: cfg("dashStatusGap", 10, 4, 24)
     readonly property int dashGlyph: 14
     readonly property real dashSwapScale: 0.6
     readonly property int dashSwapTurn: -40
@@ -869,14 +866,14 @@ Singleton {
     readonly property int dashBtGlyph: 15
     readonly property string dashBtSlashPath: "M6 6L18 18"
     readonly property int dashVolW: 17
-    readonly property int dashClockPx: fs(cfg("dashClockPx", 22))
+    readonly property int dashClockPx: fs(cfg("dashClockPx", 22, 14, 34))
     readonly property int dashDatePx: fsM
     readonly property string dashDateFormat: cfg("dashDateFormat", "MMM d")
     readonly property string dashWeekdayFormat: cfg("dashWeekdayFormat", "ddd")
     readonly property bool dashWeekday: cfg("dashWeekday", true)
     readonly property real dashDim: dimSoft
-    readonly property real dashMorphResponse: cfg("dashMorphResponse", 0.42)
-    readonly property real dashMorphDamping: cfg("dashMorphDamping", 0.6)
+    readonly property real dashMorphResponse: cfg("dashMorphResponse", 0.42, 0.2, 0.7)
+    readonly property real dashMorphDamping: cfg("dashMorphDamping", 0.6, 0.3, 1)
     readonly property real dashRevealAt: 0.35
     readonly property real dashLateAt: 0.85
     readonly property real dashSizeHold: 0.06
@@ -893,15 +890,15 @@ Singleton {
     readonly property bool dashBattery: cfg("dashBattery", cfg("dashPower", true))
 
     // visualizer
-    readonly property string visIdle: cfg("visIdle", "off")
+    readonly property string visIdle: cfg("visIdle", "off", ["off", "hover", "always"])
     readonly property bool visPeek: visIdle === "hover"
     readonly property bool visAlways: visIdle === "always"
-    readonly property int visBars: Math.min(cfg("visBars", 6), visBarsMax)
+    readonly property int visBars: cfg("visBars", 6, 3, visBarsMax)
     readonly property int visBarsMax: 16
-    readonly property int visBarW: cfg("visBarW", 3)
+    readonly property int visBarW: cfg("visBarW", 3, 1, 8)
     readonly property int visGap: 3
     readonly property int visMinH: 4
-    readonly property int visMaxH: cfg("visMaxH", 14)
+    readonly property int visMaxH: cfg("visMaxH", 14, 6, 32)
     readonly property int visIdleH: 4
     readonly property int visCycle: 900
     readonly property real visFreqStep: 0.35
@@ -917,12 +914,12 @@ Singleton {
     readonly property real visDim: 0.3
     readonly property int visTint: speed
     readonly property int visOffDelay: 8000
-    readonly property int visFps: cfg("visFps", 60)
+    readonly property int visFps: cfg("visFps", 60, 24, 144)
     readonly property int visNoiseReduction: 77
     readonly property real visLerp: 0.3
 
     // settings
-    readonly property int settingsW: cfg("settingsW", 860)
+    readonly property int settingsW: cfg("settingsW", 860, 600, 1600)
     readonly property int settingsRadius: launchRadius
     readonly property int settingsPad: 14
     readonly property int settingsPadBottom: 16

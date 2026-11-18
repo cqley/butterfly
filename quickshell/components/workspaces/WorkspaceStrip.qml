@@ -34,7 +34,12 @@ Item {
     readonly property int bias: Math.floor((root.viewCount - 1) / 2)
     readonly property int reachWant: Math.max(0, root.total - root.viewCount)
     property real reach: 0
-    readonly property real limit: Math.max(root.reach, slide.value - (root.viewCount - 1))
+    property real reachFrom: 0
+    property real slideFrom: 0
+    property bool riding: false
+    readonly property real ride: root.markIndex === root.slideFrom ? 1 : Math.max(0, Math.min(1, (slide.value - root.slideFrom) / (root.markIndex - root.slideFrom)))
+    readonly property real reachNow: root.riding ? root.reachFrom + (root.reachWant - root.reachFrom) * root.ride : root.reach
+    readonly property real limit: Math.max(root.reachNow, slide.value - (root.viewCount - 1))
     readonly property real scroll: Math.max(0, Math.min(root.limit, slide.value - root.bias))
     readonly property int rendered: Math.max(root.total, Math.ceil(slide.value) + 2)
 
@@ -48,6 +53,7 @@ Item {
 
     function settle() {
         reachRun.stop()
+        root.riding = false
         root.reach = root.reachWant
         root.markIndex = root.index
         root.travel = 0
@@ -77,10 +83,17 @@ Item {
                 root.settle()
             return
         }
-        if (root.markIndex === root.index)
+        if (root.markIndex === root.index) {
+            if (!root.riding && root.reach !== root.reachWant) {
+                reachRun.to = root.reachWant
+                reachRun.start()
+            }
             return
+        }
         reachRun.stop()
-        root.reach = root.reachWant
+        root.reachFrom = root.reachNow
+        root.slideFrom = slide.value
+        root.riding = true
         root.travel = Math.abs(root.index - slide.value)
         root.markIndex = root.index
     }
@@ -93,14 +106,10 @@ Item {
     onHiddenChanged: if (root.hidden) root.adopt()
 
     onReachWantChanged: {
-        reachRun.stop()
-        if (!root.live) {
-            if (root.hidden)
-                root.reach = root.reachWant
-            return
-        }
-        reachRun.to = root.reachWant
-        reachRun.start()
+        if (root.live)
+            gate.restart()
+        else if (root.hidden)
+            root.reach = root.reachWant
     }
 
     Component.onCompleted: {
@@ -135,6 +144,7 @@ Item {
         damping: Theme.wsDamping
         epsilon: Theme.springUnitEps
         rest: Theme.springUnitStop
+        onMovingChanged: if (!moving && root.riding) { root.reach = root.reachWant; root.riding = false }
     }
 
     Spring {
