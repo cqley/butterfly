@@ -14,7 +14,7 @@ Menu {
     property var queue: []
     property bool hovered: false
     property bool veiled: false
-    property bool dnd: false
+    readonly property bool dnd: Cfg.get("dnd", false)
     property var history: []
     property var fresh: []
     readonly property bool unread: fresh.length > 0
@@ -162,7 +162,8 @@ Menu {
     }
 
     function toggleDnd(quiet = false) {
-        dnd = !dnd
+        Cfg.set("dnd", !dnd)
+        Cfg.flush()
         if (dnd)
             flush(true)
         if (!quiet)

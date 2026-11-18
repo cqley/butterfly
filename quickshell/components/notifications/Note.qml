@@ -33,14 +33,17 @@ Panel {
     property bool sized: true
     readonly property bool hasBody: root.body !== ""
     readonly property bool hasLabel: root.appLabel !== ""
-    readonly property real briefH: titleBrief.implicitHeight + (root.hasBody ? Theme.noteLineGap + bodyLine.implicitHeight : 0)
+    readonly property real briefH: shared.title.implicitHeight + (root.hasBody ? Theme.noteLineGap + shared.body.implicitHeight : 0)
     readonly property int briefY: Math.round(Theme.noteTop + (Theme.noteIcon - root.briefH) / 2)
     readonly property int openY: Theme.noteTop + (root.hasLabel ? Math.round(label.implicitHeight) + Theme.noteLineGap : 0)
-    readonly property real openBottom: root.openY + titleBrief.implicitHeight + (root.hasBody ? Theme.noteLineGap + bodyFull.implicitHeight : 0)
+    readonly property real openBottom: root.openY + shared.title.implicitHeight + (root.hasBody ? Theme.noteLineGap + open.body.implicitHeight : 0)
     readonly property real wanted: Math.max(Theme.noteH, Math.ceil(root.openBottom + Theme.noteTop))
     readonly property bool grown: root.expanded && root.sized
     readonly property int textY: Math.round(slide.shaped)
-    readonly property int bodyY: root.textY + Math.round(titleBrief.implicitHeight) + Theme.noteLineGap
+    readonly property int bodyY: root.textY + Math.round(shared.title.implicitHeight) + Theme.noteLineGap
+    readonly property int lineH: Math.round(shared.body.implicitHeight / Math.max(1, shared.body.lineCount))
+    readonly property int titleCut: root.cut(root.summary, titleFm)
+    readonly property int bodyCut: root.cut(root.body, bodyFm)
 
     wantW: root.expanded ? Theme.noteOpenW : Theme.noteW
     wantH: root.expanded ? root.wanted : Theme.noteH
@@ -212,6 +215,26 @@ Panel {
             }
         }
 
+        Pane {
+            width: root.titleCut
+            height: root.bodyY
+
+            Brief {
+                id: shared
+            }
+        }
+
+        Pane {
+            y: root.bodyY
+            width: root.bodyCut
+            height: root.lineH
+            visible: root.hasBody
+
+            Brief {
+                y: -root.bodyY
+            }
+        }
+
         Item {
             id: lineFade
             opacity: root.expanded && fullFade.opacity >= 1 ? 0 : 1
@@ -225,27 +248,36 @@ Panel {
                 }
             }
 
-            Txt {
-                id: titleBrief
-                y: root.textY
-                width: root.briefTextW
-                text: root.summary
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                font.pixelSize: Theme.fsM
-                font.weight: Font.DemiBold
+            Pane {
+                x: root.titleCut
+                width: words.width - root.titleCut
+                height: root.bodyY
+
+                Brief {
+                    x: -root.titleCut
+                }
             }
 
-            Txt {
-                id: bodyLine
+            Pane {
+                x: root.bodyCut
                 y: root.bodyY
-                width: root.briefTextW
-                text: root.body
-                visible: root.hasBody
-                elide: Text.ElideRight
-                maximumLineCount: Theme.noteBodyLines
-                color: Theme.mix(Theme.bg, Theme.fg, Theme.dimSoft)
-                font.pixelSize: Theme.fsS
+                width: words.width - root.bodyCut
+                height: root.lineH
+
+                Brief {
+                    x: -root.bodyCut
+                    y: -root.bodyY
+                }
+            }
+
+            Pane {
+                y: root.bodyY + root.lineH
+                width: words.width
+                height: words.height
+
+                Brief {
+                    y: -root.bodyY - root.lineH
+                }
             }
         }
 
@@ -263,28 +295,124 @@ Panel {
                 }
             }
 
-            Txt {
-                y: root.textY
-                width: root.openTextW
-                text: root.summary
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                font.pixelSize: Theme.fsM
-                font.weight: Font.DemiBold
+            Pane {
+                x: root.titleCut
+                width: words.width - root.titleCut
+                height: root.bodyY
+
+                Full {
+                    x: -root.titleCut
+                }
             }
 
-            Txt {
-                id: bodyFull
+            Pane {
+                x: root.bodyCut
                 y: root.bodyY
-                width: root.openTextW
-                text: root.body
-                visible: root.hasBody
-                elide: Text.ElideRight
-                wrapMode: Text.Wrap
-                maximumLineCount: Theme.noteOpenBodyLines
-                color: Theme.mix(Theme.bg, Theme.fg, Theme.dimSoft)
-                font.pixelSize: Theme.fsS
+                width: words.width - root.bodyCut
+                height: root.lineH
+
+                Full {
+                    x: -root.bodyCut
+                    y: -root.bodyY
+                }
             }
+
+            Pane {
+                y: root.bodyY + root.lineH
+                width: words.width
+                height: words.height
+
+                Full {
+                    id: open
+                    y: -root.bodyY - root.lineH
+                }
+            }
+        }
+    }
+
+    function cut(text, fm) {
+        const w = root.briefTextW
+        if (fm.font && fm.advanceWidth(text) <= w)
+            return root.openTextW
+        const room = w - fm.advanceWidth("…")
+        let i = text.lastIndexOf(" ")
+        while (i > 0 && fm.advanceWidth(text.substring(0, i)) > room)
+            i = text.lastIndexOf(" ", i - 1)
+        if (i > 0)
+            return Math.round(fm.advanceWidth(text.substring(0, i)) + fm.advanceWidth(" ") / 2)
+        let k = 0
+        while (k < text.length && fm.advanceWidth(text.substring(0, k + 1)) <= room)
+            k++
+        return Math.floor(fm.advanceWidth(text.substring(0, k)))
+    }
+
+    FontMetrics {
+        id: titleFm
+        font: shared.title.font
+    }
+
+    FontMetrics {
+        id: bodyFm
+        font: shared.body.font
+    }
+
+    component Pane: Item {
+        clip: true
+        visible: width > 0 && height > 0
+    }
+
+    component Brief: Item {
+        property alias title: briefTitle
+        property alias body: briefBody
+
+        Txt {
+            id: briefTitle
+            y: root.textY
+            width: root.briefTextW
+            text: root.summary
+            elide: Text.ElideRight
+            maximumLineCount: 1
+            font.pixelSize: Theme.fsM
+            font.weight: Font.DemiBold
+        }
+
+        Txt {
+            id: briefBody
+            y: root.bodyY
+            width: root.briefTextW
+            text: root.body
+            visible: root.hasBody
+            elide: Text.ElideRight
+            maximumLineCount: Theme.noteBodyLines
+            color: Theme.mix(Theme.bg, Theme.fg, Theme.dimSoft)
+            font.pixelSize: Theme.fsS
+        }
+    }
+
+    component Full: Item {
+        property alias body: openBody
+
+        Txt {
+            y: root.textY
+            width: root.openTextW
+            text: root.summary
+            elide: Text.ElideRight
+            maximumLineCount: 1
+            font.pixelSize: Theme.fsM
+            font.weight: Font.DemiBold
+        }
+
+        Txt {
+            id: openBody
+            y: root.bodyY
+            width: root.openTextW
+            text: root.body
+            visible: root.hasBody
+            elide: Text.ElideRight
+            wrapMode: Text.Wrap
+            maximumLineCount: Theme.noteOpenBodyLines
+            color: Theme.mix(Theme.bg, Theme.fg, Theme.dimSoft)
+            font.pixelSize: Theme.fsS
         }
     }
 }
