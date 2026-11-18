@@ -10,6 +10,7 @@ Item {
     property var origin: null
     property bool fades: false
     property bool hoverable: false
+    property bool blocks: false
     property bool togglable: false
     property bool stages: true
     property bool bounces: true
@@ -39,7 +40,7 @@ Item {
         : (1 - cell.travelT) * cell.reach
     readonly property real travelY: cell.morphs ? (1 - cell.travelT) * (cell.originY - cell.rowCy) : 0
     readonly property bool hovered: hit.containsMouse
-    readonly property bool pressed: hit.pressed
+    readonly property bool pressed: hit.pressed && cell.hoverable
     readonly property real touchScale: touch.shaped
 
     width: widthMotion.shaped
@@ -95,10 +96,10 @@ Item {
     MouseArea {
         id: hit
         anchors.fill: parent
-        visible: cell.hoverable && cell.shown && cell.live
-        hoverEnabled: hit.visible
-        acceptedButtons: cell.togglable ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
-        cursorShape: Qt.PointingHandCursor
+        visible: (cell.hoverable || cell.blocks) && cell.shown && cell.live
+        hoverEnabled: hit.visible && cell.hoverable
+        acceptedButtons: cell.togglable || cell.blocks ? Qt.LeftButton | Qt.RightButton : Qt.LeftButton
+        cursorShape: cell.hoverable ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: e => e.button === Qt.RightButton ? cell.toggled() : cell.activated()
     }
 }

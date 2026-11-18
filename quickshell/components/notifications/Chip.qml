@@ -13,6 +13,7 @@ ClippingRectangle {
     property string kind: ""
     property bool critical: false
     property bool on: false
+    property bool linked: false
     property real level: -1
     readonly property bool battery: root.kind === "battery"
     readonly property bool net: root.kind === "net"
@@ -21,6 +22,8 @@ ClippingRectangle {
     readonly property bool shot: root.kind === "shot"
     readonly property bool rec: root.kind === "rec"
     readonly property bool own: root.battery || root.net || root.bluetooth || root.dnd || root.shot || root.rec
+    readonly property bool toned: root.critical || root.on && (root.net || root.bluetooth || root.dnd)
+    readonly property color ink: root.toned ? Theme.white : Theme.fg
     property string source: ""
 
     function refresh() {
@@ -58,9 +61,10 @@ ClippingRectangle {
 
     BatteryIcon {
         anchors.centerIn: parent
+        anchors.horizontalCenterOffset: Theme.noteBatNudge
         visible: root.battery
         pct: root.level >= 0 ? root.level : 1
-        tone: Theme.batTone(root.level >= 0 ? root.level : 1)
+        tone: root.toned ? root.ink : Theme.batTone(root.level >= 0 ? root.level : 1)
         pluggedIn: root.on
         scale: Theme.noteBatScale
     }
@@ -69,11 +73,14 @@ ClippingRectangle {
         anchors.centerIn: parent
         visible: root.net
         level: root.on ? Theme.sigBars : 0
+        tint: root.ink
+        off: Theme.noteSigOff
         scale: Theme.noteSigScale
     }
 
     Shape {
         anchors.centerIn: parent
+        anchors.horizontalCenterOffset: Theme.noteBtNudge
         width: Theme.iconGrid
         height: Theme.iconGrid
         scale: Theme.noteBtGlyph / Theme.iconGrid
@@ -82,11 +89,11 @@ ClippingRectangle {
 
         ShapePath {
             strokeWidth: Theme.iconStroke
-            strokeColor: Theme.fg
+            strokeColor: root.ink
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
             joinStyle: ShapePath.RoundJoin
-            PathSvg { path: Theme.btGlyphPath }
+            PathSvg { path: root.linked ? Theme.btGlyphPath + Theme.btLinkPath : Theme.btGlyphPath }
         }
     }
 
@@ -108,6 +115,7 @@ ClippingRectangle {
 
     Shape {
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: Theme.noteShotNudge
         width: Theme.iconGrid
         height: Theme.iconGrid
         scale: Theme.noteShotGlyph / Theme.iconGrid

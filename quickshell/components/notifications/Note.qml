@@ -25,7 +25,8 @@ Panel {
     property bool dndOn: false
     property real level: -1
     readonly property bool hasLevel: bluetooth && level >= 0
-    readonly property int sideReserve: hasLevel ? Theme.noteBtBadge + Theme.noteTextGap : 0
+    readonly property color levelTone: root.level <= Theme.batYellowAt ? Theme.batTone(root.level) : Theme.green
+    readonly property int sideReserve: !hasLevel ? 0 : (Theme.noteBtPercent ? Math.ceil(btPct.implicitWidth) : Theme.noteBtBadge) + Theme.noteTextGap
     readonly property int textX: Theme.noteIconX + Theme.noteIcon + Theme.noteTextGap
     readonly property int openTextW: Theme.noteOpenW - root.textX - Theme.noteTextRight - root.sideReserve
     readonly property int briefTextW: Theme.noteW - root.textX - Theme.noteTextRight - root.sideReserve
@@ -129,6 +130,7 @@ Panel {
         kind: root.kind
         critical: root.critical
         on: root.charging || root.netOn || root.btConnected || root.dndOn
+        linked: root.btConnected && root.hasBody
         level: root.level
     }
 
@@ -139,12 +141,12 @@ Panel {
         anchors.verticalCenter: chip.verticalCenter
         width: Theme.noteBtBadge
         height: Theme.noteBtBadge
-        visible: root.hasLevel
+        visible: root.hasLevel && !Theme.noteBtPercent
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
             strokeWidth: Theme.noteBtRingWidth
-            strokeColor: Theme.noteBtTrack
+            strokeColor: Qt.rgba(root.levelTone.r, root.levelTone.g, root.levelTone.b, Theme.noteBtTrack)
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
 
@@ -160,7 +162,7 @@ Panel {
 
         ShapePath {
             strokeWidth: Theme.noteBtRingWidth
-            strokeColor: Theme.green
+            strokeColor: root.levelTone
             fillColor: "transparent"
             capStyle: ShapePath.FlatCap
 
@@ -173,6 +175,17 @@ Panel {
                 sweepAngle: 360 * Math.max(0, Math.min(1, root.level))
             }
         }
+    }
+
+    Txt {
+        id: btPct
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.noteTextRight - Theme.noteBtPctBearing
+        anchors.verticalCenter: chip.verticalCenter
+        visible: root.hasLevel && Theme.noteBtPercent
+        text: Math.round(root.level * 100) + "%"
+        color: root.level <= Theme.batYellowAt ? root.levelTone : Theme.mix(Theme.bg, Theme.fg, Theme.dimSoft)
+        font.pixelSize: Theme.fsS
     }
 
     Item {

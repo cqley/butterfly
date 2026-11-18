@@ -81,8 +81,8 @@ Pick {
                     text: Bt.displayName(row.modelData)
                     elide: Text.ElideRight
                     font.pixelSize: Theme.fsL
-                    font.weight: row.on ? Font.DemiBold : Font.Normal
-                    color: row.on || row.selected ? Theme.accent : Theme.fg
+                    font.weight: row.on || row.busy ? Font.DemiBold : Font.Normal
+                    color: row.on || row.busy || row.selected ? Theme.accent : Theme.fg
 
                     Behavior on color {
                         ColorAnimation {

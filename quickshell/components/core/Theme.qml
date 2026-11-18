@@ -411,9 +411,15 @@ Singleton {
     readonly property real noteSigScale: 0.8
     readonly property int noteBtGlyph: 16
     readonly property real noteBatScale: 0.88
+    readonly property int noteBatNudge: 1
+    readonly property real noteBtNudge: -0.5
+    readonly property int noteShotNudge: -1
+    readonly property real noteSigOff: 0.5
     readonly property int noteBtBadge: 18
     readonly property real noteBtRingWidth: 1.5
-    readonly property color noteBtTrack: Qt.rgba(green.r, green.g, green.b, 0.22)
+    readonly property real noteBtTrack: 0.22
+    readonly property bool noteBtPercent: cfg("noteBtPercent", false)
+    readonly property int noteBtPctBearing: 1
     readonly property int noteMoonGlyph: 15
     readonly property int noteShotGlyph: 16
     readonly property int noteRecGlyph: 18
@@ -666,7 +672,7 @@ Singleton {
     readonly property int markH: 11
     readonly property real markY: 0.5
     readonly property int markCapH: 12
-    readonly property int markCapY: -1
+    readonly property int markCapY: 0
 
     // bluetooth
     readonly property int btW: 320
@@ -675,6 +681,7 @@ Singleton {
     readonly property int btRows: netRows
     readonly property int btMetaR: netMetaR
     readonly property string btGlyphPath: "M7 7L17 17L12 22L12 2L17 7L7 17"
+    readonly property string btLinkPath: "M3 12H4.5M19.5 12H21"
     readonly property int btTimeout: 15000
     readonly property int btBatteryWait: 1200
     readonly property int btPowerSettle: 4000

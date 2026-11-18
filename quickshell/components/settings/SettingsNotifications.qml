@@ -65,6 +65,20 @@ Column {
                 onCommitted: Cfg.flush()
             }
         }
+
+        SettingsRow {
+            label: "device battery"
+            token: "noteBtPercent"
+
+            SettingsSegmented {
+                options: ["ring", "percent"]
+                current: Theme.noteBtPercent ? 1 : 0
+                onPicked: i => {
+                    Cfg.set("noteBtPercent", i === 1)
+                    Cfg.flush()
+                }
+            }
+        }
     }
 
     SettingsGroup {

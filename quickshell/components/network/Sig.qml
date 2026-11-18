@@ -6,6 +6,7 @@ Item {
     id: root
     property int level: 0
     property color tint: Theme.fg
+    property real off: Theme.sigOff
     readonly property int grid: 20
 
     width: Theme.sigRowW
@@ -23,7 +24,7 @@ Item {
             y: root.height - bar.bh
             width: Theme.sigW
             height: bar.bh
-            opacity: root.level > bar.index ? Theme.sigOn : Theme.sigOff
+            opacity: root.level > bar.index ? Theme.sigOn : root.off
             transformOrigin: Item.TopLeft
             transform: Scale { xScale: 1 / root.grid; yScale: 1 / root.grid }
             preferredRendererType: Shape.CurveRenderer

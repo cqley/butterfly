@@ -170,8 +170,7 @@ Item {
             contentW: bat.width
             origin: root.origin("battery")
             lead: wsCell
-            hoverable: true
-            onActivated: Mixer.open = true
+            blocks: true
 
             BatteryModule {
                 id: bat
@@ -366,8 +365,8 @@ Item {
             origin: root.origin("wifi")
             hoverable: true
             togglable: true
-            onActivated: Net.open = true
-            onToggled: Net.requestPower()
+            onActivated: Net.requestPower()
+            onToggled: Net.open = true
 
             WifiModule {
                 id: sig
@@ -382,14 +381,14 @@ Item {
             contentW: Theme.dashGlyph
             hoverable: true
             togglable: true
-            onActivated: Bt.open = true
-            onToggled: Bt.toggleAdapter()
+            onActivated: Bt.toggleAdapter()
+            onToggled: Bt.open = true
 
             DashGlyph {
                 anchors.centerIn: parent
                 size: Theme.dashBtGlyph
                 ink: Bt.enabled ? Theme.accent : root.dim
-                paths: Bt.enabled ? [Theme.btGlyphPath] : [Theme.btGlyphPath, Theme.dashBtSlashPath]
+                paths: !Bt.enabled ? [Theme.btGlyphPath, Theme.dashBtSlashPath] : Bt.linked ? [Theme.btGlyphPath, Theme.btLinkPath] : [Theme.btGlyphPath]
             }
         }
 

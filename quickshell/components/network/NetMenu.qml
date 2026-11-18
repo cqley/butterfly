@@ -47,7 +47,7 @@ Pick {
         if (!item)
             return ""
         if (Net.pending === item.ssid && Net.phase !== "")
-            return Net.phase
+            return Net.phase + "…"
         return ""
     }
 

@@ -582,7 +582,7 @@ Menu {
                 root.target = ""
                 root.phase = ""
                 root.pending = ""
-                Notifs.pushSystem("can't connect", timedOut ? name + " · timed out" : name, false, "net", true)
+                Notifs.pushSystem("couldn't connect", timedOut ? name + " · timed out" : name, false, "net", true)
                 root.open = false
             }
             root.refresh()

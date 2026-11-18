@@ -15,6 +15,7 @@ Menu {
     readonly property bool available: !!adapter
     readonly property bool enabled: available && adapter.enabled
     readonly property bool blocked: available && adapter.state === BluetoothAdapterState.Blocked
+    readonly property bool linked: enabled && items.some(d => d.connected)
     property bool powering: false
 
     readonly property string title: {
@@ -76,6 +77,19 @@ Menu {
     Connections {
         target: root.available ? root.adapter.devices : null
         function onValuesChanged() { root.rebuild() }
+    }
+
+    Instantiator {
+        model: root.available ? root.adapter.devices : null
+
+        delegate: Connections {
+            required property var modelData
+            target: modelData
+            function onNameChanged() { Qt.callLater(root.rebuild) }
+            function onDeviceNameChanged() { Qt.callLater(root.rebuild) }
+            function onPairedChanged() { Qt.callLater(root.rebuild) }
+            function onConnectedChanged() { Qt.callLater(root.rebuild) }
+        }
     }
 
     Connections {
