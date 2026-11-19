@@ -75,8 +75,10 @@ Item {
 
     width: Theme.dashW - 2 * Theme.dashPadX
     height: Theme.dashRowH + Theme.dashRowGap + Theme.dashRow2H
-    readonly property real wantW: width + 2 * Theme.dashPadX
-    readonly property real wantH: y + height + Theme.dashPad
+    readonly property real padX: Theme.dashPadX
+    readonly property real padBottom: Theme.dashPad
+    readonly property real wantW: width + 2 * root.padX
+    readonly property real wantH: y + height + root.padBottom
     visible: root.present && root.opacity > 0.004
     opacity: 0
 
