@@ -17,6 +17,10 @@ Menu {
     readonly property bool blocked: available && adapter.state === BluetoothAdapterState.Blocked
     readonly property bool linked: enabled && items.some(d => d.connected)
     property bool powering: false
+    property var connecting: null
+    property bool seen: false
+    property string failed: ""
+    property string failText: ""
 
     readonly property string title: {
         if (!available)
@@ -87,8 +91,33 @@ Menu {
             target: modelData
             function onNameChanged() { Qt.callLater(root.rebuild) }
             function onDeviceNameChanged() { Qt.callLater(root.rebuild) }
-            function onPairedChanged() { Qt.callLater(root.rebuild) }
-            function onConnectedChanged() { Qt.callLater(root.rebuild) }
+            function onPairedChanged() {
+                Qt.callLater(root.rebuild)
+                if (modelData.paired && root.connecting === modelData)
+                    root.follow(modelData)
+            }
+            function onPairingChanged() {
+                const d = modelData
+                if (!d.pairing && root.connecting === d)
+                    Qt.callLater(() => {
+                        if (root.connecting === d && !d.paired && !d.pairing)
+                            root.fail(d, "couldn't pair")
+                    })
+            }
+            function onStateChanged() {
+                if (root.connecting !== modelData)
+                    return
+                if (modelData.state === BluetoothDeviceState.Connecting)
+                    root.seen = true
+                else if (modelData.state === BluetoothDeviceState.Disconnected && root.seen && !modelData.pairing)
+                    root.fail(modelData, "couldn't connect")
+            }
+            function onConnectedChanged() {
+                Qt.callLater(root.rebuild)
+                if (modelData.connected && root.connecting === modelData)
+                    root.settle()
+                root.announce(modelData)
+            }
         }
     }
 
@@ -128,33 +157,25 @@ Menu {
         }
     }
 
-    readonly property bool busy: items.some(d =>
+    readonly property bool busy: connecting !== null || items.some(d =>
         d.state === BluetoothDeviceState.Connecting ||
         d.state === BluetoothDeviceState.Disconnecting ||
         d.pairing)
 
-    onBusyChanged: {
-        if (!busy) {
-            connectTimeout.stop()
-            connecting = null
-        }
-        syncScan()
-    }
-
-    property var connecting: null
+    onBusyChanged: syncScan()
 
     Timer {
         id: connectTimeout
         interval: Theme.btTimeout
         onTriggered: {
             const d = root.connecting
-            root.connecting = null
             if (!d)
                 return
             if (d.pairing)
                 d.cancelPair()
             else if (d.state === BluetoothDeviceState.Connecting)
                 d.disconnect()
+            root.fail(d, d.paired ? "couldn't connect" : "couldn't pair")
         }
     }
 
@@ -180,18 +201,23 @@ Menu {
     function statusOf(d) {
         if (!d)
             return ""
+        if (root.failed === d.address)
+            return root.failText
         if (d.state === BluetoothDeviceState.Connecting)
             return "connecting…"
         if (d.state === BluetoothDeviceState.Disconnecting)
             return "disconnecting…"
         if (d.pairing)
             return "pairing…"
+        if (root.connecting === d)
+            return d.paired ? "connecting…" : "pairing…"
         return ""
     }
 
     function pick(d) {
         if (!d || busy)
             return
+        failed = ""
         if (d.connected) {
             d.disconnect()
             return
@@ -199,11 +225,51 @@ Menu {
         if (available)
             adapter.discovering = false
         connecting = d
+        seen = false
         connectTimeout.restart()
         if (d.paired)
-            d.connect()
+            follow(d)
         else
             d.pair()
+    }
+
+    function follow(d) {
+        if (!d.trusted)
+            d.trusted = true
+        seen = false
+        connectTimeout.restart()
+        d.connect()
+    }
+
+    function settle() {
+        connecting = null
+        seen = false
+        connectTimeout.stop()
+        syncScan()
+    }
+
+    function fail(d, text) {
+        if (root.connecting !== d)
+            return
+        settle()
+        failed = d.address
+        failText = text
+        failClear.restart()
+        if (!open)
+            Notifs.pushSystem(text, displayName(d), false, "bluetooth", true)
+    }
+
+    function forget(d) {
+        if (!d || busy || !d.paired)
+            return
+        failed = ""
+        d.forget()
+    }
+
+    Timer {
+        id: failClear
+        interval: Theme.btFailHold
+        onTriggered: root.failed = ""
     }
 
     property var pendingConnects: []
@@ -225,23 +291,15 @@ Menu {
         }
     }
 
-    Instantiator {
-        model: root.available ? root.adapter.devices : null
-
-        Connections {
-            required property var modelData
-            target: modelData
-            function onConnectedChanged() {
-                if (root.open)
-                    return
-                if (modelData.connected) {
-                    root.pendingConnects.push(modelData)
-                    if (!connectNotifyDelay.running)
-                        connectNotifyDelay.restart()
-                } else if (!root.powering && root.enabled) {
-                    Notifs.pushSystem("disconnected", root.displayName(modelData), false, "bluetooth")
-                }
-            }
+    function announce(d) {
+        if (root.open)
+            return
+        if (d.connected) {
+            root.pendingConnects.push(d)
+            if (!connectNotifyDelay.running)
+                connectNotifyDelay.restart()
+        } else if (!root.powering && root.enabled) {
+            Notifs.pushSystem("disconnected", root.displayName(d), false, "bluetooth")
         }
     }
 

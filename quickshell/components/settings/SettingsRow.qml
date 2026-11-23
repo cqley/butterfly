@@ -95,6 +95,7 @@ Item {
         MouseArea {
             id: touch
             anchors.fill: parent
+            visible: root.showArrow
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: {
@@ -143,6 +144,7 @@ Item {
 
         MouseArea {
             anchors.fill: parent
+            visible: root.modified
             cursorShape: Qt.PointingHandCursor
             onClicked: root.reset()
         }

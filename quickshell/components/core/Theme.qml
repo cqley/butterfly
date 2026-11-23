@@ -17,6 +17,9 @@ Singleton {
     readonly property string font: fontVariable ? "Inter Variable" : "Inter"
     readonly property real fontScale: cfg("fontScale", 1, 0.8, 1.4)
     readonly property var tabular: ({ "tnum": 1 })
+    readonly property int jobLimit: 15000
+    readonly property int jobKill: 3000
+    readonly property int jobStart: 500
     readonly property int boldWeight: fontVariable ? Font.DemiBold : Font.Bold
     readonly property var bold: fontVariable ? { "wght": 700 } : ({})
     readonly property int fsXXS: fs(9)
@@ -240,6 +243,8 @@ Singleton {
     readonly property int selInset: 4
     readonly property int selGap: 2
     readonly property color selFill: Qt.rgba(1, 1, 1, 0.06)
+    readonly property color selAlarmFill: Qt.rgba(red.r, red.g, red.b, 0.12)
+    readonly property color selAlarmBorder: Qt.rgba(red.r, red.g, red.b, 0.4)
     readonly property int surfaceBorderWidth: 1
     readonly property color surfaceBorder: Qt.rgba(1, 1, 1, 0.16)
     readonly property color surfaceBorderHover: Qt.rgba(1, 1, 1, 0.34)
@@ -261,7 +266,7 @@ Singleton {
     readonly property int h: cfg("h", 28, 20, 48)
     readonly property int radiusBase: 28
     readonly property int radius: cfg("radius", radiusBase, 0, 40)
-    readonly property real roundness: Math.max(0, Math.min(1, radius / radiusBase))
+    readonly property real roundness: Math.max(0, radius / radiusBase)
     readonly property int pillBorderWidth: 1
     readonly property real pillBorderOpacity: 0.08
     readonly property int pillHaloWidth: 1
@@ -642,6 +647,7 @@ Singleton {
     readonly property int netFieldH: 34
     readonly property int netPromptGap: 10
     readonly property int netPromptRise: 6
+    readonly property int netFieldGap: 6
     readonly property int blink: 700
     readonly property int sigBars: 4
     readonly property int sigGap: 2
@@ -659,7 +665,6 @@ Singleton {
     readonly property string lockBodyPath: "M4 4H10A2 2 0 0 1 12 6V10A2 2 0 0 1 10 12H4A2 2 0 0 1 2 10V6A2 2 0 0 1 4 4Z"
     readonly property int netMetaR: 12
     readonly property int netSettle: 600
-    readonly property int netKill: 3000
     readonly property int netVerify: 600
     readonly property int netPollBusy: 1500
     readonly property int netPoll: 4000
@@ -688,6 +693,7 @@ Singleton {
     readonly property int btTimeout: 15000
     readonly property int btBatteryWait: 1200
     readonly property int btPowerSettle: 4000
+    readonly property int btFailHold: 3000
 
     // tray
     readonly property int trayPad: 6
@@ -757,6 +763,7 @@ Singleton {
     readonly property real mixerZeroDim: 0.3
 
     // screenshot
+    readonly property int shotPickLimit: 60000
     readonly property string screenshotDir: Quickshell.env("HOME") + "/pictures/screenshots"
     readonly property int screenshotCheckDelay: 300
     readonly property int screenshotSettleDelay: fall + speed + 40
@@ -846,15 +853,11 @@ Singleton {
     readonly property real islandWeekFadeCurve: 2
     readonly property int islandWeekPad: 14
     readonly property int islandWeekW: cellW * islandWeekCells
-    readonly property int islandWeekH: stripH + 2 * islandWeekPad
     readonly property int islandCalCellW: 38
     readonly property int islandCalCellH: 28
     readonly property int islandCalPad: 16
-    readonly property int islandCalW: islandCalCellW * weekDays + 2 * islandCalPad
     readonly property int islandMediaPad: 16
     readonly property int islandMediaTopPad: idleTopOffsetY + islandPopH / 2 + h + rowGap
-    readonly property int islandMediaW: mediaW + 2 * islandMediaPad
-    readonly property int islandMediaH: islandMediaTopPad + artS + islandMediaPad
 
     // dashboard
     readonly property int dashW: cfg("dashW", 360, dashMinW, dashMaxW)
@@ -866,7 +869,6 @@ Singleton {
     readonly property int dashRow2H: 14
     readonly property int dashBleed: 2
     readonly property int dashRowGap: 4
-    readonly property int dashGap: 8
     readonly property int dashStatusGap: cfg("dashStatusGap", 10, 4, 24)
     readonly property int dashGlyph: 14
     readonly property real dashSwapScale: 0.6

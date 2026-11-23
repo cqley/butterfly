@@ -19,7 +19,7 @@ Menu {
     property string lastFile: ""
     property bool needsCopy: false
     property var items: []
-    readonly property bool busy: proc.running || picking || targeting || holding || settle.running || check.running || copy.running || clientsQuery.running || activeQuery.running || pickQuery.running
+    readonly property bool busy: proc.live || picking || targeting || holding || settle.running || check.live || copy.live || clientsQuery.live || activeQuery.live || pickQuery.live
 
     onOpenChanged: if (open) {
         refresh()
@@ -89,19 +89,19 @@ Menu {
         const file = newFile()
         const geo = Math.round(x) + "," + Math.round(y) + " " + Math.round(w) + "x" + Math.round(h)
         needsCopy = true
-        proc.exec([grimBin, "-g", geo, file])
+        proc.launch([grimBin, "-g", geo, file])
     }
 
     function captureMonitor(name) {
         const file = newFile()
         needsCopy = true
-        proc.exec([grimBin, "-o", name, file])
+        proc.launch([grimBin, "-o", name, file])
     }
 
     function captureNative(id) {
         const file = newFile()
         needsCopy = true
-        proc.exec(Compositor.nativeWindowShotCmd(file, id))
+        proc.launch(Compositor.nativeWindowShotCmd(file, id))
     }
 
     function captureActive() {
@@ -120,10 +120,10 @@ Menu {
         }
         if (busy)
             return
-        activeQuery.running = true
+        activeQuery.launch()
     }
 
-    Process {
+    Job {
         id: activeQuery
         command: Compositor.activeWindowCmd
         stdout: StdioCollector {
@@ -183,7 +183,7 @@ Menu {
         const ry = Math.min(pressG.y, curG.y)
         const rw = Math.abs(curG.x - pressG.x)
         const rh = Math.abs(curG.y - pressG.y)
-        if (rw >= Theme.regionMinSize && rh >= Theme.regionMinSize && !proc.running) {
+        if (rw >= Theme.regionMinSize && rh >= Theme.regionMinSize && !proc.live) {
             shot = Qt.rect(rx, ry, rw, rh)
             holding = true
             shotWait.restart()
@@ -238,7 +238,7 @@ Menu {
         if (busy)
             return
         if (Compositor.supportsNativeWindowShot) {
-            pickQuery.running = true
+            pickQuery.launch()
             return
         }
         if (grimBin === "") {
@@ -249,10 +249,10 @@ Menu {
             Notifs.pushSystem("screenshot unavailable", "window capture needs " + Compositor.backend, false, "shot", true)
             return
         }
-        clientsQuery.running = true
+        clientsQuery.launch()
     }
 
-    Process {
+    Job {
         id: clientsQuery
         command: Compositor.windowListCmd
         stdout: StdioCollector {
@@ -274,8 +274,9 @@ Menu {
         }
     }
 
-    Process {
+    Job {
         id: pickQuery
+        limit: Theme.shotPickLimit
         command: Compositor.pickWindowCmd
         stdout: StdioCollector {
             onStreamFinished: {
@@ -315,8 +316,8 @@ Menu {
     }
 
     function confirmTargetPick() {
-        if (targetIndex < 0 || targetIndex >= targets.length || proc.running) {
-            if (proc.running)
+        if (targetIndex < 0 || targetIndex >= targets.length || proc.live) {
+            if (proc.live)
                 Notifs.pushSystem("screenshot skipped", "previous capture still running", false, "shot", true)
             cancelTargetPick()
             return
@@ -352,18 +353,18 @@ Menu {
         }
     }
 
-    Process {
+    Job {
         id: proc
-        onExited: {
+        onDone: {
             root.holding = false
             settle.restart()
         }
     }
 
-    Process {
+    Job {
         id: check
         command: ["sh", "-c", "test -s \"$1\"", "sh", root.lastFile]
-        onExited: code => {
+        onDone: code => {
             if (code !== 0) {
                 if (root.needsCopy)
                     Notifs.pushSystem("screenshot failed", "no output file", false, "shot", true)
@@ -371,7 +372,7 @@ Menu {
                 return
             }
             if (root.needsCopy && root.copyBin !== "") {
-                copy.running = true
+                copy.launch()
             } else {
                 root.notifySaved(root.needsCopy)
                 root.needsCopy = false
@@ -379,10 +380,10 @@ Menu {
         }
     }
 
-    Process {
+    Job {
         id: copy
         command: ["sh", "-c", "exec \"$0\" --type image/png < \"$1\"", root.copyBin, root.lastFile]
-        onExited: code => {
+        onDone: code => {
             root.notifySaved(code !== 0)
             root.needsCopy = false
         }
@@ -391,7 +392,7 @@ Menu {
     Timer {
         id: settle
         interval: Theme.screenshotCheckDelay
-        onTriggered: check.running = true
+        onTriggered: check.launch()
     }
 
     Component.onCompleted: {

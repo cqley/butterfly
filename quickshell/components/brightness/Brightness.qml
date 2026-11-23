@@ -41,7 +41,7 @@ Singleton {
     }
 
     function enqueue(bus) {
-        if (queue.indexOf(bus) < 0 && !(fetch.running && fetchBus === bus))
+        if (queue.indexOf(bus) < 0 && !(fetch.live && fetchBus === bus))
             queue.push(bus)
     }
 
@@ -77,7 +77,7 @@ Singleton {
         else
             rest.restart()
         if (!probed || backlit)
-            probe.running = true
+            probe.launch()
     }
 
     function set(i, v) {
@@ -98,13 +98,13 @@ Singleton {
     }
 
     function pump() {
-        if (!calm || fetch.running || queue.length === 0)
+        if (!calm || fetch.live || queue.length === 0)
             return
         const next = find("ddc", queue[0])
         if (hold && next >= 0 && devs.get(next).ready)
             return
         fetchBus = queue.shift()
-        fetch.running = true
+        fetch.launch()
     }
 
     function onProbe(text) {
@@ -194,7 +194,7 @@ Singleton {
             return
         }
         if (kind !== "ddc") {
-            probe.running = true
+            probe.launch()
             return
         }
         const i = find(kind, bus)
@@ -232,31 +232,31 @@ Singleton {
             if (!root.calm)
                 settle.restart()
             else if (!root.scanned || root.count === 0 || root.screenCount !== Quickshell.screens.length)
-                scan.running = true
+                scan.launch()
             else
                 root.pump()
         }
     }
 
-    Process {
+    Job {
         id: probe
         command: ["brightnessctl", "-m", "-c", "backlight", "info"]
-        stdout: StdioCollector {}
-        onRunningChanged: if (!running) root.onProbe(stdout.text)
+        stdout: StdioCollector { id: probeOut }
+        onDone: (code, why) => root.onProbe(why === "" ? probeOut.text : "")
     }
 
-    Process {
+    Job {
         id: scan
         command: ["ddcutil", "detect"]
-        stdout: StdioCollector {}
-        onRunningChanged: if (!running) root.onScan(stdout.text)
+        stdout: StdioCollector { id: scanOut }
+        onDone: (code, why) => root.onScan(why === "" ? scanOut.text : "")
     }
 
-    Process {
+    Job {
         id: fetch
         command: ["ddcutil", "--bus", String(root.fetchBus), "--skip-ddc-checks", "getvcp", "10", "--brief"]
-        stdout: StdioCollector {}
-        onRunningChanged: if (!running) root.onFetch(stdout.text)
+        stdout: StdioCollector { id: fetchOut }
+        onDone: (code, why) => root.onFetch(why === "" ? fetchOut.text : "")
     }
 
     IpcHandler {

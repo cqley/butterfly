@@ -13,6 +13,7 @@ Item {
     property real highlightOpacity: 1
     property bool marked: false
     property string mark: ""
+    property bool alarm: false
     property Component delegate
 
     width: parent ? parent.width : 0
@@ -45,16 +46,38 @@ Item {
             width: inner.width - Theme.selInset * 2
             height: root.rowH - Theme.selGap
             radius: Theme.corner(height / 2)
-            color: Theme.selFill
+            color: root.alarm ? Theme.selAlarmFill : Theme.selFill
             border.width: Theme.surfaceBorderWidth
-            border.color: Theme.surfaceBorder
+            border.color: root.alarm ? Theme.selAlarmBorder : Theme.surfaceBorder
             antialiasing: true
             opacity: root.highlightOpacity
             visible: root.highlight && root.highlightShown
 
+            Behavior on color {
+                ColorAnimation {
+                    duration: Theme.glide
+                    easing.type: Theme.ease
+                }
+            }
+
+            Behavior on border.color {
+                ColorAnimation {
+                    duration: Theme.glide
+                    easing.type: Theme.ease
+                }
+            }
+
             Mark {
                 visible: root.marked
                 label: root.mark
+                tint: root.alarm ? Theme.red : Theme.accent
+
+                Behavior on tint {
+                    ColorAnimation {
+                        duration: Theme.glide
+                        easing.type: Theme.ease
+                    }
+                }
             }
 
             Spring {

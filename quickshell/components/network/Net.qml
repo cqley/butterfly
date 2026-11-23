@@ -10,30 +10,36 @@ Menu {
     name: "net"
     ipc: false
     property bool enabled: true
-    property string active: ""
-    property string error: ""
-    property string asking: ""
-    property var list: []
-    property bool busy: false
-    property bool toggling: false
-    property string pending: ""
-    property string phase: ""
-    property string target: ""
-    property string activeConnection: ""
-    property bool canceling: false
-    property bool sent: false
-    property string secret: ""
-    property bool timedOut: false
-    property bool watch: false
-    property bool askLocked: false
-    property bool resolved: false
-    property var order: []
     property bool hw: true
     property bool device: true
-    property bool wantPower: false
     property bool probed: false
+    property bool wantPower: false
+    property bool watch: false
+    property var list: []
+    property var order: []
+    property string active: ""
+    property string activeUuid: ""
+    property var saved: ({})
+    property bool savedReady: false
+    property string op: ""
+    property string target: ""
+    property string kind: ""
+    property var fields: []
+    property bool locked: false
+    property bool tried: false
+    property var before: null
+    property int gen: 0
+    property string error: ""
+    property string secret: ""
 
+    readonly property string nm: Quickshell.shellPath("components/network/nm.sh")
     readonly property bool available: hw && device
+    readonly property bool busy: op !== "" && op !== "ask"
+    readonly property bool toggling: op === "radio"
+    readonly property bool asked: op === "ask"
+    readonly property string phase: op === "connect" ? "connecting" : op === "disconnect" ? "disconnecting" : op === "forget" ? "forgetting" : ""
+    readonly property string pending: phase !== "" ? target : ""
+    readonly property string asking: asked ? (kind === "hidden" ? "hidden network" : target) : ""
 
     readonly property string title: {
         if (!available)
@@ -42,10 +48,8 @@ Menu {
             return "wifi off"
         if (asking !== "")
             return asking
-        if (phase === "connecting")
-            return "connecting…"
-        if (phase === "disconnecting")
-            return "disconnecting…"
+        if (phase !== "")
+            return phase + "…"
         if (active !== "")
             return active
         return "network"
@@ -123,64 +127,30 @@ Menu {
 
     onOpenChanged: if (open) {
         probe()
-        asking = ""
         error = ""
-        if (!busy) {
-            pending = ""
-            phase = ""
-        }
+        if (asked)
+            idle()
         order = []
         refresh()
-        if (enabled)
-            rescan.running = true
+        loadSaved()
+        if (enabled && !rescan.live)
+            rescan.launch()
         startWatching()
     } else {
         if (!watch)
             stopWatching()
-        if (asking !== "")
-            cancelAsk()
+        if (asked)
+            idle()
         error = ""
-        if (!busy) {
-            pending = ""
-            phase = ""
-        }
     }
 
     onActiveChanged: {
-        if (!resolved && busy && phase === "connecting" && target !== "" && active === target)
-            finish(target)
+        if (op === "connect" && target !== "" && active === target)
+            succeed()
         else if (watch && active !== "") {
             watch = false
             Notifs.pushSystem("connected", active, true, "net")
         }
-    }
-
-    function finish(name) {
-        resolved = true
-        kill.stop()
-        if (up.running)
-            up.signal(15)
-        busy = false
-        watch = false
-        sent = false
-        askLocked = false
-        asking = ""
-        error = ""
-        target = ""
-        pending = ""
-        phase = ""
-        settle.restart()
-        Notifs.pushSystem("connected", name, true, "net")
-        open = false
-    }
-
-    function needsSecret(err) {
-        const t = err.toLowerCase()
-        if (t === "")
-            return false
-        if (t.indexOf("connection activated") >= 0 || t.indexOf("successfully") >= 0)
-            return false
-        return t.indexOf("secrets were required") >= 0 || t.indexOf("no secrets provided") >= 0 || t.indexOf("802-11-wireless-security.psk") >= 0 || t.indexOf("password") >= 0 || t.indexOf("passphrase") >= 0 || t.indexOf("secret") >= 0
     }
 
     onWatchChanged: if (watch) {
@@ -189,43 +159,95 @@ Menu {
     } else if (!open)
         stopWatching()
 
+    function begin(o, ssid) {
+        op = o
+        target = ssid
+        error = ""
+        return ++gen
+    }
+
+    function idle() {
+        gen++
+        op = ""
+        target = ""
+        kind = ""
+        fields = []
+        tried = false
+        secret = ""
+    }
+
+    function succeed() {
+        const name = target
+        if (up.live)
+            up.halt("done")
+        idle()
+        watch = false
+        settle.restart()
+        loadSaved()
+        Notifs.pushSystem("connected", name, true, "net")
+        open = false
+    }
+
+    function isEap(sec) {
+        return /802\.1X/i.test(sec)
+    }
+
+    function isLocked(sec) {
+        return /WEP|WPA|SAE|802\.1X/i.test(sec)
+    }
+
+    function known(ssid) {
+        return (saved[ssid] || []).length > 0
+    }
+
+    function needsSecret(err) {
+        const t = err.toLowerCase()
+        if (t === "")
+            return false
+        if (t.indexOf("connection activated") >= 0 || t.indexOf("successfully") >= 0)
+            return false
+        return t.indexOf("secrets were required") >= 0 || t.indexOf("no secrets provided") >= 0 || t.indexOf("802-11-wireless-security.psk") >= 0 || t.indexOf("802-1x") >= 0 || t.indexOf("password") >= 0 || t.indexOf("passphrase") >= 0 || t.indexOf("secret") >= 0
+    }
+
     function refresh() {
         if (toggling)
             return
-        if (!radio.running)
-            radio.running = true
-        if (!activeCon.running)
-            activeCon.running = true
+        if (!radio.live)
+            radio.launch()
+        if (!activeCon.live)
+            activeCon.launch()
     }
 
     function probe() {
-        if (!devs.running)
-            devs.running = true
+        if (!devs.live)
+            devs.launch()
+    }
+
+    function loadSaved() {
+        if (!savedJob.live)
+            savedJob.launch(["sh", root.nm, "saved"])
     }
 
     function clearConnectionState() {
         list = []
         order = []
         active = ""
-        activeConnection = ""
-        pending = ""
-        phase = ""
+        activeUuid = ""
     }
 
     function setRadio(on) {
-        if (toggling || busy)
+        if (busy)
             return
-        toggling = true
+        radioSet.ticket = begin("radio", "")
         enabled = on
         watch = on
         if (!on)
             clearConnectionState()
-        radioSet.command = ["nmcli", "radio", "wifi", on ? "on" : "off"]
-        radioSet.running = true
+        radioSet.launch(["nmcli", "radio", "wifi", on ? "on" : "off"])
     }
 
     function requestPower() {
-        if (wantPower || toggling || busy)
+        if (wantPower || busy)
             return
         wantPower = true
         probed = false
@@ -245,89 +267,108 @@ Menu {
         setRadio(!enabled)
     }
 
-    function afterRadio() {
-        if (wantPower && probed)
-            applyPower()
+    function ask(k, ssid, f) {
+        begin("ask", ssid)
+        kind = k
+        fields = f
     }
 
     function pick(item) {
-        if (!item || busy || toggling || up.running)
+        if (!item || busy)
             return
         watch = false
-        error = ""
+        if (item.hidden) {
+            if (!(asked && kind === "hidden"))
+                ask("hidden", "", ["ssid", "password"])
+            return
+        }
+        if (asked && target === item.ssid)
+            return
         if (item.active) {
-            if (!item.connection) {
-                refresh()
-                return
-            }
-            busy = true
-            pending = item.ssid
-            phase = "disconnecting"
-            down.command = ["nmcli", "connection", "down", "id", item.connection]
-            down.running = true
+            disconnect()
             return
         }
-        if (asking === item.ssid)
+        const eap = isEap(item.security)
+        if (!known(item.ssid) && savedReady && eap) {
+            ask("eap", item.ssid, ["identity", "password"])
             return
-        busy = true
-        pending = item.ssid
-        phase = "connecting"
-        asking = ""
-        target = item.ssid
-        askLocked = !!item.locked
-        resolved = false
-        sent = false
-        root.secret = ""
-        up.stdinEnabled = false
-        up.command = ["nmcli", "device", "wifi", "connect", item.ssid]
-        up.running = true
-    }
-
-    function submitPsk(psk) {
-        if (asking === "" || psk === "" || busy || up.running)
-            return
-        error = ""
-        busy = true
-        pending = asking
-        phase = "connecting"
-        target = asking
-        asking = ""
-        resolved = false
-        sent = true
-        root.secret = psk
-        up.stdinEnabled = true
-        up.command = ["nmcli", "--ask", "device", "wifi", "connect", target]
-        up.running = true
-    }
-
-    function cancelAsk() {
-        canceling = up.running
-        sent = false
-        if (up.running) {
-            up.signal(15)
-            kill.restart()
         }
-        asking = ""
+        if (!known(item.ssid) && savedReady && item.locked) {
+            ask("psk", item.ssid, ["password"])
+            return
+        }
+        connect(eap ? "eap" : "psk", item.ssid, item.locked, {})
+    }
+
+    function submit(v) {
+        if (!asked)
+            return false
+        const ssid = kind === "hidden" ? String(v.ssid || "").trim() : target
+        const pass = String(v.password || "")
+        if (ssid === "" || kind === "eap" && String(v.identity || "").trim() === "" || kind !== "hidden" && pass === "")
+            return false
+        connect(kind, ssid, true, v)
+        return true
+    }
+
+    function connect(k, ssid, lock, v) {
+        const t = begin("connect", ssid)
+        kind = k
+        fields = []
+        locked = lock
+        before = savedReady ? (saved[ssid] || []).slice() : null
+        secret = String(v.password || "")
+        tried = secret !== ""
+        let cmd
+        if (k === "eap" && v.identity !== undefined)
+            cmd = ["sh", root.nm, "eap", before && before.length ? before[0] : "", ssid, String(v.identity).trim()]
+        else if (k === "eap" && known(ssid))
+            cmd = ["nmcli", "connection", "up", "uuid", saved[ssid][0]]
+        else
+            cmd = ["nmcli"].concat(tried ? ["--ask"] : [], ["device", "wifi", "connect", ssid], k === "hidden" ? ["hidden", "yes"] : [])
+        up.ticket = t
+        up.stdinEnabled = tried
+        up.launch(cmd)
+    }
+
+    function prune(ssid) {
+        if (before !== null && ssid !== "" && !pruner.live)
+            pruner.launch(["sh", root.nm, "prune", ssid].concat(before))
+        else
+            loadSaved()
+    }
+
+    function cancel() {
+        const live = op === "connect"
+        const ssid = target
+        const keep = before
+        if (up.live)
+            up.halt("cancel")
+        idle()
         error = ""
-        busy = false
-        target = ""
-        pending = ""
-        phase = ""
+        if (live && !abort.live)
+            abort.launch(["sh", root.nm, "abort", keep !== null ? ssid : ""].concat(keep || []))
+        refresh()
     }
 
-    function stopConnect() {
-        const live = phase === "connecting"
-        cancelAsk()
-        if (live && !halt.running)
-            halt.running = true
+    function disconnect() {
+        if (activeUuid === "") {
+            refresh()
+            return
+        }
+        down.ticket = begin("disconnect", active)
+        down.launch(["nmcli", "connection", "down", "uuid", activeUuid])
     }
 
-    function clearPhase() {
-        pending = ""
-        phase = ""
+    function forget(ssid) {
+        const u = saved[ssid] || []
+        if (busy || !u.length)
+            return
+        drop.ticket = begin("forget", ssid)
+        drop.launch(["nmcli", "connection", "delete"].concat(...u.map(x => ["uuid", x])))
     }
 
-    function fields(line) {
+    function fieldsOf(line) {
         const out = [""]
         for (let i = 0; i < line.length; i++) {
             const c = line[i]
@@ -355,7 +396,7 @@ Menu {
             const line = lines[i]
             if (line === "")
                 continue
-            const p = fields(line)
+            const p = fieldsOf(line)
             if (p.length < 4)
                 continue
             const ssid = p[2]
@@ -373,56 +414,55 @@ Menu {
                 ssid: ssid,
                 signal: sig,
                 active: active,
-                connection: active ? root.activeConnection : ssid,
-                locked: sec !== "" && sec !== "--" && sec.toLowerCase().indexOf("open") < 0,
+                locked: isLocked(sec),
                 security: sec
             }
         }
-        if (asking !== "" && !best[asking]) {
+        if (asked && target !== "" && !best[target]) {
             for (let i = 0; i < list.length; i++) {
-                if (list[i].ssid === asking) {
-                    best[asking] = list[i]
+                if (list[i].ssid === target) {
+                    best[target] = list[i]
                     break
                 }
             }
         }
         const result = Theme.stableReorder(Object.values(best), order, r => r.ssid, rank)
-        const out = result.items
         order = result.order
-        list = out
+        list = result.items
         active = cur
-        if (out.length > 0)
+        if (list.length > 0)
             device = true
     }
 
-    Process {
+    Job {
         id: radioSet
-        onExited: code => {
-            root.toggling = false
+        property int ticket: 0
+        onDone: (code, why) => {
+            if (radioSet.ticket !== root.gen)
+                return
+            root.idle()
             if (code !== 0) {
                 root.watch = false
-                Notifs.pushSystem(root.enabled ? "couldn't turn wifi on" : "couldn't turn wifi off", "", false, "net", true)
+                Notifs.pushSystem(root.enabled ? "couldn't turn wifi on" : "couldn't turn wifi off", why === "missing" ? "nmcli not found" : "", false, "net", true)
             } else if (!root.open)
                 Notifs.pushSystem(root.enabled ? "wifi on" : "wifi off", "", root.enabled, "net")
             root.refresh()
         }
     }
 
-    Process {
+    Job {
         id: devs
         command: ["nmcli", "-t", "-f", "TYPE", "device", "status"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const lines = text.trim().split("\n")
-                let found = false
-                for (let i = 0; i < lines.length; i++)
-                    if (lines[i].trim() === "wifi")
-                        found = true
-                root.device = found
-                root.probed = true
-                if (root.wantPower && !radio.running)
-                    radio.running = true
-            }
+        stdout: StdioCollector { id: devsOut }
+        onDone: (code, why) => {
+            if (why === "") {
+                const lines = devsOut.text.trim().split("\n")
+                root.device = lines.some(l => l.trim() === "wifi")
+            } else if (why === "missing")
+                root.device = false
+            root.probed = true
+            if (root.wantPower && !radio.live)
+                radio.launch()
         }
     }
 
@@ -438,66 +478,87 @@ Menu {
         }
     }
 
-    Process {
+    Job {
         id: radio
         command: ["nmcli", "-t", "-f", "WIFI-HW,WIFI", "radio"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const p = root.fields(text.trim().toLowerCase())
-                if (p.length >= 2) {
-                    root.hw = p[0] === "enabled"
-                    if (!root.toggling) {
-                        root.enabled = p[1] === "enabled"
-                        if (!root.enabled)
-                            root.clearConnectionState()
-                    }
+        stdout: StdioCollector { id: radioOut }
+        onDone: (code, why) => {
+            const p = root.fieldsOf(radioOut.text.trim().toLowerCase())
+            if (why === "" && p.length >= 2) {
+                root.hw = p[0] === "enabled"
+                if (!root.toggling) {
+                    root.enabled = p[1] === "enabled"
+                    if (!root.enabled)
+                        root.clearConnectionState()
                 }
-                root.afterRadio()
             }
+            if (root.wantPower && root.probed)
+                root.applyPower()
         }
     }
 
-    Process {
+    Job {
         id: activeCon
-        command: ["nmcli", "-t", "-f", "NAME,TYPE,DEVICE", "connection", "show", "--active"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const lines = text.trim().split("\n")
-                root.activeConnection = ""
-                for (let i = 0; i < lines.length; i++) {
-                    if (lines[i] === "")
-                        continue
-                    const p = root.fields(lines[i])
-                    if (p.length < 3 || p[1] !== "802-11-wireless")
-                        continue
-                    root.activeConnection = p[0]
+        command: ["nmcli", "-t", "-f", "UUID,TYPE", "connection", "show", "--active"]
+        stdout: StdioCollector { id: activeOut }
+        onDone: (code, why) => {
+            if (why !== "")
+                return
+            let uuid = ""
+            for (const line of activeOut.text.trim().split("\n")) {
+                const p = root.fieldsOf(line)
+                if (p.length >= 2 && p[1] === "802-11-wireless") {
+                    uuid = p[0]
                     break
                 }
-                if (root.enabled)
-                    scan.running = true
             }
+            root.activeUuid = uuid
+            if (root.enabled && !scan.live)
+                scan.launch()
         }
     }
 
-    Process {
+    Job {
         id: scan
         command: ["nmcli", "-t", "-f", "ACTIVE,SIGNAL,SSID,SECURITY", "device", "wifi", "list", "--rescan", "no"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (root.enabled)
-                    root.parseWifi(text)
-                else {
-                    root.list = []
-                    root.active = ""
-                }
-            }
+        stdout: StdioCollector { id: scanOut }
+        onDone: (code, why) => {
+            if (why !== "")
+                return
+            if (root.enabled)
+                root.parseWifi(scanOut.text)
+            else
+                root.clearConnectionState()
         }
     }
 
-    Process {
+    Job {
+        id: savedJob
+        stdout: StdioCollector { id: savedOut }
+        onDone: (code, why) => {
+            if (why !== "" || code !== 0)
+                return
+            const map = {}
+            for (const line of savedOut.text.split("\n")) {
+                const i = line.indexOf("\t")
+                if (i <= 0)
+                    continue
+                const ssid = line.slice(i + 1)
+                if (ssid === "")
+                    continue
+                if (!map[ssid])
+                    map[ssid] = []
+                map[ssid].push(line.slice(0, i))
+            }
+            root.saved = map
+            root.savedReady = true
+        }
+    }
+
+    Job {
         id: rescan
         command: ["nmcli", "device", "wifi", "rescan"]
-        onExited: late.restart()
+        onDone: late.restart()
     }
 
     Process {
@@ -528,9 +589,11 @@ Menu {
         onTriggered: if (root.open) root.refresh()
     }
 
-    Process {
+    Job {
         id: up
-        stderr: StdioCollector {}
+        property int ticket: 0
+        limit: Theme.netTimeout
+        stderr: StdioCollector { id: upErr }
         onStarted: {
             if (root.secret === "")
                 return
@@ -538,106 +601,70 @@ Menu {
             root.secret = ""
             up.stdinEnabled = false
         }
-        onExited: code => {
+        onDone: (code, why) => {
             root.secret = ""
-            kill.stop()
-            if (root.resolved) {
-                root.canceling = false
-                root.timedOut = false
-                root.sent = false
-                root.busy = false
+            if (up.ticket !== root.gen || root.op !== "connect")
                 return
-            }
-            const canceled = root.canceling
-            const timedOut = root.timedOut
-            const wasSent = root.sent
-            const name = root.target
-            root.canceling = false
-            root.timedOut = false
-            root.sent = false
-            root.busy = false
-            if (canceled)
-                return
-            if (code === 0) {
-                root.asking = ""
-                root.error = ""
-                root.target = ""
-                root.phase = ""
+            if (code === 0 && why === "") {
                 root.refresh()
-                settle.restart()
-                Notifs.pushSystem("connected", name, true, "net")
-                root.open = false
+                root.succeed()
                 return
             }
-            if (!timedOut && root.needsSecret(stderr.text) && root.askLocked) {
-                root.asking = root.target
-                root.phase = ""
-                if (wasSent) {
+            const name = root.target
+            const k = root.kind
+            const wrong = root.tried
+            root.prune(name)
+            if (why === "" && root.locked && root.needsSecret(upErr.text)) {
+                root.ask(k, name, k === "eap" ? ["identity", "password"] : k === "hidden" ? ["ssid", "password"] : ["password"])
+                if (wrong)
                     root.error = "wrong password"
-                    forget.command = ["nmcli", "connection", "delete", "id", root.target]
-                    forget.running = true
-                }
+                root.refresh()
+                return
             }
-            if (root.asking === "") {
-                root.target = ""
-                root.phase = ""
-                root.pending = ""
-                Notifs.pushSystem("couldn't connect", timedOut ? name + " · timed out" : name, false, "net", true)
-                root.open = false
-            }
+            root.idle()
+            Notifs.pushSystem("couldn't connect", why === "timeout" ? name + " · timed out" : why === "missing" ? "nmcli not found" : name, false, "net", true)
+            root.open = false
             root.refresh()
         }
     }
 
-    Process {
-        id: forget
+    Job {
+        id: pruner
+        onDone: root.loadSaved()
     }
 
-    Process {
-        id: halt
-        command: ["sh", "-c", "nmcli -t -f UUID,TYPE,STATE connection show --active | awk -F: '$2 == \"802-11-wireless\" && $3 == \"activating\" { print $1 }' | xargs -r -n1 nmcli connection down uuid"]
-        onExited: root.refresh()
+    Job {
+        id: abort
+        onDone: {
+            root.loadSaved()
+            root.refresh()
+        }
     }
 
-    Process {
+    Job {
         id: down
-        onExited: code => {
-            const name = root.pending
-            root.busy = false
-            root.phase = ""
-            root.pending = ""
+        property int ticket: 0
+        onDone: (code, why) => {
+            if (down.ticket !== root.gen)
+                return
+            const name = root.target
+            root.idle()
             if (code !== 0)
-                Notifs.pushSystem("couldn't disconnect", name, false, "net", true)
+                Notifs.pushSystem("couldn't disconnect", why === "timeout" ? name + " · timed out" : name, false, "net", true)
             root.refresh()
         }
     }
 
-    Timer {
-        id: guard
-        interval: Theme.netTimeout
-        running: up.running
-        onTriggered: {
-            if (up.running) {
-                root.timedOut = true
-                up.signal(15)
-                kill.restart()
-            }
-        }
-    }
-
-    Timer {
-        id: kill
-        interval: Theme.netKill
-        onTriggered: {
-            if (up.running)
-                up.signal(9)
-            root.canceling = false
-            root.timedOut = false
-            root.sent = false
-            root.busy = false
-            root.target = ""
-            root.pending = ""
-            root.phase = ""
+    Job {
+        id: drop
+        property int ticket: 0
+        onDone: (code, why) => {
+            if (drop.ticket !== root.gen)
+                return
+            root.idle()
+            if (code !== 0)
+                root.error = "couldn't forget"
+            root.loadSaved()
             root.refresh()
         }
     }
@@ -645,11 +672,7 @@ Menu {
     Timer {
         id: settle
         interval: Theme.netSettle
-        onTriggered: {
-            if (!root.busy)
-                root.clearPhase()
-            root.refresh()
-        }
+        onTriggered: root.refresh()
     }
 
     Timer {
@@ -660,7 +683,7 @@ Menu {
 
     Timer {
         id: poll
-        interval: root.phase === "connecting" ? Theme.netVerify : root.busy ? Theme.netPollBusy : Theme.netPoll
+        interval: root.op === "connect" ? Theme.netVerify : root.busy ? Theme.netPollBusy : Theme.netPoll
         repeat: true
         onTriggered: root.refresh()
     }
@@ -672,6 +695,8 @@ Menu {
             return "wifi off"
         if (root.phase !== "")
             return root.phase + " " + root.pending
+        if (root.asked)
+            return "asking " + root.asking
         if (root.active !== "")
             return "connected " + root.active + root.linkText()
         return "idle" + root.linkText()
@@ -692,4 +717,3 @@ Menu {
         function status(): string { return root.status() }
     }
 }
-

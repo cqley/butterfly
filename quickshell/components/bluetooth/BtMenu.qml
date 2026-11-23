@@ -5,6 +5,7 @@ import Quickshell
 Pick {
     id: root
     readonly property var items: Bt.items
+    property string doom: ""
 
     n: items.length
     rows: Theme.btRows
@@ -18,13 +19,35 @@ Pick {
     onFresh: {
         reset()
         anchor = ""
+        doom = ""
     }
 
     readonly property string selKey: items[sel] ? String(items[sel].address) : ""
 
+    readonly property var current: items[sel] || null
+
+    onSelChanged: doom = ""
+
+    function arm(d) {
+        if (!d || !d.paired || Bt.busy)
+            return false
+        if (doom === d.address) {
+            doom = ""
+            Bt.forget(d)
+        } else
+            doom = d.address
+        return true
+    }
+
     function run() {
-        if (n)
-            Bt.pick(items[sel])
+        if (!n)
+            return
+        if (doom !== "" && current && doom === current.address)
+            arm(current)
+        else {
+            doom = ""
+            Bt.pick(current)
+        }
     }
 
     Connections {
@@ -33,8 +56,14 @@ Pick {
     }
 
     keys: ({
-        cancel: () => Bt.open = false,
-        accept: () => root.run()
+        cancel: () => {
+            if (root.doom !== "")
+                root.doom = ""
+            else
+                Bt.open = false
+        },
+        accept: () => root.run(),
+        delete: () => root.arm(root.current)
     })
 
     Pulse {
@@ -56,6 +85,7 @@ Pick {
             visible: Bt.enabled && root.n > 0
             marked: true
             mark: Bt.displayName(root.items[root.sel])
+            alarm: root.doom !== ""
 
             delegate: Item {
                 id: row
@@ -63,7 +93,17 @@ Pick {
                 required property int index
                 readonly property bool on: !!modelData && !!modelData.connected
                 readonly property string status: Bt.statusOf(modelData)
-                readonly property bool busy: status !== ""
+                readonly property bool doomed: !!modelData && root.doom === modelData.address
+                readonly property bool failing: !!modelData && Bt.failed === modelData.address
+                readonly property bool busy: status !== "" && !failing
+                property string held: ""
+                property bool heldRed: false
+                onStatusChanged: {
+                    if (row.status === "")
+                        return
+                    row.held = row.status
+                    row.heldRed = Bt.failed === row.modelData.address
+                }
                 readonly property bool selected: root.selKey !== "" && !!modelData && root.selKey === modelData.address
                 readonly property bool onscreen: row.index >= root.start && row.index < root.start + root.rows
 
@@ -82,7 +122,7 @@ Pick {
                     elide: Text.ElideRight
                     font.pixelSize: Theme.fsL
                     font.weight: row.on || row.busy ? Font.DemiBold : Font.Normal
-                    color: row.on || row.busy || row.selected ? Theme.accent : Theme.fg
+                    color: row.doomed ? Theme.red : row.on || row.busy || row.selected ? Theme.accent : Theme.fg
 
                     Behavior on color {
                         ColorAnimation {
@@ -122,13 +162,40 @@ Pick {
                         }
                     }
 
-                    Txt {
+                    Item {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: row.status
-                        font.pixelSize: Theme.fsS
-                        color: Theme.accent
-                        opacity: row.busy ? Theme.dimMid + (1 - Theme.dimMid) * pulse.val : 0
-                        visible: text !== ""
+                        width: row.status !== "" ? note.implicitWidth : 0
+                        height: note.implicitHeight
+                        visible: width > 0
+
+                        Behavior on width {
+                            NumberAnimation {
+                                duration: root.snap ? 0 : Theme.glide
+                                easing.type: Theme.ease
+                            }
+                        }
+
+                        Item {
+                            anchors.fill: parent
+                            opacity: row.status !== "" ? 1 : 0
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: root.snap ? 0 : Theme.glide
+                                    easing.type: Theme.ease
+                                }
+                            }
+
+                            Txt {
+                                id: note
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: row.held
+                                font.pixelSize: Theme.fsS
+                                color: row.heldRed ? Theme.red : Theme.accent
+                                opacity: row.heldRed ? 1 : Theme.dimMid + (1 - Theme.dimMid) * pulse.val
+                            }
+                        }
                     }
                 }
 
@@ -136,9 +203,13 @@ Pick {
                     pick: root
                     at: row.index
                     live: row.onscreen
-                    onClicked: {
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: e => {
                         root.sel = row.index
-                        root.run()
+                        if (e.button === Qt.RightButton)
+                            root.arm(row.modelData)
+                        else
+                            root.run()
                     }
                 }
             }

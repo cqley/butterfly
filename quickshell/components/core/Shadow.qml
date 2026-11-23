@@ -1,4 +1,3 @@
-// shadow rendering adapted from minflair (github.com/t4lentles5/minflair), GPLv3, reused with permission
 import QtQuick
 import QtQuick.Effects
 

@@ -11,12 +11,12 @@ QtObject {
     property real want: -1
     property real sent: -1
     property bool careful: false
-    readonly property bool busy: proc.running
+    readonly property bool busy: proc.live
     readonly property bool active: root.busy || (root.want >= 0 && root.want !== root.sent)
     signal settled(bool ok)
 
-    readonly property var proc: Process {
-        onExited: code => root.finish(code)
+    readonly property var proc: Job {
+        onDone: code => root.finish(code)
     }
 
     readonly property var again: Timer {
@@ -39,11 +39,10 @@ QtObject {
     }
 
     function kick() {
-        if (root.proc.running || root.want < 0 || root.want === root.sent)
+        if (root.proc.live || root.want < 0 || root.want === root.sent)
             return
         root.sent = root.want
-        root.proc.command = root.argv(root.sent)
-        root.proc.running = true
+        root.proc.launch(root.argv(root.sent))
     }
 
     function finish(code) {
