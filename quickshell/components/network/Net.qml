@@ -32,7 +32,7 @@ Menu {
     property string error: ""
     property string secret: ""
 
-    readonly property string nm: Quickshell.shellPath("components/network/nm.sh")
+    readonly property string script: Quickshell.shellPath("components/core/scripts/wifi.sh")
     readonly property bool available: hw && device
     readonly property bool busy: op !== "" && op !== "ask"
     readonly property bool toggling: op === "radio"
@@ -225,7 +225,7 @@ Menu {
 
     function loadSaved() {
         if (!savedJob.live)
-            savedJob.launch(["sh", root.nm, "saved"])
+            savedJob.launch(["sh", root.script, "saved"])
     }
 
     function clearConnectionState() {
@@ -321,7 +321,7 @@ Menu {
         tried = secret !== ""
         let cmd
         if (k === "eap" && v.identity !== undefined)
-            cmd = ["sh", root.nm, "eap", before && before.length ? before[0] : "", ssid, String(v.identity).trim()]
+            cmd = ["sh", root.script, "eap", before && before.length ? before[0] : "", ssid, String(v.identity).trim()]
         else if (k === "eap" && known(ssid))
             cmd = ["nmcli", "connection", "up", "uuid", saved[ssid][0]]
         else
@@ -333,7 +333,7 @@ Menu {
 
     function prune(ssid) {
         if (before !== null && ssid !== "" && !pruner.live)
-            pruner.launch(["sh", root.nm, "prune", ssid].concat(before))
+            pruner.launch(["sh", root.script, "prune", ssid].concat(before))
         else
             loadSaved()
     }
@@ -347,7 +347,7 @@ Menu {
         idle()
         error = ""
         if (live && !abort.live)
-            abort.launch(["sh", root.nm, "abort", keep !== null ? ssid : ""].concat(keep || []))
+            abort.launch(["sh", root.script, "abort", keep !== null ? ssid : ""].concat(keep || []))
         refresh()
     }
 
