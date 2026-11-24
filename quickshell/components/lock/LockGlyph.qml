@@ -29,8 +29,10 @@ Item {
     }
 
     function follow(o) {
+        fade.stop()
         root.lit = o.lit
         leg.land(o.legSpring.shaped)
+        leg.kick(o.legSpring.moving ? o.legSpring.velocity : 0)
         if (root.lit !== (root.shown ? 1 : 0))
             root.relight()
     }

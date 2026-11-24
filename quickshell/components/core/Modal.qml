@@ -8,6 +8,7 @@ Singleton {
     property var registry: ({})
     property bool busy: false
     property string pending: ""
+    property bool sealed: false
     readonly property string which: Object.keys(registry).find(k => !!registry[k] && registry[k].open) || ""
     readonly property bool any: which !== ""
 
@@ -41,6 +42,10 @@ Singleton {
     function claim(name) {
         const owner = registry[name]
         if (!owner) return
+        if (root.sealed) {
+            owner.open = false
+            return
+        }
         if (registry.polkit && registry.polkit.open) {
             owner.open = false
             return
@@ -58,7 +63,7 @@ Singleton {
     function flush() {
         const name = root.pending
         root.pending = ""
-        if (!name || !registry[name] || !root.any)
+        if (!name || !registry[name] || !root.any || root.sealed)
             return
         close(name)
         registry[name].open = true

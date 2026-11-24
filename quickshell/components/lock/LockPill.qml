@@ -33,8 +33,7 @@ Item {
         if (!twin || !Locker.staging && !Locker.preview)
             return
         wMotion.land(twin.wAnim)
-        if (twin.wSpring.moving)
-            wMotion.kick(twin.wSpring.velocity)
+        wMotion.kick(twin.wSpring.moving ? twin.wSpring.velocity : 0)
         dots.follow(twin.dotsTwin)
         glyph.follow(twin.glyphTwin)
     }

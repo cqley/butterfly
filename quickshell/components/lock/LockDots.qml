@@ -24,8 +24,7 @@ Item {
 
     function lift(a, b) {
         a.land(b.shaped)
-        if (b.moving)
-            a.kick(b.velocity)
+        a.kick(b.moving ? b.velocity : 0)
     }
 
     function dotSpring(i) {

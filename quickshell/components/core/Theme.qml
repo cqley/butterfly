@@ -1039,7 +1039,7 @@ Singleton {
     readonly property int lockerWakeMin: 3
     readonly property real lockerSettle: 0.02
     readonly property real lockerGlyphNear: 0.05
-    readonly property int lockerGlyphRise: 200
+    readonly property int lockerGlyphRise: 120
     readonly property int lockerGlyphFall: 160
     readonly property int lockerGlyphEase: Easing.InOutSine
     readonly property int lockerWakeCap: 250

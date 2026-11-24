@@ -415,6 +415,12 @@ Singleton {
         onTriggered: sleepWatch.running = true
     }
 
+    Binding {
+        target: Modal
+        property: "sealed"
+        value: root.covering
+    }
+
     IpcHandler {
         target: "lock"
 

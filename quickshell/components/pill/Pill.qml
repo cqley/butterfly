@@ -274,6 +274,8 @@ Item {
         target: "notch"
 
         function toggle(): string {
+            if (Locker.covering)
+                return "locked"
             Cfg.set("notch", !Theme.notch)
             Cfg.flush()
             return Theme.notch ? "on" : "off"
