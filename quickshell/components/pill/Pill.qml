@@ -1160,7 +1160,7 @@ Item {
         x: Theme.mid(root.width, width)
         y: Math.round(root.topY) + Theme.mid(Theme.h, height)
         z: 4
-        shown: Locker.secure || root.lockShape && Locker.t > Locker.glyphAt && Locker.glyph
+        shown: Locker.secure || root.lockShape && Locker.t > Locker.glyphAt && Locker.glyph && lockDots.lit === 0
         open: Locker.opened || Locker.secure
         instant: Locker.secure
     }

@@ -6,6 +6,7 @@ import Quickshell.Widgets
 Item {
     id: root
     readonly property real want: Math.max(Theme.lockerPillW, dots.need + 2 * Theme.pad)
+    readonly property bool glyphOn: Locker.glyph && dots.lit === 0
     readonly property real topY: Theme.notch ? 0 : Theme.gap
     readonly property real wAnim: wMotion.shaped
     readonly property real bodyR: Math.min(Math.min(body.width, body.height) / 2, Theme.radius)
@@ -50,7 +51,7 @@ Item {
     Binding {
         target: Locker
         property: "stageSettled"
-        value: Math.abs(wMotion.shaped - wMotion.target) < Theme.settleEps && glyph.settled && dots.lit === 0
+        value: Math.abs(wMotion.shaped - wMotion.target) < Theme.settleEps && glyph.shown === root.glyphOn && glyph.settled && dots.lit === 0
     }
 
     Spring {
@@ -132,7 +133,7 @@ Item {
         x: Theme.mid(root.width, width)
         y: Math.round(root.topY) + Theme.mid(Theme.h, height)
         z: 4
-        shown: Locker.glyph
+        shown: root.glyphOn
         open: Locker.opened
     }
 
