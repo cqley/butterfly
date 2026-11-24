@@ -77,7 +77,7 @@ Singleton {
             return "locked"
         }
         if (root.down) {
-            if (!root.preview)
+            if (!root.preview && !(instant && root.phase === "closing"))
                 return "already locked"
             root.preview = false
             root.opened = false
@@ -418,7 +418,7 @@ Singleton {
     IpcHandler {
         target: "lock"
 
-        function lock(): string { return root.lock(false) }
+        function toggle(): string { return root.lock(false) }
         function preview(): string { return root.beginPreview() }
         function status(): string {
             return root.phase + (root.preview ? " (preview)" : "")

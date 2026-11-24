@@ -4,7 +4,7 @@
 | --- | --- |
 | `launcher` | `toggle` |
 | `power` | `toggle` |
-| `lock` | `lock` `status` |
+| `lock` | `toggle` `status` |
 | `wallpaper` | `toggle` |
 | `polkit` | `status` |
 | `record` | `toggle` `stop` `status` |
@@ -25,7 +25,7 @@
 | `tray` | `toggle` `status` |
 | `workspaces` | `toggle` `place <left\|right\|only>` `style <dots\|bars>` `status` |
 | `modal` | `dismiss` `status` |
-| `bar` | `toggle` `status` |
+| `shell` | `toggle` `status` |
 | `notch` | `toggle` `status` |
 
 ```
@@ -44,7 +44,6 @@ quickshell ipc call <target> <action>
 | colors | `magick`, `gawk`, `awww` |
 | gtk colors | `adw-gtk3` |
 | qt colors | `qt6ct` (qt5ct for qt5 apps) |
-| lock | `hyprlock` `swaylock` (optional) |
 | visualizer | `cava` (optional) fallback if absent|
 
 ## colors

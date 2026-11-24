@@ -260,7 +260,7 @@ Item {
     readonly property bool tucking: root.tucked || tuckMotion.moving
 
     IpcHandler {
-        target: "bar"
+        target: "shell"
 
         function toggle(): string {
             root.hidden = !root.hidden
