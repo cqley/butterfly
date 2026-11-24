@@ -62,7 +62,7 @@ Scope {
                     visible: Locker.covering
                     t: Locker.t
                     move: Locker.move
-                    from: pill.lockClockHome
+                    from: pill.lockClockSeen
                     fromInk: pill.idleClock
                     to: Qt.point(win.width / 2, win.height / 2 + Theme.lockerClockOffsetY)
                     wall: lockWall.glass
@@ -71,7 +71,7 @@ Scope {
 
                 Pill {
                     id: pill
-                    lockShift: Locker.covering ? Qt.point(lockClock.cx - pill.lockClockHome.x, lockClock.cy - pill.lockClockHome.y) : Qt.point(0, 0)
+                    lockShift: Locker.covering ? Qt.point(lockClock.cx - pill.lockClockSeen.x, lockClock.cy - pill.lockClockSeen.y) : Qt.point(0, 0)
                     lockScale: Locker.covering ? lockClock.size / Theme.clockPx : 1
                 }
 

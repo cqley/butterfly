@@ -60,7 +60,7 @@ Item {
     readonly property bool hot: hover.hovered
     readonly property bool modal: Modal.any && Modal.which !== "settings"
     readonly property bool locking: Locker.covering
-    readonly property bool lockShape: Locker.shut
+    readonly property bool lockShape: Locker.shut || root.stowing && root.tucked
     readonly property bool alert: Notifs.current !== null && !modal && !locking
     readonly property bool calm: !alert && !modal
     readonly property bool panelOpen: islandPop.open
@@ -255,15 +255,18 @@ Item {
         }
     }
 
-    property bool hidden: false
-    readonly property bool tucked: root.hidden && !Modal.any && Notifs.current === null && !root.locking
+    readonly property bool hidden: Theme.shellHidden
+    readonly property bool tucked: root.hidden && !Modal.any && Notifs.current === null && !Locker.shut
+    property bool stowing: false
     readonly property bool tucking: root.tucked || tuckMotion.moving
+    readonly property real tuckY: -tuckMotion.shaped * (root.topY + root.hAnim + Theme.barClear)
 
     IpcHandler {
         target: "shell"
 
         function toggle(): string {
-            root.hidden = !root.hidden
+            Cfg.set("shellHidden", !Theme.shellHidden)
+            Cfg.flush()
             return root.hidden ? "hidden" : "shown"
         }
 
@@ -286,6 +289,7 @@ Item {
 
     Spring {
         id: tuckMotion
+        snap: !Cfg.ready
         target: root.tucked ? 1 : 0
         hold: Theme.springHold
         settle: Theme.scaleSettle(Theme.h + Theme.barClear)
@@ -293,10 +297,12 @@ Item {
         damping: Theme.barDamping
         epsilon: Theme.springUnitEps
         rest: Theme.springUnitStop
+        Component.onCompleted: land(target)
     }
 
     Spring {
         id: notchMotion
+        snap: !Cfg.ready
         target: Theme.notch ? 1 : 0
         response: Theme.barResponse
         damping: 1
@@ -307,7 +313,7 @@ Item {
     }
 
     opacity: root.tucked && !tuckMotion.moving ? 0 : 1
-    transform: Translate { y: -tuckMotion.shaped * (root.topY + root.hAnim + Theme.barClear) }
+    transform: Translate { y: root.tuckY }
 
     readonly property bool islandReady: !stage.running
 
@@ -393,7 +399,7 @@ Item {
     Binding {
         target: Locker
         property: "pillSettled"
-        value: !root.resizing || root.typedWide
+        value: (!root.resizing || root.typedWide) && tuckMotion.shaped === 0
     }
 
     Binding {
@@ -414,8 +420,23 @@ Item {
         }
     }
 
+    function unstow() {
+        if (root.stowing && !Locker.covering && !tuckMotion.moving)
+            root.stowing = false
+    }
+
+    Connections {
+        target: tuckMotion
+        function onMovingChanged() { root.unstow() }
+    }
+
     Connections {
         target: Locker
+        function onPhaseChanged() {
+            if (Locker.phase === "opening" && root.hidden)
+                root.stowing = true
+            root.unstow()
+        }
         function onLeavingChanged() {
             if (Locker.leaving && root.Window.window)
                 root.Window.window.update()
@@ -424,6 +445,7 @@ Item {
 
     readonly property point lockClockHome: Qt.point(root.clockHomeX + Theme.idleOffsetX,
         root.topY + Theme.idleTopOffsetY + root.idleCenterDrop + Theme.idleOffsetY + Theme.h / 2 + Theme.clockOffsetY)
+    readonly property point lockClockSeen: Qt.point(root.lockClockHome.x, root.lockClockHome.y + root.tuckY)
 
     Binding {
         target: Net
@@ -639,6 +661,7 @@ Item {
 
     Spring {
         id: gapMotion
+        snap: !Cfg.ready
         target: Theme.gap
         response: Theme.islandDropResponse
         damping: Theme.islandDropDamping

@@ -286,6 +286,7 @@ Singleton {
     readonly property int shadowContactOffsetY: 1
 
     // bar
+    readonly property bool shellHidden: cfg("shellHidden", false)
     readonly property real barResponse: islandResponse
     readonly property real barDamping: islandDamping
     readonly property int barClear: shadowBlur + shadowOffsetY + pillHaloSpread

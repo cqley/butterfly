@@ -234,6 +234,8 @@ Singleton {
         }
 
         function go(id: int): string {
+            if (id < 1)
+                return "expected a workspace number from 1"
             root.focus(id)
             return "ws " + id
         }
