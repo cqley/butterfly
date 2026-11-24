@@ -8,6 +8,7 @@ Item {
     property color color: Theme.fg
     property int horizontalAlignment: Text.AlignHCenter
     property real dx: 0
+    property int renderType: Text.QtRendering
     property string last: ""
     property string prior: ""
     readonly property real originX: root.horizontalAlignment === Text.AlignHCenter
@@ -119,6 +120,7 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 font: base.font
                 color: root.color
+                renderType: root.renderType
                 text: root.prior
                 opacity: 1 - cell.p
                 visible: cell.p < 1
@@ -137,6 +139,7 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 font: base.font
                 color: root.color
+                renderType: root.renderType
                 text: root.text
                 opacity: cell.p
                 layer.enabled: cell.p < 1

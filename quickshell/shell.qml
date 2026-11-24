@@ -2,6 +2,7 @@ import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import "components/core"
+import "components/lock"
 import "components/pill"
 import "components/screenshot"
 import "components/settings"
@@ -33,7 +34,7 @@ Scope {
 
             PanelWindow {
                 id: win
-                readonly property bool modal: Modal.any && Modal.which !== "settings"
+                readonly property bool modal: Modal.any && Modal.which !== "settings" || Locker.covering
                 property var pillMask: Region { item: pill.hitTarget }
                 property var openMask: Region { width: win.width; height: win.height }
                 property var tuckMask: Region {}
@@ -50,7 +51,51 @@ Scope {
                 mask: modal ? openMask : pill.tucking ? tuckMask : pillMask
                 WlrLayershell.keyboardFocus: modal ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-                Pill { id: pill }
+                LockWall {
+                    id: lockWall
+                    visible: Locker.covering
+                    t: Locker.fade
+                }
+
+                Clock {
+                    id: lockClock
+                    visible: Locker.covering
+                    t: Locker.t
+                    move: Locker.move
+                    from: pill.lockClockHome
+                    fromInk: pill.idleClock
+                    to: Qt.point(win.width / 2, win.height / 2 + Theme.lockerClockOffsetY)
+                    wall: lockWall.glass
+                    text: Theme.clockText(pill.clockNow)
+                }
+
+                Pill {
+                    id: pill
+                    lockShift: Locker.covering ? Qt.point(lockClock.cx - pill.lockClockHome.x, lockClock.cy - pill.lockClockHome.y) : Qt.point(0, 0)
+                    lockScale: Locker.covering ? lockClock.size / Theme.clockPx : 1
+                }
+
+                Item {
+                    id: lockKeys
+                    Keys.onPressed: e => {
+                        Locker.key(e)
+                        e.accepted = true
+                    }
+
+                    Connections {
+                        target: Locker
+                        function onCoveringChanged() {
+                            if (Locker.covering)
+                                lockKeys.forceActiveFocus()
+                        }
+                    }
+                }
+
+                Loader {
+                    anchors.fill: parent
+                    active: Locker.preview && Locker.phase === "locked"
+                    sourceComponent: LockStage {}
+                }
             }
         }
     }
@@ -98,6 +143,8 @@ Scope {
             }
         }
     }
+
+    LockSession {}
 
     RegionPicker {}
     TargetPicker {}

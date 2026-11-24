@@ -1024,4 +1024,61 @@ Singleton {
     readonly property int settingsModHit: 16
     readonly property int settingsModGap: 8
     readonly property real settingsStepKey: 0.05
+
+    // lockscreen
+    readonly property int lockerClockPx: 300
+    readonly property int lockerClockWeight: 900
+    readonly property real lockerInkSwap: 0.08
+    readonly property real lockerInkOut: 0.12
+    readonly property int lockerClockOffsetY: 0
+    readonly property real lockerResponse: 0.42
+    readonly property real lockerHold: dashMorphHold
+    readonly property real lockerVeilResponse: 0.55
+    readonly property int lockerWakeFrames: 3
+    readonly property int lockerWakeGap: 7
+    readonly property int lockerWakeMin: 3
+    readonly property real lockerSettle: 0.02
+    readonly property real lockerGlyphNear: 0.05
+    readonly property int lockerGlyphRise: 200
+    readonly property int lockerGlyphFall: 160
+    readonly property int lockerGlyphEase: Easing.InOutSine
+    readonly property int lockerWakeCap: 250
+    readonly property int lockerShadeIn: 450
+    readonly property int lockerShadeOut: speed
+    readonly property real lockerGlassFrom: 0.55
+    readonly property real lockerGlassTo: 0.95
+    readonly property real lockerGlyphAt: 0.5
+    readonly property real lockerGlyphBack: lockerInkOut
+    readonly property real lockerGlyphLeave: 0.6
+    readonly property real lockerGlassBlur: 1
+    readonly property int lockerGlassBlurMax: 16
+    readonly property int lockerGlassScale: 4
+    readonly property real lockerGlassBlurMul: 1
+    readonly property real lockerGlassBright: 0.22
+    readonly property real lockerGlassSat: 0.4
+    readonly property real lockerDim: 0
+    readonly property int lockerPillW: w
+    readonly property int lockerGlyph: 14
+    readonly property real lockerGlyphDamping: 0.6
+    readonly property real lockerShackleLift: 3
+    readonly property real lockerShackleResponse: 0.11
+    readonly property real lockerDamping: 0.72
+    readonly property real lockerHomeDamping: 0.84
+    readonly property int lockerDip: 6
+    readonly property int lockerDot: 6
+    readonly property int lockerDotGap: 5
+    readonly property int lockerDotsMax: 14
+    readonly property real lockerDotFrom: 0.2
+    readonly property real lockerDotGone: 0.05
+    readonly property real lockerShakeKick: 900
+    readonly property real lockerShakeResponse: 0.16
+    readonly property real lockerShakeDamping: 0.22
+    readonly property int lockerFailHold: 500
+    readonly property int lockerOpenHold: fade
+    readonly property int lockerOpenCap: 1500
+    readonly property int lockerSecureWait: 3000
+    readonly property int lockerBusyPulse: 900
+    readonly property real lockerBusyLag: 0.6
+    readonly property real lockerDotDamping: 0.7
+    readonly property string lockerPam: "butterfly"
 }

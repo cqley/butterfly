@@ -4,6 +4,7 @@
 | --- | --- |
 | `launcher` | `toggle` |
 | `power` | `toggle` |
+| `lock` | `lock` `status` |
 | `wallpaper` | `toggle` |
 | `polkit` | `status` |
 | `record` | `toggle` `stop` `status` |

@@ -8,6 +8,7 @@ import "../brightness"
 import "../calendar"
 import "../core"
 import "../launcher"
+import "../lock"
 import "../media"
 import "../mixer"
 import "../network"
@@ -58,7 +59,9 @@ Item {
 
     readonly property bool hot: hover.hovered
     readonly property bool modal: Modal.any && Modal.which !== "settings"
-    readonly property bool alert: Notifs.current !== null && !modal
+    readonly property bool locking: Locker.covering
+    readonly property bool lockShape: Locker.shut
+    readonly property bool alert: Notifs.current !== null && !modal && !locking
     readonly property bool calm: !alert && !modal
     readonly property bool panelOpen: islandPop.open
     readonly property bool islandOwn: Modal.which === "island"
@@ -78,7 +81,7 @@ Item {
     readonly property bool idleRowActive: root.calm || root.islandOwn
     readonly property bool idleHeld: morph.morphing
     readonly property bool idleSlotVisible: root.idleHeld || root.idleShowing
-    readonly property bool hideIdleIcons: !root.idleHeld && (!root.idleRowActive || root.panelOpen)
+    readonly property bool hideIdleIcons: root.lockShape || !root.idleHeld && (!root.idleRowActive || root.panelOpen)
     readonly property bool slotVis: root.idleHeld ? morph.heldVis : root.showVisualizer
     readonly property bool idleClock: !root.slotVis && !root.wsOnly
     readonly property bool ringGeometryBase: root.calm && !root.hot && !root.hideIdleIcons
@@ -253,7 +256,7 @@ Item {
     }
 
     property bool hidden: false
-    readonly property bool tucked: root.hidden && !Modal.any && Notifs.current === null
+    readonly property bool tucked: root.hidden && !Modal.any && Notifs.current === null && !root.locking
     readonly property bool tucking: root.tucked || tuckMotion.moving
 
     IpcHandler {
@@ -359,7 +362,7 @@ Item {
     Binding {
         target: islandPop
         property: "hovered"
-        value: (hover.hovered || halo.hovered) && !root.alert && (!root.modal || Modal.which === "island")
+        value: (hover.hovered || halo.hovered) && !root.alert && !root.locking && (!root.modal || Modal.which === "island")
     }
 
     TapHandler {
@@ -382,8 +385,51 @@ Item {
     Binding {
         target: Notifs
         property: "veiled"
-        value: root.modal
+        value: root.modal || root.locking
     }
+
+    Binding {
+        target: Locker
+        property: "pillSettled"
+        value: !root.resizing || Locker.count > 0
+    }
+
+    Binding {
+        target: Locker
+        property: "twin"
+        value: root
+    }
+
+    Connections {
+        target: Locker
+        function onCountChanged() {
+            if (root.lockShape && Locker.count > 0)
+                root.panelMotion = false
+        }
+    }
+
+    property point lockShift: Qt.point(0, 0)
+    property real lockScale: 1
+    Connections {
+        target: root.Window.window
+        enabled: Locker.leaving
+        function onFrameSwapped() {
+            Locker.woke()
+            if (Locker.leaving)
+                root.Window.window.update()
+        }
+    }
+
+    Connections {
+        target: Locker
+        function onLeavingChanged() {
+            if (Locker.leaving && root.Window.window)
+                root.Window.window.update()
+        }
+    }
+
+    readonly property point lockClockHome: Qt.point(root.clockHomeX + Theme.idleOffsetX,
+        root.topY + Theme.idleTopOffsetY + root.idleCenterDrop + Theme.idleOffsetY + Theme.h / 2 + Theme.clockOffsetY)
 
     Binding {
         target: Net
@@ -504,18 +550,24 @@ Item {
         return Theme.mid(root.width, w) - body.x
     }
 
-    readonly property real wantW: root.activePanel ? root.activePanel.wantW
+    readonly property real wantW: root.lockShape ? Math.max(Theme.lockerPillW, lockDots.want + 2 * Theme.pad)
+        : root.activePanel ? root.activePanel.wantW
         : islandPop.popped ? root.idleTargetW + Theme.islandPopW
         : root.calm ? root.idleTargetW : Theme.w
 
-    readonly property real wantH: root.activePanel ? root.activePanel.wantH
+    readonly property real wantH: root.lockShape ? Theme.h
+        : root.activePanel ? root.activePanel.wantH
         : islandPop.popped ? Theme.h + Theme.islandPopH
         : Theme.h
 
+    readonly property alias wSpring: wMotion
+    readonly property alias glyphTwin: lockGlyph
+    readonly property alias dotsTwin: lockDots
     property bool panelMotion: false
     readonly property bool idleSettled: root.activePanel === null && !wMotion.moving && !hMotion.moving
 
     onActivePanelChanged: if (root.activePanel !== null) root.panelMotion = true
+    onLockShapeChanged: root.panelMotion = true
     onIdleSettledChanged: if (root.idleSettled) root.panelMotion = false
 
     readonly property real roomW: root.activePanel ? 2 * (root.activePanel.padX || 0) : 0
@@ -673,6 +725,7 @@ Item {
         }
 
         TapHandler {
+            enabled: !root.locking
             onTapped: p => {
                 if (root.alert) {
                     Notifs.dismiss()
@@ -688,6 +741,7 @@ Item {
         }
 
         TapHandler {
+            enabled: !root.locking
             acceptedButtons: Qt.MiddleButton
             onTapped: {
                 if (islandPop.dashShown) {
@@ -699,6 +753,7 @@ Item {
         }
 
         TapHandler {
+            enabled: !root.locking
             acceptedButtons: Qt.RightButton
             onTapped: {
                 if (root.alert) {
@@ -985,7 +1040,19 @@ Item {
                     height: parent.height
                     shown: !root.slotVis && !root.wsOnly && root.idleSlotVisible
                     ready: !swapGate.running
-                    scale: Theme.slotScale + (1 - Theme.slotScale) * clockScale.shaped
+                    scale: root.locking ? 1 : Theme.slotScale + (1 - Theme.slotScale) * clockScale.shaped
+                    transform: [
+                        Scale {
+                            origin.x: clockFade.width / 2
+                            origin.y: clockFade.height / 2
+                            xScale: root.lockScale
+                            yScale: root.lockScale
+                        },
+                        Translate {
+                            x: root.lockShift.x
+                            y: root.lockShift.y
+                        }
+                    ]
 
                     ScaleSpring {
                         id: clockScale
@@ -1004,7 +1071,7 @@ Item {
                         font.pixelSize: Theme.clockPx
                         font.features: Theme.tabular
                         dx: Theme.clockOffsetX
-                        opacity: morph.veil
+                        opacity: (root.locking ? 1 - Locker.smooth(Math.min(1, Locker.t / Theme.lockerInkOut)) : 1) * morph.veil
                     }
                 }
 
@@ -1015,7 +1082,7 @@ Item {
                     anchors.alignWhenCentered: Theme.idleAlignWhenCentered
                     width: wsOnlyStrip.width
                     height: parent.height
-                    shown: root.wsOnly && !root.slotVis && root.idleSlotVisible
+                    shown: root.wsOnly && !root.slotVis && root.idleSlotVisible && !root.lockShape
                     ready: !swapGate.running
                     scale: Theme.slotScale + (1 - Theme.slotScale) * wsOnlyScale.shaped
 
@@ -1046,7 +1113,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: vbars.width
                     height: parent.height
-                    shown: root.slotVis && root.idleSlotVisible
+                    shown: root.slotVis && root.idleSlotVisible && !root.lockShape
                     ready: root.idleHeld || root.visRevealed || root.visGate
                     rise: root.panelRise
                     scale: Theme.slotScale + (1 - Theme.slotScale) * visScale.shaped
@@ -1093,6 +1160,25 @@ Item {
         border.color: Qt.rgba(1, 1, 1, Theme.pillBorderOpacity)
         antialiasing: true
         z: 3
+    }
+
+    LockGlyph {
+        id: lockGlyph
+        x: Theme.mid(root.width, width)
+        y: Math.round(root.topY) + Theme.mid(Theme.h, height)
+        z: 4
+        shown: Locker.secure || root.lockShape && Locker.t > Locker.glyphAt && Locker.glyph
+        open: Locker.opened || Locker.secure
+        instant: Locker.secure
+    }
+
+    LockDots {
+        id: lockDots
+        count: Locker.staging && Locker.t > Locker.glyphAt ? Locker.count : 0
+        instant: Locker.secure
+        x: body.x + (body.width - width) / 2
+        y: Math.round(root.topY) + Theme.mid(Theme.h, height)
+        z: 4
     }
 
     Fade {
