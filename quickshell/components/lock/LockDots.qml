@@ -4,11 +4,13 @@ import QtQuick
 Item {
     id: root
     property int count: Locker.count
+    property real room: 0
     property bool instant: false
     readonly property int n: Math.min(root.count, Theme.lockerDotsMax)
     readonly property real step: Theme.lockerDot + Theme.lockerDotGap
     readonly property int held: root.n > 0 ? root.n : root.lit
     readonly property real want: root.held > 0 ? root.held * root.step - Theme.lockerDotGap : 0
+    readonly property real need: root.n > 0 ? root.n * root.step - Theme.lockerDotGap : 0
     readonly property real span: spanMotion.value
     property real beat: 0
     property int lit: 0
@@ -64,7 +66,7 @@ Item {
         Rectangle {
             id: dot
             required property int index
-            readonly property bool on: dot.index < root.n
+            readonly property bool on: dot.index < root.n && dot.index * root.step + Theme.lockerDot - root.span / 2 <= root.room / 2 + Theme.pad / 2
             readonly property alias spring: pop
 
             x: dot.index * root.step

@@ -5,7 +5,7 @@ import Quickshell.Widgets
 
 Item {
     id: root
-    readonly property real want: Math.max(Theme.lockerPillW, dots.want + 2 * Theme.pad)
+    readonly property real want: Math.max(Theme.lockerPillW, dots.need + 2 * Theme.pad)
     readonly property real topY: Theme.notch ? 0 : Theme.gap
     readonly property real wAnim: wMotion.shaped
     readonly property real bodyR: Math.min(Math.min(body.width, body.height) / 2, Theme.radius)
@@ -16,10 +16,15 @@ Item {
 
     anchors.fill: parent
 
-    Timer {
-        running: true
-        interval: 0
-        onTriggered: root.follow()
+    property bool followed: false
+
+    Connections {
+        target: root.Window.window
+        enabled: !root.followed
+        function onAfterAnimating() {
+            root.followed = true
+            root.follow()
+        }
     }
 
     function follow() {
@@ -116,6 +121,7 @@ Item {
         LockDots {
             id: dots
             count: Locker.count
+            room: body.width - 2 * Theme.pad
             x: (body.width - width) / 2
             y: Theme.mid(body.height, height)
         }

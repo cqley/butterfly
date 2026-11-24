@@ -391,21 +391,13 @@ Item {
     Binding {
         target: Locker
         property: "pillSettled"
-        value: !root.resizing || Locker.count > 0
+        value: !root.resizing || root.typedWide
     }
 
     Binding {
         target: Locker
         property: "twin"
         value: root
-    }
-
-    Connections {
-        target: Locker
-        function onCountChanged() {
-            if (root.lockShape && Locker.count > 0)
-                root.panelMotion = false
-        }
     }
 
     property point lockShift: Qt.point(0, 0)
@@ -563,6 +555,7 @@ Item {
     readonly property alias wSpring: wMotion
     readonly property alias glyphTwin: lockGlyph
     readonly property alias dotsTwin: lockDots
+    readonly property bool typedWide: root.lockShape && root.wantW > Theme.lockerPillW
     property bool panelMotion: false
     readonly property bool idleSettled: root.activePanel === null && !wMotion.moving && !hMotion.moving
 
@@ -574,7 +567,7 @@ Item {
     readonly property real roomH: root.activePanel ? root.activePanel.padBottom || 0 : 0
 
     function bounces(m, room) {
-        return Theme.menuBounce && root.panelMotion
+        return Theme.menuBounce && root.panelMotion && !root.typedWide
             && (root.activePanel === null || m.target > m.origin || Theme.menuSwitchDip && room > 0)
     }
 
@@ -1176,6 +1169,7 @@ Item {
         id: lockDots
         count: Locker.staging && Locker.t > Locker.glyphAt ? Locker.count : 0
         instant: Locker.secure
+        room: body.width - 2 * Theme.pad
         x: body.x + (body.width - width) / 2
         y: Math.round(root.topY) + Theme.mid(Theme.h, height)
         z: 4
