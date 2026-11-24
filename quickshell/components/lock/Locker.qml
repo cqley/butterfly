@@ -386,14 +386,14 @@ Singleton {
     Process {
         id: inhibit
         running: !root.secure
-        command: ["systemd-inhibit", "--what=sleep", "--mode=delay", "--who=butterfly",
-            "--why=lock the screen before sleep", "sleep", "infinity"]
+        command: ["setpriv", "--pdeathsig", "TERM", "systemd-inhibit", "--what=sleep", "--mode=delay", "--who=butterfly",
+            "--why=lock the screen before sleep", "setpriv", "--pdeathsig", "TERM", "sleep", "infinity"]
     }
 
     Process {
         id: sleepWatch
         running: true
-        command: ["busctl", "--system", "wait", "/org/freedesktop/login1",
+        command: ["setpriv", "--pdeathsig", "TERM", "busctl", "--system", "wait", "/org/freedesktop/login1",
             "org.freedesktop.login1.Manager", "PrepareForSleep"]
         stdout: SplitParser {
             onRead: line => {
