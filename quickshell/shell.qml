@@ -18,6 +18,7 @@ Scope {
 
             PanelWindow {
                 screen: modelData
+                visible: Cfg.ready
                 anchors {
                     top: true
                     left: true
